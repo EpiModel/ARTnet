@@ -1,27 +1,19 @@
 
 ##
 ## Network parameters analysis for ART-Net Data
-## v1: 2018-08
 ##
 
 ## Packages ##
-rm(list = ls())
 library("tidyverse")
-
-
-## Inputs ##
-city_name <- "San Francisco"
-
+library("ARTnetData")
 
 ## Data ##
-## Data ##
-library(ARTnetData)
 d <- ARTnet.wide
 l <- ARTnet.long
 
-
-## Derivatives ##
-coef_name <- "cityYN"
+## Inputs ##
+city_name <- "Atlanta"
+coef_name <- paste0("city2", city_name)
 
 
 # 0. Data Processing ------------------------------------------------------
@@ -63,7 +55,6 @@ md <- group_by(d, city2) %>%
   summarise(dm = mean(deg.main), dc = mean(deg.casl), dt = mean(deg.tot))
 print(md, n = nrow(md))
 
-table(d$deg.main, d$deg.casl)
 round(prop.table(table(d$deg.main, d$deg.casl)), 3)
 
 # Concurrency
@@ -71,8 +62,6 @@ d$deg.main.conc <- ifelse(d$deg.main > 1, 1, 0)
 d$deg.casl.conc <- ifelse(d$deg.casl > 1, 1, 0)
 
 ## one-off calcs ##
-
-head(d$ai.part, 25)
 
 # Total MC anal sex partner count
 d <- l %>%
@@ -90,21 +79,56 @@ d$count.oo.part <- pmax(0, d$count.oo.part)
 head(data.frame(d$ai.part, d$count.mc.part, d$count.oo.part), 25)
 summary(d$count.oo.part)
 
-
-## race coding
-
-l$race.cat2 <- ifelse(l$race.cat %in% c("white", "other"), 1, 0)
-l$p_race.cat2 <- ifelse(l$p_race.cat %in% c("white", "other"), 1, 0)
-table(l$race.cat2, l$p_race.cat2, useNA = "always")
-
-d$race.cat2 <- ifelse(d$race.cat %in% c("white", "other"), 1, 0)
-table(d$race.cat2)
+# Truncated OO part
+d$count.oo.part.trunc <- ifelse(d$count.oo.part > 100, 100, d$count.oo.part)
+summary(d$count.oo.part.trunc)
+table(d$count.oo.part.trunc)
 
 
-## set up HIV status
+## Race/Ethnicity
+table(d$race.cat)
+d$race.cat3 <- rep(NA, nrow(d))
+d$race.cat3[d$race.cat == "black"] <- 0
+d$race.cat3[d$race.cat == "hispanic"] <- 1
+d$race.cat3[d$race.cat %in% c("white", "other")] <- 2
+table(d$race.cat, d$race.cat3)
 
-table(l$p_hiv)
-table(l$hiv, l$p_hiv, useNA = "always")
+table(l$race.cat, useNA = "always")
+table(l$p_race.cat, useNA = "always")
+table(l$race.cat, l$p_race.cat, useNA = "always")
+
+l$race.cat3 <- rep(NA, nrow(l))
+l$race.cat3[l$race.cat == "black"] <- 0
+l$race.cat3[l$race.cat == "hispanic"] <- 1
+l$race.cat3[l$race.cat %in% c("white", "other")] <- 2
+table(l$race.cat3, useNA = "always")
+
+table(l$p_race.cat, useNA = "always")
+l$p_race.cat3 <- rep(NA, nrow(l))
+l$p_race.cat3[l$p_race.cat == "black"] <- 0
+l$p_race.cat3[l$p_race.cat == "hispanic"] <- 1
+l$p_race.cat3[l$p_race.cat %in% c("white", "other")] <- 2
+table(l$p_race.cat3, useNA = "always")
+
+# redistribute NAs in proportion to non-missing partner races
+probs <- prop.table(table(l$race.cat3, l$p_race.cat3), 1)
+
+imp_black <- which(is.na(l$p_race.cat3) & l$race.cat3 == 0)
+l$p_race.cat3[imp_black] <- sample(0:2, length(imp_black), TRUE, probs[1, ])
+
+imp_hisp <- which(is.na(l$p_race.cat3) & l$race.cat3 == 1)
+l$p_race.cat3[imp_hisp] <- sample(0:2, length(imp_hisp), TRUE, probs[2, ])
+
+imp_white <- which(is.na(l$p_race.cat3) & l$race.cat3 == 2)
+l$p_race.cat3[imp_white] <- sample(0:2, length(imp_white), TRUE, probs[3, ])
+
+table(l$race.cat3, l$p_race.cat3, useNA = "always")
+
+
+## HIV status
+
+l$p_hiv2 <- ifelse(l$p_hiv == 1, 1, 0)
+table(l$p_hiv, l$p_hiv2, useNA = "always")
 
 hiv.combo <- rep(NA, nrow(l))
 hiv.combo[l$hiv == 0 & l$p_hiv == 0] <- 1
@@ -121,10 +145,6 @@ table(l$hiv.concord)
 table(l$hiv.concord.pos)
 
 
-# city
-l$cityYN <- ifelse(l$city2 == city_name, 1, 0)
-d$cityYN <- ifelse(d$city2 == city_name, 1, 0)
-
 
 ## Setup output list ##
 
@@ -139,112 +159,116 @@ lmain <- l[l$ptype == 1, ]
 
 ## 1A: edges ##
 
-mod <- glm(deg.main ~ cityYN,
+mod <- glm(deg.main ~ city2,
            data = d, family = poisson())
 summary(mod)
 
-b <- coef(mod)
-md.main <- exp(sum(b))
+dat <- data.frame(city2 = city_name)
+pred <- predict(mod, newdata = dat, type = "response")
 
-out$main$md.main <- as.numeric(md.main)
+out$main$md.main <- as.numeric(pred)
 
 
 ## 1B: nodematch("age.grp") ##
 
 age.breaks <- c(0, 24, 34, 44, 54, 64, 100)
 lmain$index.age.grp <- cut(lmain$age, age.breaks, labels = FALSE)
-lmain$part.age.grp <- cut(as.numeric(lmain$p_age), age.breaks, labels = FALSE)
-data.frame(lmain$age, lmain$index.age.grp, lmain$p_age, lmain$part.age.grp)
+lmain$part.age.grp <- cut(as.numeric(lmain$p_age_imp), age.breaks, labels = FALSE)
+data.frame(lmain$age, lmain$index.age.grp, lmain$p_age_imp, lmain$part.age.grp)
 
 lmain$same.age.grp <- ifelse(lmain$index.age.grp == lmain$part.age.grp, 1, 0)
 
-mod <- glm(same.age.grp ~ cityYN + index.age.grp,
+mod <- glm(same.age.grp ~ city2 + index.age.grp,
            data = lmain, family = binomial())
 summary(mod)
 
-b <- coef(mod)
-nm.age.grp <- plogis(b[1] + b[coef_name] + b["index.age.grp"]*1:5)
-out$main$nm.age.grp <- nm.age.grp
+dat <- data.frame(city2 = city_name, index.age.grp = 1:5)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$main$nm.age.grp <- as.numeric(pred)
 
 
 ## 1C: nodefactor("age.grp") ##
 
 d$age.grp <- cut(d$age, age.breaks, labels = FALSE)
 
-mod <- glm(deg.main ~ cityYN + age.grp + sqrt(age.grp),
+mod <- glm(deg.main ~ city2 + age.grp + sqrt(age.grp),
            data = d, family = poisson())
 summary(mod)
 
-b <- coef(mod)
-nf.age.grp <- exp(b[1] + b[coef_name] + b["age.grp"]*1:5 + b["sqrt(age.grp)"]*sqrt(1:5))
-out$main$nf.age.grp <- nf.age.grp
+dat <- data.frame(city2 = city_name, age.grp = 1:5)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$main$nf.age.grp <- as.numeric(pred)
 
 
 ## 1D: nodematch("race") ##
 
-table(lmain$race.cat2)
-table(lmain$p_race.cat2)
+prop.table(table(lmain$race.cat3, lmain$p_race.cat3), 1)
 
-lmain$same.race <- ifelse(lmain$race.cat2 == lmain$p_race.cat2, 1, 0)
-mean(lmain$same.race, na.rm = TRUE)
+lmain$same.race <- ifelse(lmain$race.cat3 == lmain$p_race.cat3, 1, 0)
+group_by(lmain, race.cat3) %>%
+  summarise(mn = mean(same.race))
 
-mod <- glm(same.race ~ cityYN,
+mod <- glm(same.race ~ city2 + as.factor(race.cat3),
            data = lmain, family = binomial())
 summary(mod)
 
-b <- coef(mod)
-nm.race <- plogis(b[1] + b[coef_name])
-out$main$nm.race <- as.numeric(nm.race)
+dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$main$nm.race <- as.numeric(pred)
 
 
 ## 1E: nodefactor("race") ##
 
-mod <- glm(deg.main ~ cityYN + race.cat2,
+mod <- glm(deg.main ~ city2 + as.factor(race.cat3),
            data = d, family = poisson())
 summary(mod)
 
-summary(d$deg.main[d$race.cat2 == 0])
-summary(d$deg.main[d$race.cat2 == 1])
-summary(d$deg.main[d$cityYN == 0])
-summary(d$deg.main[d$cityYN == 1])
+dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
+pred <- predict(mod, newdata = dat, type = "response")
 
-b <- coef(mod)
-nf.race <- exp(b[1] + b[coef_name] + b["race.cat2"]*0:1)
-out$main$nf.race <- nf.race
+out$main$nf.race <- as.numeric(pred)
 
 
 ## 1F: nodefactor("deg.casl") ##
 
-mod <- glm(deg.main ~ cityYN + deg.casl,
+mod <- glm(deg.main ~ city2 + deg.casl,
            data = d, family = poisson())
 summary(mod)
 
-b <- coef(mod)
-md.main.casl <- exp(b[1] + b[coef_name] + b["deg.casl"]*0:3)
-out$main$md.main.casl <- as.numeric(md.main.casl)
+dat <- data.frame(city2 = city_name, deg.casl = sort(unique(d$deg.casl)))
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$main$md.main.pers <- as.numeric(pred)
 
 deg.casl.dist <- prop.table(table(d$deg.casl[d$city2 == city_name]))
 out$main$deg.casl.dist <- as.numeric(deg.casl.dist)
 
+
 ## 1G: concurrent ##
 
-mod <- glm(deg.main.conc ~ cityYN,
+mod <- glm(deg.main.conc ~ city2,
            data = d, family = binomial())
 summary(mod)
 
-b <- coef(mod)
-concurrent <- plogis(b[1] + b[coef_name])
-out$main$concurrent <- as.numeric(concurrent)
+dat <- data.frame(city2 = city_name)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$main$concurrent <- as.numeric(pred)
 
 
 ## 1H: nodefactor("diag.status") ##
 
-mod <- glm(deg.main ~ cityYN + hiv,
+mod <- glm(deg.main ~ city2 + hiv2,
            data = d, family = poisson())
 summary(mod)
-b <- coef(mod)
-nf.diag.status <- exp(b[1] + b[coef_name] + b["hiv"]*0:1)
-out$main$nf.diag.status <- nf.diag.status
+
+dat <- data.frame(city2 = city_name, hiv2 = 0:1)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$main$nf.diag.status <- as.numeric(pred)
 
 
 ## Durations ##
@@ -323,84 +347,93 @@ lcasl <- l[l$ptype == 2, ]
 
 ## 2A: edges ##
 
-mod <- glm(deg.casl ~ cityYN,
+mod <- glm(deg.casl ~ city2,
            data = d, family = poisson())
 summary(mod)
 
-b <- coef(mod)
-md.casl <- exp(b[1] + b[coef_name])
+dat <- data.frame(city2 = city_name)
+pred <- predict(mod, newdata = dat, type = "response")
 
-out$casl$md.casl <- as.numeric(md.casl)
+out$casl$md.casl <- as.numeric(pred)
 
 
 ## 2B: nodematch("age.grp") ##
 
 age.breaks <- c(0, 24, 34, 44, 54, 64, 100)
 lcasl$index.age.grp <- cut(lcasl$age, age.breaks, labels = FALSE)
-lcasl$part.age.grp <- cut(as.numeric(lcasl$p_age), age.breaks, labels = FALSE)
-data.frame(lcasl$age, lcasl$index.age.grp, lcasl$p_age, lcasl$part.age.grp)
+lcasl$part.age.grp <- cut(as.numeric(lcasl$p_age_imp), age.breaks, labels = FALSE)
+data.frame(lcasl$age, lcasl$index.age.grp, lcasl$p_age_imp, lcasl$part.age.grp)
 
 lcasl$same.age.grp <- ifelse(lcasl$index.age.grp == lcasl$part.age.grp, 1, 0)
 
-mod <- glm(same.age.grp ~ cityYN + index.age.grp,
+mod <- glm(same.age.grp ~ city2 + index.age.grp,
            data = lcasl, family = binomial())
 summary(mod)
 
-b <- coef(mod)
-nm.age.grp <- plogis(b[1] + b[coef_name] + b["index.age.grp"]*1:5)
-out$casl$nm.age.grp <- nm.age.grp
+dat <- data.frame(city2 = city_name, index.age.grp = 1:5)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$casl$nm.age.grp <- as.numeric(pred)
+
+# Consider adding absdiff within index.age.grp
+# group_by(lcasl, index.age.grp) %>%
+#   summarise(absdiff = mean(abs(age - p_age_imp)))
+#
+# abs(lcasl$age - lcasl$p_age_imp)
 
 
 ## 2C: nodefactor("age.grp") ##
 
 d$age.grp <- cut(d$age, age.breaks, labels = FALSE)
 
-mod <- glm(deg.casl ~ cityYN + age.grp + sqrt(age.grp),
+mod <- glm(deg.casl ~ city2 + age.grp + sqrt(age.grp),
            data = d, family = poisson())
 summary(mod)
 
-b <- coef(mod)
-nf.age.grp <- exp(b[1] + b[coef_name] + b["age.grp"]*1:5 + b["sqrt(age.grp)"]*sqrt(1:5))
-out$casl$nf.age.grp <- nf.age.grp
+dat <- data.frame(city2 = city_name, age.grp = 1:5)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$casl$nf.age.grp <- as.numeric(pred)
 
 
 ## 2D: nodematch("race") ##
 
-table(lcasl$race.cat2)
-table(lcasl$p_race.cat2)
+prop.table(table(lcasl$race.cat3, lcasl$p_race.cat3), 1)
 
-lcasl$same.race <- ifelse(lcasl$race.cat2 == lcasl$p_race.cat2, 1, 0)
-mean(lcasl$same.race, na.rm = TRUE)
+lcasl$same.race <- ifelse(lcasl$race.cat3 == lcasl$p_race.cat3, 1, 0)
 
-mod <- glm(same.race ~ cityYN,
+mod <- glm(same.race ~ city2 + as.factor(race.cat3),
            data = lcasl, family = binomial())
 summary(mod)
 
-b <- coef(mod)
-nm.race <- plogis(b[1] + b[coef_name])
-out$casl$nm.race <- as.numeric(nm.race)
+dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$casl$nm.race <- as.numeric(pred)
 
 
 ## 2E: nodefactor("race") ##
 
-mod <- glm(deg.casl ~ cityYN + race.cat2,
+mod <- glm(deg.casl ~ city2 + as.factor(race.cat3),
            data = d, family = poisson())
 summary(mod)
 
-b <- coef(mod)
-nf.race <- exp(b[1] + b[coef_name] + b["race.cat2"]*0:1)
-out$casl$nf.race <- nf.race
+dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$casl$nf.race <- as.numeric(pred)
 
 
 ## 2F: nodefactor("deg.main") ##
 
-mod <- glm(deg.casl ~ cityYN + deg.main,
+mod <- glm(deg.casl ~ city2 + deg.main,
            data = d, family = poisson())
 summary(mod)
 
-b <- coef(mod)
-md.casl.main <- exp(b[1] + b[coef_name] + b["deg.main"]*0:2)
-out$casl$md.casl.main <- as.numeric(md.casl.main)
+dat <- data.frame(city2 = city_name, deg.main = 0:2)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$casl$md.pers.main <- as.numeric(pred)
 
 deg.main.dist <- prop.table(table(d$deg.main[d$city2 == city_name]))
 out$casl$deg.main.dist <- as.numeric(deg.main.dist)
@@ -408,23 +441,26 @@ out$casl$deg.main.dist <- as.numeric(deg.main.dist)
 
 ## 2G: concurrent ##
 
-mod <- glm(deg.casl.conc ~ cityYN,
+mod <- glm(deg.casl.conc ~ city2,
            data = d, family = binomial())
 summary(mod)
 
-b <- coef(mod)
-concurrent <- plogis(b[1] + b[coef_name])
-out$casl$concurrent <- as.numeric(concurrent)
+dat <- data.frame(city2 = city_name)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$casl$concurrent <- as.numeric(pred)
 
 
 ## 2H: nodefactor("diag.status") ##
 
-mod <- glm(deg.casl ~ cityYN + hiv,
+mod <- glm(deg.casl ~ city2 + hiv2,
            data = d, family = poisson())
 summary(mod)
-b <- coef(mod)
-nf.diag.status <- exp(b[1] + b[coef_name] + b["hiv"]*0:1)
-out$casl$nf.diag.status <- nf.diag.status
+
+dat <- data.frame(city2 = city_name, hiv2 = 0:1)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$casl$nf.diag.status <- as.numeric(pred)
 
 
 ## Durations ##
@@ -509,69 +545,75 @@ summary(d$count.oo.part)
 d$rate.oo.part <- d$count.oo.part/52
 summary(d$rate.oo.part)
 
-mod <- glm(count.oo.part ~ cityYN,
+mod <- glm(count.oo.part ~ city2,
            data = d, family = poisson())
 summary(mod)
 
-b <- coef(mod)
-md.inst <- exp(b[1] + b[coef_name])/52
-out$inst$md.inst <- as.numeric(md.inst)
+dat <- data.frame(city2 = city_name)
+pred <- predict(mod, newdata = dat, type = "response")/52
+
+out$inst$md.inst <- as.numeric(pred)
 
 
 ## 3B: nodematch("age.grp") ##
 
 age.breaks <- c(0, 24, 34, 44, 54, 64, 100)
 linst$index.age.grp <- cut(linst$age, age.breaks, labels = FALSE)
-linst$part.age.grp <- cut(as.numeric(linst$p_age), age.breaks, labels = FALSE)
-data.frame(linst$age, linst$index.age.grp, linst$p_age, linst$part.age.grp)
+linst$part.age.grp <- cut(as.numeric(linst$p_age_imp), age.breaks, labels = FALSE)
+data.frame(linst$age, linst$index.age.grp, linst$p_age_imp, linst$part.age.grp)
 
 linst$same.age.grp <- ifelse(linst$index.age.grp == linst$part.age.grp, 1, 0)
 
-mod <- glm(same.age.grp ~ cityYN + index.age.grp,
+mod <- glm(same.age.grp ~ city2 + index.age.grp,
            data = linst, family = binomial())
 summary(mod)
 
-b <- coef(mod)
-nm.age.grp <- plogis(b[1] + b[coef_name] + b["index.age.grp"]*1:5)
-out$inst$nm.age.grp <- nm.age.grp
+dat <- data.frame(city2 = city_name, index.age.grp = 1:5)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$inst$nm.age.grp <- as.numeric(pred)
 
 
 ## 3C: nodefactor("age.grp") ##
 
 d$age.grp <- cut(d$age, age.breaks, labels = FALSE)
 
-mod <- glm(count.oo.part ~ cityYN + age.grp + sqrt(age.grp),
+mod <- glm(count.oo.part ~ city2 + age.grp + sqrt(age.grp),
            data = d, family = poisson())
 summary(mod)
 
-b <- coef(mod)
-nf.age.grp <- exp(b[1] + b[coef_name] + b["age.grp"]*1:5 + b["sqrt(age.grp)"]*sqrt(1:5))/52
-out$inst$nf.age.grp <- nf.age.grp
+dat <- data.frame(city2 = city_name, age.grp = 1:5)
+pred <- predict(mod, newdata = dat, type = "response")/52
+
+out$inst$nf.age.grp <- as.numeric(pred)
 
 
 ## 3D: nodematch("race") ##
 
-linst$same.race <- ifelse(linst$race.cat2 == linst$p_race.cat2, 1, 0)
-mean(lcasl$same.race, na.rm = TRUE)
+prop.table(table(linst$race.cat3, linst$p_race.cat3), 1)
 
-mod <- glm(same.race ~ cityYN,
+linst$same.race <- ifelse(linst$race.cat3 == linst$p_race.cat3, 1, 0)
+
+mod <- glm(same.race ~ city2 + as.factor(race.cat3),
            data = linst, family = binomial())
 summary(mod)
 
-b <- coef(mod)
-nm.race <- plogis(b[1] + b[coef_name])
-out$inst$nm.race <- as.numeric(nm.race)
+dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$inst$nm.race <- as.numeric(pred)
 
 
 ## 3E: nodefactor("race") ##
 
-mod <- glm(count.oo.part ~ cityYN + race.cat2,
+mod <- glm(count.oo.part ~ city2 + as.factor(race.cat3),
            data = d, family = poisson())
 summary(mod)
 
-b <- coef(mod)
-nf.race <- exp(b[1] + b[coef_name] + b["race.cat2"]*0:1)/52
-out$inst$nf.race <- nf.race
+dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
+pred <- predict(mod, newdata = dat, type = "response")/52
+
+out$inst$nf.race <- as.numeric(pred)
 
 
 ## 3F: nodefactor("risk.grp") ##
@@ -607,32 +649,32 @@ out$inst$nf.risk.grp <- oo.quants
 
 ## 3G: nodefactor("tot.deg(3+)") ##
 
-summary(d$deg.tot)
-table(d$deg.tot)
 d$deg.tot3 <- ifelse(d$deg.tot >= 3, 3, d$deg.tot)
 table(d$deg.tot3)
 
 deg.tot.dist <- prop.table(table(d$deg.tot3[d$city2 == city_name]))
 out$inst$deg.tot.dist <- as.numeric(deg.tot.dist)
 
-
-mod <- glm(count.oo.part ~ cityYN + deg.tot3,
+mod <- glm(count.oo.part ~ city2 + deg.tot3 + sqrt(deg.tot3),
            data = d, family = poisson())
 summary(mod)
 
-b <- coef(mod)
-nf.deg.tot <- exp(b[1] + b[coef_name] + b["deg.tot3"]*0:3)/52
-out$inst$nf.deg.tot <- nf.deg.tot
+dat <- data.frame(city2 = city_name, deg.tot3 = 0:3)
+pred <- predict(mod, newdata = dat, type = "response")/52
+
+out$inst$nf.deg.tot <- as.numeric(pred)
 
 
 ## 3H: nodefactor("diag.status") ##
 
-mod <- glm(count.oo.part ~ cityYN + hiv,
+mod <- glm(count.oo.part ~ city2 + hiv2,
            data = d, family = poisson())
 summary(mod)
-b <- coef(mod)
-nf.diag.status <- exp(b[1] + b[coef_name] + b["hiv"]*0:1)/52
-out$inst$nf.diag.status <- nf.diag.status
+
+dat <- data.frame(city2 = city_name, hiv2 = 0:1)
+pred <- predict(mod, newdata = dat, type = "response")/52
+
+out$inst$nf.diag.status <- as.numeric(pred)
 
 
 
