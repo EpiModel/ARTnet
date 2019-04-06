@@ -1,18 +1,16 @@
 
 ##
-## Epidemic parameters analysis for ART-Net Data
-## v1: 2018-08
+## Epidemic parameters analysis for ARTnet Data
 ##
 
 ## Packages ##
-rm(list = ls())
 library("tidyverse")
+library("ARTnetData")
 
 ## Inputs ##
 city_name <- "Atlanta"
 
 ## Data ##
-library(ARTnetData)
 d <- ARTnet.wide
 l <- ARTnet.long
 
@@ -28,11 +26,18 @@ names(l)
 table(l$age, useNA = "always")
 table(l$p_age_imp, useNA = "always")
 
-l$comb.age <- l$age + l$p_age
-l$diff.age <- abs(l$age - l$p_age)
+l$comb.age <- l$age + l$p_age_imp
+l$diff.age <- abs(l$age - l$p_age_imp)
 
 
 # Race
+table(d$race.cat)
+d$race.cat3 <- rep(NA, nrow(d))
+d$race.cat3[d$race.cat == "black"] <- 0
+d$race.cat3[d$race.cat == "hispanic"] <- 1
+d$race.cat3[d$race.cat %in% c("white", "other")] <- 2
+table(d$race.cat, d$race.cat3)
+
 table(l$race.cat, useNA = "always")
 table(l$p_race.cat, useNA = "always")
 table(l$race.cat, l$p_race.cat, useNA = "always")
@@ -95,17 +100,6 @@ l$hiv.concord.pos <- ifelse(hiv.combo == 2, 1, 0)
 table(l$hiv.concord)
 table(l$hiv.concord.pos)
 
-# PrEP
-names(d)
-table(d$PREP_REVISED, useNA = "always")
-table(d$artnetPREP_CURRENT, useNA = "always")
-table(d$PREP_REVISED, d$artnetPREP_CURRENT, useNA = "always")
-d$prep <- ifelse(d$artnetPREP_CURRENT == 0 | is.na(d$artnetPREP_CURRENT), 0, 1)
-table(d$prep, useNA = "always")
-
-dlim <- select(d, c(AMIS_ID, survey.year, prep))
-l <- left_join(l, dlim, by = "AMIS_ID")
-
 # city
 l$cityYN <- ifelse(l$city2 == city_name, 1, 0)
 d$cityYN <- ifelse(d$city2 == city_name, 1, 0)
@@ -117,13 +111,14 @@ d$cityYN <- ifelse(d$city2 == city_name, 1, 0)
 
 # Pull Data
 la <- select(l, ptype, duration, comb.age, city = cityYN,
-             race.combo, RAI, IAI, hiv.concord.pos, prep,
-             acts = anal.acts.week, anal.acts.week.cp) %>%
+             race.combo, RAI, IAI, hiv.concord.pos, 
+             acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
   filter(ptype %in% 1:2) %>%
   filter(RAI == 1 | IAI == 1)
 la <- select(la, -c(RAI, IAI))
 head(la, 25)
 nrow(la)
+
 
 # Poisson Model
 acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) + as.factor(race.combo) +
@@ -132,25 +127,20 @@ acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) + as.factor(race.combo
                 family = poisson(), data = la)
 summary(acts.mod)
 
-x <- expand.grid(duration = seq(0, 600, 50),
-                 ptype = 1:2,
+x <- expand.grid(duration = 100,
+                 ptype = 2,
                  race.combo = 0:5,
-                 comb.age = seq(40, 120, 40),
-                 hiv.concord.pos = 0:1,
+                 comb.age = 40,
+                 hiv.concord.pos = 0,
                  city = 1)
 pred <- predict(acts.mod, newdata = x, type = "response", se.fit = FALSE)
 pred.acts <- cbind(x, pred = pred/52)
 pred.acts
 
-ggplot(pred.acts, aes(duration, pred, color = as.factor(comb.age), lty = as.factor(ptype))) +
-  geom_line() +
-  facet_wrap(~as.factor(race.combo) + as.factor(hiv.concord.pos), ncol = 2) +
-  scale_color_viridis_d() +
-  theme_minimal()
-
 
 # Condom Use // Main Casual -----------------------------------------------
 
+par(mar = c(3,3,1,1), mgp = c(2,1,0))
 plot(la$acts, la$cp.acts)
 plot(la$acts, la$cp.acts, xlim = c(0, 10), ylim = c(0, 10))
 
@@ -173,31 +163,25 @@ table(la$never.cond)
 
 cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) + as.factor(race.combo) +
                      as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
-                     hiv.concord.pos + prep + city,
+                     hiv.concord.pos + city,
                 family = binomial(), data = la)
 summary(cond.mc.mod)
 
-x <- expand.grid(duration = seq(0, 600, 50),
-                 ptype = 1:2,
-                 race.combo = 0:2,
-                 comb.age = seq(40, 120, 40),
-                 hiv.concord.pos = 0,
-                 prep = 0,
+x <- expand.grid(duration = 50,
+                 ptype = 2,
+                 race.combo = 0:5,
+                 comb.age = 40,
+                 hiv.concord.pos = 0:1,
                  city = 1)
 pred <- predict(cond.mc.mod, newdata = x, type = "response")
 pred.cond <- cbind(x, pred)
-
-ggplot(pred.cond, aes(duration, pred, color = as.factor(comb.age), lty = as.factor(ptype))) +
-  geom_line() +
-  facet_wrap(~as.factor(race.combo)) +
-  scale_color_viridis_d() +
-  theme_minimal()
+pred.cond
 
 
 # Condom Use // Inst ------------------------------------------------------
 
 lb <- select(l, ptype, comb.age, city = cityYN,
-         race.combo, hiv.concord.pos, prep,
+         race.combo, hiv.concord.pos, 
          RAI, IAI, RECUAI, INSUAI) %>%
   filter(ptype == 3) %>%
   filter(RAI == 1 | IAI == 1)
@@ -223,15 +207,14 @@ head(lb, 40)
 
 cond.oo.mod <- glm(prob.cond ~ as.factor(race.combo) +
                      comb.age + I(comb.age^2) +
-                     hiv.concord.pos + city + prep + prep*city,
+                     hiv.concord.pos + city,
                    family = binomial(), data = lb)
 summary(cond.oo.mod)
 
-x <- expand.grid(race.combo = 0:2,
-                 comb.age = 30:120,
+x <- expand.grid(race.combo = 0:5,
+                 comb.age = 40,
                  hiv.concord.pos = 0:1,
-                 prep = 0,
-                 city = 0:1)
+                 city = 1)
 pred <- predict(cond.oo.mod, newdata = x, type = "response")
 pred.cond <- cbind(x, pred)
 pred.cond
@@ -240,17 +223,17 @@ pred.cond
 
 # Init HIV Status ---------------------------------------------------------
 
-d1 <- select(d, race, cityYN, age, hiv)
+d1 <- select(d, race.cat3, cityYN, age, hiv2)
 
-d1$race2 <- ifelse(d1$race %in% c("white", "other"), 1, 0)
-hiv.mod <- glm(hiv ~ age + cityYN + race2 + cityYN*race2, data = d1, family = binomial())
+hiv.mod <- glm(hiv2 ~ age + cityYN + as.factor(race.cat3) + cityYN*as.factor(race.cat3), 
+               data = d1, family = binomial())
 summary(hiv.mod)
-x <- expand.grid(age = 15:65, race2 = 0:1, cityYN = 0:1)
+x <- expand.grid(age = 15:65, race.cat3 = 0:2, cityYN = 0:1)
 pred <- predict(hiv.mod, newdata = x)
 pred <- cbind(x, est = plogis(pred))
 pred
 
-ggplot(pred, aes(age, est, color = as.factor(race2), lty = as.factor(cityYN))) +
+ggplot(pred, aes(age, est, color = as.factor(race.cat3), lty = as.factor(cityYN))) +
   geom_line() +
   scale_color_viridis_d() +
   theme_minimal()
