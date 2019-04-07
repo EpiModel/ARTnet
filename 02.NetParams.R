@@ -1,6 +1,6 @@
 
 ##
-## Network parameters analysis for ART-Net Data
+## Network parameters analysis for ARTnet Data
 ##
 
 ## Packages ##
@@ -287,7 +287,7 @@ durs.main.geo <- lmain %>%
   filter(RAI == 1 | IAI == 1) %>%
   filter(index.age.grp < 6) %>%
   filter(ongoing2 == 1) %>%
-  filter(cityYN == 1) %>%
+  filter(city2 == city_name) %>%
   summarise(mean.dur = mean(duration, na.rm = TRUE),
             median.dur = median(duration, na.rm = TRUE)) %>%
   as.data.frame()
@@ -479,7 +479,7 @@ durs.casl.geo <- lcasl %>%
   filter(RAI == 1 | IAI == 1) %>%
   filter(index.age.grp < 6) %>%
   filter(ongoing2 == 1) %>%
-  filter(cityYN == 1) %>%
+  filter(city2 == city_name) %>%
   summarise(mean.dur = mean(duration, na.rm = TRUE),
             median.dur = median(duration, na.rm = TRUE)) %>%
   as.data.frame()
