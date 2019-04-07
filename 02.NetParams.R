@@ -241,7 +241,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name, deg.casl = sort(unique(d$deg.casl)))
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$main$md.main.pers <- as.numeric(pred)
+out$main$nf.deg.casl <- as.numeric(pred)
 
 deg.casl.dist <- prop.table(table(d$deg.casl[d$city2 == city_name]))
 out$main$deg.casl.dist <- as.numeric(deg.casl.dist)
@@ -433,7 +433,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name, deg.main = 0:2)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$casl$md.pers.main <- as.numeric(pred)
+out$casl$nf.deg.main <- as.numeric(pred)
 
 deg.main.dist <- prop.table(table(d$deg.main[d$city2 == city_name]))
 out$casl$deg.main.dist <- as.numeric(deg.main.dist)
@@ -647,7 +647,7 @@ oo.quants * 52
 out$inst$nf.risk.grp <- oo.quants
 
 
-## 3G: nodefactor("tot.deg(3+)") ##
+## 3G: nodefactor("deg.tot") ##
 
 d$deg.tot3 <- ifelse(d$deg.tot >= 3, 3, d$deg.tot)
 table(d$deg.tot3)
