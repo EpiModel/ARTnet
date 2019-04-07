@@ -100,6 +100,17 @@ l$hiv.concord.pos <- ifelse(hiv.combo == 2, 1, 0)
 table(l$hiv.concord)
 table(l$hiv.concord.pos)
 
+# PrEP
+names(d)
+table(d$PREP_REVISED, useNA = "always")
+table(d$artnetPREP_CURRENT, useNA = "always")
+table(d$PREP_REVISED, d$artnetPREP_CURRENT, useNA = "always")
+d$prep <- ifelse(d$artnetPREP_CURRENT == 0 | is.na(d$artnetPREP_CURRENT), 0, 1)
+table(d$prep, useNA = "always")
+
+dlim <- select(d, c(AMIS_ID, survey.year, prep))
+l <- left_join(l, dlim, by = "AMIS_ID")
+
 # city
 l$cityYN <- ifelse(l$city2 == city_name, 1, 0)
 d$cityYN <- ifelse(d$city2 == city_name, 1, 0)
@@ -111,7 +122,7 @@ d$cityYN <- ifelse(d$city2 == city_name, 1, 0)
 
 # Pull Data
 la <- select(l, ptype, duration, comb.age, city = cityYN,
-             race.combo, RAI, IAI, hiv.concord.pos, 
+             race.combo, RAI, IAI, hiv.concord.pos, prep,
              acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
   filter(ptype %in% 1:2) %>%
   filter(RAI == 1 | IAI == 1)
@@ -163,7 +174,7 @@ table(la$never.cond)
 
 cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) + as.factor(race.combo) +
                      as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
-                     hiv.concord.pos + city,
+                     hiv.concord.pos + prep + city,
                 family = binomial(), data = la)
 summary(cond.mc.mod)
 
@@ -171,7 +182,8 @@ x <- expand.grid(duration = 50,
                  ptype = 2,
                  race.combo = 0:5,
                  comb.age = 40,
-                 hiv.concord.pos = 0:1,
+                 hiv.concord.pos = 0,
+                 prep = 0:1,
                  city = 1)
 pred <- predict(cond.mc.mod, newdata = x, type = "response")
 pred.cond <- cbind(x, pred)
@@ -181,7 +193,7 @@ pred.cond
 # Condom Use // Inst ------------------------------------------------------
 
 lb <- select(l, ptype, comb.age, city = cityYN,
-         race.combo, hiv.concord.pos, 
+         race.combo, hiv.concord.pos, prep,
          RAI, IAI, RECUAI, INSUAI) %>%
   filter(ptype == 3) %>%
   filter(RAI == 1 | IAI == 1)
@@ -207,13 +219,14 @@ head(lb, 40)
 
 cond.oo.mod <- glm(prob.cond ~ as.factor(race.combo) +
                      comb.age + I(comb.age^2) +
-                     hiv.concord.pos + city,
+                     hiv.concord.pos + prep + city,
                    family = binomial(), data = lb)
 summary(cond.oo.mod)
 
 x <- expand.grid(race.combo = 0:5,
                  comb.age = 40,
-                 hiv.concord.pos = 0:1,
+                 hiv.concord.pos = 0,
+                 prep = 0:1,
                  city = 1)
 pred <- predict(cond.oo.mod, newdata = x, type = "response")
 pred.cond <- cbind(x, pred)
