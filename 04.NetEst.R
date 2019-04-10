@@ -132,7 +132,7 @@ tstats_inst <- c(
   edges = tstats$inst$edges,
   nodematch_age.grp = sum(tstats$inst$nodematch_age.grp),
   nodefactor_age.grp = tstats$inst$nodefactor_age.grp[-1],
-  nodematch_race = tstats$inst$nodematch_race,
+  nodematch_race = tstats$inst$nodematch_race_diffF,
   nodefactor_race = tstats$inst$nodefactor_race[-1],
   nodefactor_risk.grp = tstats$inst$nodefactor_risk.grp[-5],
   nodefactor_deg.tot = tstats$inst$nodefactor_deg.tot[-1],
