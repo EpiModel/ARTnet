@@ -131,12 +131,12 @@ l$p_hiv2 <- ifelse(l$p_hiv == 1, 1, 0)
 table(l$p_hiv, l$p_hiv2, useNA = "always")
 
 hiv.combo <- rep(NA, nrow(l))
-hiv.combo[l$hiv == 0 & l$p_hiv == 0] <- 1
-hiv.combo[l$hiv == 1 & l$p_hiv == 1] <- 2
-hiv.combo[l$hiv == 1 & l$p_hiv == 0] <- 3
-hiv.combo[l$hiv == 0 & l$p_hiv == 1] <- 3
-hiv.combo[l$hiv == 0 & l$p_hiv == 2] <- 4
-hiv.combo[l$hiv == 1 & l$p_hiv == 2] <- 5
+hiv.combo[l$hiv2 == 0 & l$p_hiv == 0] <- 1
+hiv.combo[l$hiv2 == 1 & l$p_hiv == 1] <- 2
+hiv.combo[l$hiv2 == 1 & l$p_hiv == 0] <- 3
+hiv.combo[l$hiv2 == 0 & l$p_hiv == 1] <- 3
+hiv.combo[l$hiv2 == 0 & l$p_hiv == 2] <- 4
+hiv.combo[l$hiv2 == 1 & l$p_hiv == 2] <- 5
 table(hiv.combo, useNA = "always")
 
 l$hiv.concord <- ifelse(hiv.combo %in% 0:1, 1, 0)
