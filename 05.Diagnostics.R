@@ -10,7 +10,7 @@ suppressMessages(library("EpiModelHIV"))
 
 
 ## Inputs ##
-city_name <- "San Francisco"
+city_name <- "Atlanta"
 
 
 ## Load Data ##
@@ -28,7 +28,7 @@ fit_main <- est[[1]]
 model_main_dx <- ~edges +
   nodematch("age.grp", diff = TRUE) +
   nodefactor("age.grp", base = 0) +
-  nodematch("race") +
+  nodematch("race", diff = TRUE) +
   nodefactor("race", base = 0) +
   nodefactor("deg.casl", base = 0) +
   degrange(from = 3) +
@@ -52,7 +52,7 @@ fit_casl <- est[[2]]
 model_casl_dx <- ~edges +
   nodematch("age.grp", diff = TRUE) +
   nodefactor("age.grp", base = 0) +
-  nodematch("race") +
+  nodematch("race", diff = TRUE) +
   nodefactor("race", base = 0) +
   nodefactor("deg.main", base = 0) +
   degrange(from = 4) +
@@ -76,7 +76,7 @@ fit_inst <- est[[3]]
 model_inst_dx <- ~edges +
   nodematch("age.grp", diff = FALSE) +
   nodefactor("age.grp", base = 0) +
-  nodematch("race") +
+  nodematch("race", diff = TRUE) +
   nodefactor("race", base = 0) +
   nodefactor("risk.grp", base = 0) +
   nodefactor("deg.tot", base = 0) +
