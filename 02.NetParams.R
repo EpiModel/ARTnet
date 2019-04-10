@@ -202,7 +202,7 @@ pred <- predict(mod, newdata = dat, type = "response")
 out$main$nf.age.grp <- as.numeric(pred)
 
 
-## 1D: nodematch("race") ##
+## 1D: nodematch("race", diff = TRUE) ##
 
 prop.table(table(lmain$race.cat3, lmain$p_race.cat3), 1)
 
@@ -218,6 +218,18 @@ dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
 pred <- predict(mod, newdata = dat, type = "response")
 
 out$main$nm.race <- as.numeric(pred)
+
+
+## 1Db: nodematch("race", diff = FALSE) ##
+
+mod <- glm(same.race ~ city2,
+           data = lmain, family = binomial())
+summary(mod)
+
+dat <- data.frame(city2 = city_name)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$main$nm.race_diffF <- as.numeric(pred)
 
 
 ## 1E: nodefactor("race") ##
@@ -412,7 +424,19 @@ pred <- predict(mod, newdata = dat, type = "response")
 out$casl$nm.race <- as.numeric(pred)
 
 
-## 2E: nodefactor("race") ##
+## 2Db: nodematch("race", diff = FALSE) ##
+
+mod <- glm(same.race ~ city2,
+           data = lcasl, family = binomial())
+summary(mod)
+
+dat <- data.frame(city2 = city_name)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$casl$nm.race_diffF <- as.numeric(pred)
+
+
+## 2E: nodefactor("race", diff = TRUE) ##
 
 mod <- glm(deg.casl ~ city2 + as.factor(race.cat3),
            data = d, family = poisson())
@@ -588,7 +612,7 @@ pred <- predict(mod, newdata = dat, type = "response")/52
 out$inst$nf.age.grp <- as.numeric(pred)
 
 
-## 3D: nodematch("race") ##
+## 3D: nodematch("race", diff = TRUE) ##
 
 prop.table(table(linst$race.cat3, linst$p_race.cat3), 1)
 
@@ -602,6 +626,18 @@ dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
 pred <- predict(mod, newdata = dat, type = "response")
 
 out$inst$nm.race <- as.numeric(pred)
+
+
+## 3D: nodematch("race", diff = FALSE) ##
+
+mod <- glm(same.race ~ city2,
+           data = linst, family = binomial())
+summary(mod)
+
+dat <- data.frame(city2 = city_name)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$inst$nm.race_diffF <- as.numeric(pred)
 
 
 ## 3E: nodefactor("race") ##

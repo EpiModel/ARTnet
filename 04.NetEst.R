@@ -1,7 +1,6 @@
 
 ##
-## Network modeling for ART-Net Data
-## v1: 2018-08
+## Network modeling for ARTnet Data
 ##
 
 ## Packages ##
@@ -10,7 +9,7 @@ suppressMessages(library("EpiModelHIV"))
 
 
 ## Inputs ##
-city_name <- "San Francisco"
+city_name <- "Atlanta"
 
 
 ## Load Data ##
@@ -21,8 +20,9 @@ tstats <- readRDS(file = fn)
 # 0. Initialize Network ---------------------------------------------------
 
 num.B <- tstats$demog$num.B
+num.H <- tstats$demog$num.H
 num.W <- tstats$demog$num.W
-num <- num.B + num.W
+num <- num.B + num.H + num.W
 nw <- network::network.initialize(num, directed = FALSE)
 
 attr.names <- names(tstats$attr)
@@ -37,7 +37,7 @@ nw_main <- nw_casl <- nw_inst <- nw
 model_main <- ~edges +
                nodematch("age.grp", diff = TRUE) +
                nodefactor("age.grp", base = 1) +
-               nodematch("race") +
+               nodematch("race", diff = FALSE) +
                nodefactor("race", base = 1) +
                nodefactor("deg.casl", base = 1) +
                concurrent +
@@ -50,7 +50,7 @@ tstats_main <- c(
   edges = tstats$main$edges,
   nodematch_age.grp = tstats$main$nodematch_age.grp,
   nodefactor_age.grp = tstats$main$nodefactor_age.grp[-1],
-  nodematch_race = tstats$main$nodematch_race,
+  nodematch_race = tstats$main$nodematch_race_diffF,
   nodefactor_race = tstats$main$nodefactor_race[-1],
   nodefactor_deg.casl = tstats$main$nodefactor_deg.casl[-1],
   concurrent = tstats$main$concurrent,
@@ -67,8 +67,8 @@ fit_main <- netest(nw_main,
                    target.stats = tstats_main,
                    coef.diss = tstats$main$diss,
                    set.control.ergm = control.ergm(MCMLE.maxit = 500,
-                                                   SAN.maxit = 2,
-                                                   SAN.nsteps.times = 2),
+                                                   SAN.maxit = 5,
+                                                   SAN.nsteps.times = 5),
                    verbose = FALSE)
 
 
@@ -79,7 +79,7 @@ fit_main <- netest(nw_main,
 model_casl <- ~edges +
                nodematch("age.grp", diff = TRUE) +
                nodefactor("age.grp", base = c(1,5)) +
-               nodematch("race") +
+               nodematch("race", diff = FALSE) +
                nodefactor("race", base = 1) +
                nodefactor("deg.main", base = 3) +
                concurrent +
@@ -92,7 +92,7 @@ tstats_casl <- c(
   edges = tstats$casl$edges,
   nodematch_age.grp = tstats$casl$nodematch_age.grp,
   nodefactor_age.grp = tstats$casl$nodefactor_age.grp[-c(1,5)],
-  nodematch_race = tstats$casl$nodematch_race,
+  nodematch_race = tstats$casl$nodematch_race_diffF,
   nodefactor_race = tstats$casl$nodefactor_race[-1],
   nodefactor_deg.main = tstats$casl$nodefactor_deg.main[-3],
   concurrent = tstats$casl$concurrent,
@@ -120,7 +120,7 @@ fit_casl <- netest(nw_casl,
 model_inst <- ~edges +
                nodematch("age.grp", diff = FALSE) +
                nodefactor("age.grp", base = 1) +
-               nodematch("race") +
+               nodematch("race", diff = FALSE) +
                nodefactor("race", base = 1) +
                nodefactor("risk.grp", base = 5) +
                nodefactor("deg.tot", base = 1) +

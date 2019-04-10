@@ -138,6 +138,10 @@ out$main$nodefactor_race <- unname(nodefactor_race)
 nodematch_race <- nodefactor_race/2 * nstats$main$nm.race
 out$main$nodematch_race <- unname(nodematch_race)
 
+# 1Eb: nodematch("race", diff = FALSE)
+nodematch_race <- out$main$edges * nstats$main$nm.race_diffF
+out$main$nodematch_race_diffF <- unname(nodematch_race)
+
 # 1F: nodefactor("deg.casl")
 out$main$nodefactor_deg.casl <- num * nstats$main$deg.casl.dist * nstats$main$nf.deg.casl
 
@@ -188,6 +192,11 @@ out$casl$nodefactor_race <- unname(nodefactor_race)
 nodematch_race <- nodefactor_race/2 * nstats$casl$nm.race
 out$casl$nodematch_race <- unname(nodematch_race)
 
+# 2Eb: nodematch("race", diff = FALSE)
+nodematch_race <- out$casl$edges * nstats$casl$nm.race_diffF
+out$casl$nodematch_race_diffF <- unname(nodematch_race)
+
+
 # 2F: nodefactor("deg.main")
 out$casl$nodefactor_deg.main <- num * nstats$casl$deg.main.dist * nstats$casl$nf.deg.main
 
@@ -236,6 +245,10 @@ out$inst$nodefactor_race <- unname(nodefactor_race)
 # 3E: nodematch("race")
 nodematch_race <- nodefactor_race/2 * nstats$inst$nm.race
 out$inst$nodematch_race <- unname(nodematch_race)
+
+# 3Eb: nodematch("race", diff = FALSE)
+nodematch_race <- out$inst$edges * nstats$inst$nm.race_diffF
+out$inst$nodematch_race_diffF <- unname(nodematch_race)
 
 # 3F: nodefactor("risk.grp")
 nodefactor_risk.grp <- table(out$attr$risk.grp) * nstats$inst$nf.risk.grp
