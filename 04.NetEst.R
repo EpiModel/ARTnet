@@ -36,14 +36,14 @@ nw_main <- nw_casl <- nw_inst <- nw
 # Formula
 model_main <- ~edges +
                nodematch("age.grp", diff = TRUE) +
-               nodefactor("age.grp", levels = -1) +
+               nodefactor("age.grp", base = 1) +
                nodematch("race", diff = FALSE) +
-               nodefactor("race", levels = -1) +
-               nodefactor("deg.casl", levels = -1) +
+               nodefactor("race", base = 1) +
+               nodefactor("deg.casl", base = 1) +
                concurrent +
-               nodefactor("diag.status", levels = -1) +
+               nodefactor("diag.status", base = 1) +
                degrange(from = 3) +
-               nodematch("role.class", diff = TRUE, levels = 1:2)
+               nodematch("role.class", diff = TRUE, keep = 1:2)
 
 # Target Stats
 tstats_main <- c(
@@ -78,14 +78,14 @@ fit_main <- netest(nw_main,
 # Formula
 model_casl <- ~edges +
                nodematch("age.grp", diff = TRUE) +
-               nodefactor("age.grp", levels = c(-1,-5)) +
+               nodefactor("age.grp", base = c(1,5)) +
                nodematch("race", diff = FALSE) +
-               nodefactor("race", levels = -1) +
-               nodefactor("deg.main", levels = -3) +
+               nodefactor("race", base = 1) +
+               nodefactor("deg.main", base = 3) +
                concurrent +
-               nodefactor("diag.status", levels = -1) +
+               nodefactor("diag.status", base = 1) +
                degrange(from = 4) +
-               nodematch("role.class", diff = TRUE, levels = 1:2)
+               nodematch("role.class", diff = TRUE, keep = 1:2)
 
 # Target Stats
 tstats_casl <- c(
@@ -119,13 +119,13 @@ fit_casl <- netest(nw_casl,
 # Formula
 model_inst <- ~edges +
                nodematch("age.grp", diff = FALSE) +
-               nodefactor("age.grp", levels = -1) +
+               nodefactor("age.grp", base = 1) +
                nodematch("race", diff = FALSE) +
-               nodefactor("race", levels = -1) +
-               nodefactor("risk.grp", levels = -5) +
-               nodefactor("deg.tot", levels = -1) +
-               nodefactor("diag.status", levels = -1) +
-               nodematch("role.class", diff = TRUE, levels = 1:2)
+               nodefactor("race", base = 1) +
+               nodefactor("risk.grp", base = 5) +
+               nodefactor("deg.tot", base = 1) +
+               nodefactor("diag.status", base = 1) +
+               nodematch("role.class", diff = TRUE, keep = 1:2)
 
 # Target Stats
 tstats_inst <- c(
