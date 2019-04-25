@@ -88,9 +88,9 @@ table(d$count.oo.part.trunc)
 ## Race/Ethnicity
 table(d$race.cat)
 d$race.cat3 <- rep(NA, nrow(d))
-d$race.cat3[d$race.cat == "black"] <- 0
-d$race.cat3[d$race.cat == "hispanic"] <- 1
-d$race.cat3[d$race.cat %in% c("white", "other")] <- 2
+d$race.cat3[d$race.cat == "black"] <- 1
+d$race.cat3[d$race.cat == "hispanic"] <- 2
+d$race.cat3[d$race.cat %in% c("white", "other")] <- 3
 table(d$race.cat, d$race.cat3)
 
 table(l$race.cat, useNA = "always")
@@ -98,29 +98,29 @@ table(l$p_race.cat, useNA = "always")
 table(l$race.cat, l$p_race.cat, useNA = "always")
 
 l$race.cat3 <- rep(NA, nrow(l))
-l$race.cat3[l$race.cat == "black"] <- 0
-l$race.cat3[l$race.cat == "hispanic"] <- 1
-l$race.cat3[l$race.cat %in% c("white", "other")] <- 2
+l$race.cat3[l$race.cat == "black"] <- 1
+l$race.cat3[l$race.cat == "hispanic"] <- 2
+l$race.cat3[l$race.cat %in% c("white", "other")] <- 3
 table(l$race.cat3, useNA = "always")
 
 table(l$p_race.cat, useNA = "always")
 l$p_race.cat3 <- rep(NA, nrow(l))
-l$p_race.cat3[l$p_race.cat == "black"] <- 0
-l$p_race.cat3[l$p_race.cat == "hispanic"] <- 1
-l$p_race.cat3[l$p_race.cat %in% c("white", "other")] <- 2
+l$p_race.cat3[l$p_race.cat == "black"] <- 1
+l$p_race.cat3[l$p_race.cat == "hispanic"] <- 2
+l$p_race.cat3[l$p_race.cat %in% c("white", "other")] <- 3
 table(l$p_race.cat3, useNA = "always")
 
 # redistribute NAs in proportion to non-missing partner races
 probs <- prop.table(table(l$race.cat3, l$p_race.cat3), 1)
 
-imp_black <- which(is.na(l$p_race.cat3) & l$race.cat3 == 0)
-l$p_race.cat3[imp_black] <- sample(0:2, length(imp_black), TRUE, probs[1, ])
+imp_black <- which(is.na(l$p_race.cat3) & l$race.cat3 == 1)
+l$p_race.cat3[imp_black] <- sample(1:3, length(imp_black), TRUE, probs[1, ])
 
-imp_hisp <- which(is.na(l$p_race.cat3) & l$race.cat3 == 1)
-l$p_race.cat3[imp_hisp] <- sample(0:2, length(imp_hisp), TRUE, probs[2, ])
+imp_hisp <- which(is.na(l$p_race.cat3) & l$race.cat3 == 2)
+l$p_race.cat3[imp_hisp] <- sample(1:3, length(imp_hisp), TRUE, probs[2, ])
 
-imp_white <- which(is.na(l$p_race.cat3) & l$race.cat3 == 2)
-l$p_race.cat3[imp_white] <- sample(0:2, length(imp_white), TRUE, probs[3, ])
+imp_white <- which(is.na(l$p_race.cat3) & l$race.cat3 == 3)
+l$p_race.cat3[imp_white] <- sample(1:3, length(imp_white), TRUE, probs[3, ])
 
 table(l$race.cat3, l$p_race.cat3, useNA = "always")
 
@@ -214,7 +214,7 @@ mod <- glm(same.race ~ city2 + as.factor(race.cat3),
            data = lmain, family = binomial())
 summary(mod)
 
-dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
+dat <- data.frame(city2 = city_name, race.cat3 = 1:3)
 pred <- predict(mod, newdata = dat, type = "response")
 
 out$main$nm.race <- as.numeric(pred)
@@ -238,7 +238,7 @@ mod <- glm(deg.main ~ city2 + as.factor(race.cat3),
            data = d, family = poisson())
 summary(mod)
 
-dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
+dat <- data.frame(city2 = city_name, race.cat3 = 1:3)
 pred <- predict(mod, newdata = dat, type = "response")
 
 out$main$nf.race <- as.numeric(pred)
@@ -418,7 +418,7 @@ mod <- glm(same.race ~ city2 + as.factor(race.cat3),
            data = lcasl, family = binomial())
 summary(mod)
 
-dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
+dat <- data.frame(city2 = city_name, race.cat3 = 1:3)
 pred <- predict(mod, newdata = dat, type = "response")
 
 out$casl$nm.race <- as.numeric(pred)
@@ -442,7 +442,7 @@ mod <- glm(deg.casl ~ city2 + as.factor(race.cat3),
            data = d, family = poisson())
 summary(mod)
 
-dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
+dat <- data.frame(city2 = city_name, race.cat3 = 1:3)
 pred <- predict(mod, newdata = dat, type = "response")
 
 out$casl$nf.race <- as.numeric(pred)
@@ -622,7 +622,7 @@ mod <- glm(same.race ~ city2 + as.factor(race.cat3),
            data = linst, family = binomial())
 summary(mod)
 
-dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
+dat <- data.frame(city2 = city_name, race.cat3 = 1:3)
 pred <- predict(mod, newdata = dat, type = "response")
 
 out$inst$nm.race <- as.numeric(pred)
@@ -646,7 +646,7 @@ mod <- glm(count.oo.part ~ city2 + as.factor(race.cat3),
            data = d, family = poisson())
 summary(mod)
 
-dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
+dat <- data.frame(city2 = city_name, race.cat3 = 1:3)
 pred <- predict(mod, newdata = dat, type = "response")/52
 
 out$inst$nf.race <- as.numeric(pred)
