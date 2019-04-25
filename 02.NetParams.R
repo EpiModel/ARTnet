@@ -656,14 +656,19 @@ out$inst$nf.race <- as.numeric(pred)
 wt <- mean(d$rate.oo.part[d$city2 == city_name], na.rm = TRUE)/mean(d$rate.oo.part, na.rm = TRUE)
 wt.rate <- d$rate.oo.part * wt
 
-oo.quants <- rep(NA, 5)
+nquants <- 5
+oo.quants <- rep(NA, nquants)
 sr <- sort(wt.rate)
-qsize <- floor(length(sr) / 5)
-oo.quants[1] <- mean(sr[1:qsize])
-oo.quants[2] <- mean(sr[((1*qsize)+1):(2*qsize)])
-oo.quants[3] <- mean(sr[((2*qsize)+1):(3*qsize)])
-oo.quants[4] <- mean(sr[((3*qsize)+1):(4*qsize)])
-oo.quants[5] <- mean(sr[((4*qsize)+1):length(sr)])
+qsize <- floor(length(sr) / nquants)
+for (i in 1:nquants) {
+  if (i == 1) {
+    oo.quants[i] <- mean(sr[1:qsize])
+  } else if (i > 1 & i < nquants) {
+    oo.quants[i] <- mean(sr[(((i-1)*qsize) + 1):(i*qsize)])
+  } else if (i == nquants) {
+    oo.quants[i] <- mean(sr[(((i-1)*qsize) + 1):length(sr)])
+  }
+}
 
 # Weekly acquisition rate
 oo.quants
