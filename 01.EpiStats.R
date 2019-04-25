@@ -94,14 +94,10 @@ hiv.combo[l$hiv2 == 0 & l$p_hiv == 2] <- 4
 hiv.combo[l$hiv2 == 1 & l$p_hiv == 2] <- 5
 table(hiv.combo, useNA = "always")
 
-l$hiv.combo <- hiv.combo
-l$hiv.concord <- ifelse(hiv.combo %in% 0:1, 1, 0)
 l$hiv.concord.pos <- ifelse(hiv.combo == 2, 1, 0)
-table(l$hiv.concord)
 table(l$hiv.concord.pos)
 
 # PrEP
-names(d)
 table(d$PREP_REVISED, useNA = "always")
 table(d$artnetPREP_CURRENT, useNA = "always")
 table(d$PREP_REVISED, d$artnetPREP_CURRENT, useNA = "always")
