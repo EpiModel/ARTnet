@@ -33,9 +33,9 @@ l$diff.age <- abs(l$age - l$p_age_imp)
 # Race
 table(d$race.cat)
 d$race.cat3 <- rep(NA, nrow(d))
-d$race.cat3[d$race.cat == "black"] <- 0
-d$race.cat3[d$race.cat == "hispanic"] <- 1
-d$race.cat3[d$race.cat %in% c("white", "other")] <- 2
+d$race.cat3[d$race.cat == "black"] <- 1
+d$race.cat3[d$race.cat == "hispanic"] <- 2
+d$race.cat3[d$race.cat %in% c("white", "other")] <- 3
 table(d$race.cat, d$race.cat3)
 
 table(l$race.cat, useNA = "always")
@@ -43,39 +43,39 @@ table(l$p_race.cat, useNA = "always")
 table(l$race.cat, l$p_race.cat, useNA = "always")
 
 l$race.cat3 <- rep(NA, nrow(l))
-l$race.cat3[l$race.cat == "black"] <- 0
-l$race.cat3[l$race.cat == "hispanic"] <- 1
-l$race.cat3[l$race.cat %in% c("white", "other")] <- 2
+l$race.cat3[l$race.cat == "black"] <- 1
+l$race.cat3[l$race.cat == "hispanic"] <- 2
+l$race.cat3[l$race.cat %in% c("white", "other")] <- 3
 table(l$race.cat3, useNA = "always")
 
 table(l$p_race.cat, useNA = "always")
 l$p_race.cat3 <- rep(NA, nrow(l))
-l$p_race.cat3[l$p_race.cat == "black"] <- 0
-l$p_race.cat3[l$p_race.cat == "hispanic"] <- 1
-l$p_race.cat3[l$p_race.cat %in% c("white", "other")] <- 2
+l$p_race.cat3[l$p_race.cat == "black"] <- 1
+l$p_race.cat3[l$p_race.cat == "hispanic"] <- 2
+l$p_race.cat3[l$p_race.cat %in% c("white", "other")] <- 3
 table(l$p_race.cat3, useNA = "always")
 
 # redistribute NAs in proportion to non-missing partner races
 probs <- prop.table(table(l$race.cat3, l$p_race.cat3), 1)
 
-imp_black <- which(is.na(l$p_race.cat3) & l$race.cat3 == 0)
-l$p_race.cat3[imp_black] <- sample(0:2, length(imp_black), TRUE, probs[1, ])
+imp_black <- which(is.na(l$p_race.cat3) & l$race.cat3 == 1)
+l$p_race.cat3[imp_black] <- sample(1:3, length(imp_black), TRUE, probs[1, ])
 
-imp_hisp <- which(is.na(l$p_race.cat3) & l$race.cat3 == 1)
-l$p_race.cat3[imp_hisp] <- sample(0:2, length(imp_hisp), TRUE, probs[2, ])
+imp_hisp <- which(is.na(l$p_race.cat3) & l$race.cat3 == 2)
+l$p_race.cat3[imp_hisp] <- sample(1:3, length(imp_hisp), TRUE, probs[2, ])
 
-imp_white <- which(is.na(l$p_race.cat3) & l$race.cat3 == 2)
-l$p_race.cat3[imp_white] <- sample(0:2, length(imp_white), TRUE, probs[3, ])
+imp_white <- which(is.na(l$p_race.cat3) & l$race.cat3 == 3)
+l$p_race.cat3[imp_white] <- sample(1:3, length(imp_white), TRUE, probs[3, ])
 
 table(l$race.cat3, l$p_race.cat3, useNA = "always")
 
 l$race.combo <- rep(NA, nrow(l))
-l$race.combo[l$race.cat3 == 0 & l$p_race.cat3 == 0] <- 0
-l$race.combo[l$race.cat3 == 0 & l$p_race.cat3 %in% 1:2] <- 1
-l$race.combo[l$race.cat3 == 1 & l$p_race.cat3 %in% c(0, 2)] <- 2
-l$race.combo[l$race.cat3 == 1 & l$p_race.cat3 == 1] <- 3
-l$race.combo[l$race.cat3 == 2 & l$p_race.cat3 %in% 0:1] <- 4
-l$race.combo[l$race.cat3 == 2 & l$p_race.cat3 == 2] <- 5
+l$race.combo[l$race.cat3 == 1 & l$p_race.cat3 == 1] <- 1
+l$race.combo[l$race.cat3 == 1 & l$p_race.cat3 %in% 2:3] <- 2
+l$race.combo[l$race.cat3 == 2 & l$p_race.cat3 %in% c(1, 3)] <- 3
+l$race.combo[l$race.cat3 == 2 & l$p_race.cat3 == 2] <- 4
+l$race.combo[l$race.cat3 == 3 & l$p_race.cat3 %in% 1:2] <- 5
+l$race.combo[l$race.cat3 == 3 & l$p_race.cat3 == 3] <- 6
 
 table(l$race.combo)
 l <- select(l, -c(race.cat3, p_race.cat3))
@@ -136,7 +136,7 @@ summary(acts.mod)
 
 x <- expand.grid(duration = 100,
                  ptype = 2,
-                 race.combo = 0:5,
+                 race.combo = 1:6,
                  comb.age = 40,
                  hiv.concord.pos = 0,
                  city = 1)
@@ -176,7 +176,7 @@ summary(cond.mc.mod)
 
 x <- expand.grid(duration = 50,
                  ptype = 2,
-                 race.combo = 0:5,
+                 race.combo = 1:6,
                  comb.age = 40,
                  hiv.concord.pos = 0,
                  prep = 0:1,
@@ -219,7 +219,7 @@ cond.oo.mod <- glm(prob.cond ~ as.factor(race.combo) +
                    family = binomial(), data = lb)
 summary(cond.oo.mod)
 
-x <- expand.grid(race.combo = 0:5,
+x <- expand.grid(race.combo = 1:6,
                  comb.age = 40,
                  hiv.concord.pos = 0,
                  prep = 0:1,
@@ -237,7 +237,7 @@ d1 <- select(d, race.cat3, cityYN, age, hiv2)
 hiv.mod <- glm(hiv2 ~ age + cityYN + as.factor(race.cat3) + cityYN*as.factor(race.cat3), 
                data = d1, family = binomial())
 summary(hiv.mod)
-x <- expand.grid(age = 15:65, race.cat3 = 0:2, cityYN = 0:1)
+x <- expand.grid(age = 15:65, race.cat3 = 1:3, cityYN = 0:1)
 pred <- predict(hiv.mod, newdata = x)
 pred <- cbind(x, est = plogis(pred))
 pred
