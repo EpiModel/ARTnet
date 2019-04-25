@@ -76,12 +76,12 @@ out$attr <- list()
 attr_age <- runif(num, min = min(ages), max = max(ages) + (51/52))
 out$attr$age <- attr_age
 
-age.breaks <- c(0, 25, 35, 45, 55, 65, 100)
+age.breaks <- out$demog$age.breaks <- c(0, 25, 35, 45, 55, 65, 100)
 attr_age.grp <- cut(attr_age, age.breaks, labels = FALSE)
 out$attr$age.grp <- attr_age.grp
 
 # race attribute
-attr_race <- apportion_lr(num, 0:2, c(num.B/num, num.H/num, num.W/num), shuffled = TRUE)
+attr_race <- apportion_lr(num, 1:3, c(num.B/num, num.H/num, num.W/num), shuffled = TRUE)
 out$attr$race <- attr_race
 
 # deg.casl attribute
