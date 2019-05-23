@@ -26,7 +26,7 @@ build_netstats <- function(epistats, netparams) {
   out$demog <- list()
   
   # Overall network size
-  num <- network_size
+  num <- out$demog$num <- network_size
   
   # Population size by race group
   race.dist.3cat
