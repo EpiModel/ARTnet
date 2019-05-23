@@ -6,27 +6,20 @@
 ## Packages ##
 rm(list = ls())
 suppressMessages(library("EpiModelHIV"))
+suppressMessages(library("ARTnet"))
 
-
-## Inputs ##
-city_name <- "Atlanta"
-
-
-## Load Data ##
-fn <- paste("data/artnet.NetStats", gsub(" ", "", city_name), "rda", sep = ".")
-tstats <- readRDS(file = fn)
+epistats <- build_epistats(city_name = "Atlanta")
+netparams <- build_netparams(epistats = epistats)
+netstats <- build_netstats(epistats, netparams)
 
 
 # 0. Initialize Network ---------------------------------------------------
 
-num.B <- tstats$demog$num.B
-num.H <- tstats$demog$num.H
-num.W <- tstats$demog$num.W
-num <- num.B + num.H + num.W
+num <- netstats$num
 nw <- network::network.initialize(num, directed = FALSE)
 
-attr.names <- names(tstats$attr)
-attr.values <- tstats$attr
+attr.names <- names(netstats$attr)
+attr.values <- netstats$attr
 nw <- network::set.vertex.attribute(nw, attr.names, attr.values)
 nw_main <- nw_casl <- nw_inst <- nw
 
@@ -46,26 +39,26 @@ model_main <- ~edges +
                nodematch("role.class", diff = TRUE, keep = 1:2)
 
 # Target Stats
-tstats_main <- c(
-  edges = tstats$main$edges,
-  nodematch_age.grp = tstats$main$nodematch_age.grp,
-  nodefactor_age.grp = tstats$main$nodefactor_age.grp[-1],
-  nodematch_race = tstats$main$nodematch_race_diffF,
-  nodefactor_race = tstats$main$nodefactor_race[-1],
-  nodefactor_deg.casl = tstats$main$nodefactor_deg.casl[-1],
-  concurrent = tstats$main$concurrent,
-  nodefactor_diag.status = tstats$main$nodefactor_diag.status[-1],
+netstats_main <- c(
+  edges = netstats$main$edges,
+  nodematch_age.grp = netstats$main$nodematch_age.grp,
+  nodefactor_age.grp = netstats$main$nodefactor_age.grp[-1],
+  nodematch_race = netstats$main$nodematch_race_diffF,
+  nodefactor_race = netstats$main$nodefactor_race[-1],
+  nodefactor_deg.casl = netstats$main$nodefactor_deg.casl[-1],
+  concurrent = netstats$main$concurrent,
+  nodefactor_diag.status = netstats$main$nodefactor_diag.status[-1],
   degrange = 0,
   nodematch_role.class = c(0, 0)
 )
-cbind(tstats_main)
-tstats_main <- unname(tstats_main)
+cbind(netstats_main)
+netstats_main <- unname(netstats_main)
 
 # Fit model
 fit_main <- netest(nw_main,
                    formation = model_main,
-                   target.stats = tstats_main,
-                   coef.diss = tstats$main$diss,
+                   target.stats = netstats_main,
+                   coef.diss = netstats$main$diss,
                    set.control.ergm = control.ergm(MCMLE.maxit = 500,
                                                    SAN.maxit = 5,
                                                    SAN.nsteps.times = 5),
@@ -88,26 +81,26 @@ model_casl <- ~edges +
                nodematch("role.class", diff = TRUE, keep = 1:2)
 
 # Target Stats
-tstats_casl <- c(
-  edges = tstats$casl$edges,
-  nodematch_age.grp = tstats$casl$nodematch_age.grp,
-  nodefactor_age.grp = tstats$casl$nodefactor_age.grp[-c(1,5)],
-  nodematch_race = tstats$casl$nodematch_race_diffF,
-  nodefactor_race = tstats$casl$nodefactor_race[-1],
-  nodefactor_deg.main = tstats$casl$nodefactor_deg.main[-3],
-  concurrent = tstats$casl$concurrent,
-  nodefactor_diag.status = tstats$casl$nodefactor_diag.status[-1],
+netstats_casl <- c(
+  edges = netstats$casl$edges,
+  nodematch_age.grp = netstats$casl$nodematch_age.grp,
+  nodefactor_age.grp = netstats$casl$nodefactor_age.grp[-c(1,5)],
+  nodematch_race = netstats$casl$nodematch_race_diffF,
+  nodefactor_race = netstats$casl$nodefactor_race[-1],
+  nodefactor_deg.main = netstats$casl$nodefactor_deg.main[-3],
+  concurrent = netstats$casl$concurrent,
+  nodefactor_diag.status = netstats$casl$nodefactor_diag.status[-1],
   degrange = 0,
   nodematch_role.class = c(0, 0)
 )
-cbind(tstats_casl)
-tstats_casl <- unname(tstats_casl)
+cbind(netstats_casl)
+netstats_casl <- unname(netstats_casl)
 
 # Fit model
 fit_casl <- netest(nw_casl,
                    formation = model_casl,
-                   target.stats = tstats_casl,
-                   coef.diss = tstats$casl$diss,
+                   target.stats = netstats_casl,
+                   coef.diss = netstats$casl$diss,
                    set.control.ergm = control.ergm(MCMLE.maxit = 500,
                                                    SAN.maxit = 5,
                                                    SAN.nsteps.times = 5),
@@ -128,24 +121,24 @@ model_inst <- ~edges +
                nodematch("role.class", diff = TRUE, keep = 1:2)
 
 # Target Stats
-tstats_inst <- c(
-  edges = tstats$inst$edges,
-  nodematch_age.grp = sum(tstats$inst$nodematch_age.grp),
-  nodefactor_age.grp = tstats$inst$nodefactor_age.grp[-1],
-  nodematch_race = tstats$inst$nodematch_race_diffF,
-  nodefactor_race = tstats$inst$nodefactor_race[-1],
-  nodefactor_risk.grp = tstats$inst$nodefactor_risk.grp[-5],
-  nodefactor_deg.tot = tstats$inst$nodefactor_deg.tot[-1],
-  nodefactor_diag.status = tstats$inst$nodefactor_diag.status[-1],
+netstats_inst <- c(
+  edges = netstats$inst$edges,
+  nodematch_age.grp = sum(netstats$inst$nodematch_age.grp),
+  nodefactor_age.grp = netstats$inst$nodefactor_age.grp[-1],
+  nodematch_race = netstats$inst$nodematch_race_diffF,
+  nodefactor_race = netstats$inst$nodefactor_race[-1],
+  nodefactor_risk.grp = netstats$inst$nodefactor_risk.grp[-5],
+  nodefactor_deg.tot = netstats$inst$nodefactor_deg.tot[-1],
+  nodefactor_diag.status = netstats$inst$nodefactor_diag.status[-1],
   nodematch_role.class = c(0, 0)
 )
-cbind(tstats_inst)
-tstats_inst <- unname(tstats_inst)
+cbind(netstats_inst)
+netstats_inst <- unname(netstats_inst)
 
 # Fit model
 fit_inst <- netest(nw_inst,
                    formation = model_inst,
-                   target.stats = tstats_inst,
+                   target.stats = netstats_inst,
                    coef.diss = dissolution_coefs(~offset(edges), 1),
                    set.control.ergm = control.ergm(MCMLE.maxit = 500,
                                                    SAN.maxit = 5,
