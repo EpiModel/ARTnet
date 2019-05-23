@@ -11,7 +11,8 @@
 #' netparams <- build_netparams(epistats = epistats)
 #' netstats <- build_netstats(epistats, netparams)
 #'
-build_netstats <- function(epistats, netparams) {
+build_netstats <- function(epistats, netparams,
+                           expect.mort = 0.0005762142) {
 
   ## Inputs ##
   city_name <- epistats$city_name
@@ -158,13 +159,12 @@ build_netstats <- function(epistats, netparams) {
   out$main$nodefactor_diag.status <- unname(nodefactor_diag.status)
 
   ## Dissolution
-  exp.mort <- (mean(trans.asmr.B) + mean(trans.asmr.H) + mean(trans.asmr.W)) / 3
   out$main$diss.homog <- dissolution_coefs(dissolution = ~offset(edges),
                                            duration = netparams$main$durs.main.homog$mean.dur.adj,
-                                           d.rate = exp.mort)
+                                           d.rate = expect.mort)
   out$main$diss.byage <- dissolution_coefs(dissolution = ~offset(edges) + offset(nodematch("age.grp", diff = TRUE)),
                                            duration = netparams$main$durs.main.byage$mean.dur.adj,
-                                           d.rate = exp.mort)
+                                           d.rate = expect.mort)
 
 
 
@@ -221,10 +221,10 @@ build_netstats <- function(epistats, netparams) {
   ## Dissolution
   out$casl$diss.homog <- dissolution_coefs(dissolution = ~offset(edges),
                                            duration = netparams$casl$durs.casl.homog$mean.dur.adj,
-                                           d.rate = exp.mort)
+                                           d.rate = expect.mort)
   out$casl$diss.byage <- dissolution_coefs(dissolution = ~offset(edges) + offset(nodematch("age.grp", diff = TRUE)),
                                            duration = netparams$casl$durs.casl.byage$mean.dur.adj,
-                                           d.rate = exp.mort)
+                                           d.rate = expect.mort)
 
 
   # One-Time Model ----------------------------------------------------------

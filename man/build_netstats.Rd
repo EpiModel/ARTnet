@@ -4,7 +4,7 @@
 \alias{build_netstats}
 \title{Build EpiStats}
 \usage{
-build_netstats(epistats, netparams)
+build_netstats(epistats, netparams, expect.mort = 0.0005762142)
 }
 \arguments{
 \item{epistats}{Output from \code{\link{build_epistats}}.}
