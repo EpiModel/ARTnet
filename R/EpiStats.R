@@ -1,12 +1,12 @@
 
 #' Build EpiStats
 #'
-#' @param city_name 
+#' @param city_name City name for ARTnet statistics.
 #'
 #' @export
 #'
 #' @examples
-#' test <- build_epistats(city_name = "Atlanta")
+#' epistats <- build_epistats(city_name = "Atlanta")
 #' 
 build_epistats <- function(city_name = "Atlanta") {
 

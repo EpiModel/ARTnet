@@ -7,13 +7,13 @@
 build_netparams(epistats)
 }
 \arguments{
-\item{city_name}{}
+\item{epistats}{Output from \code{\link{build_epistats}}.}
 }
 \description{
 Build NetParams
 }
 \examples{
-test.epistats <- build_epistats(city_name = "Atlanta")
-test.netparams <- build_netparams(epistats = test.epistats)
+epistats <- build_epistats(city_name = "Atlanta")
+netparams <- build_netparams(epistats = epistats)
 
 }

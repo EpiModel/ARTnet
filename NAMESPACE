@@ -2,6 +2,7 @@
 
 export(build_epistats)
 export(build_netparams)
+export(build_netstats)
 import(ARTnetData)
 import(EpiModel)
 import(tidyverse)

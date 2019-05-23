@@ -1,13 +1,13 @@
 
 #' Build NetParams
 #'
-#' @param city_name 
+#' @param epistats Output from \code{\link{build_epistats}}.
 #'
 #' @export
 #'
 #' @examples
-#' test.epistats <- build_epistats(city_name = "Atlanta")
-#' test.netparams <- build_netparams(epistats = test.epistats)
+#' epistats <- build_epistats(city_name = "Atlanta")
+#' netparams <- build_netparams(epistats = epistats)
 #' 
 build_netparams <- function(epistats) { 
   

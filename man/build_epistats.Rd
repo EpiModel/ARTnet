@@ -7,12 +7,12 @@
 build_epistats(city_name = "Atlanta")
 }
 \arguments{
-\item{city_name}{}
+\item{city_name}{City name for ARTnet statistics.}
 }
 \description{
 Build EpiStats
 }
 \examples{
-test <- build_epistats(city_name = "Atlanta")
+epistats <- build_epistats(city_name = "Atlanta")
 
 }
