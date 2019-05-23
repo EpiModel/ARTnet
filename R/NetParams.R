@@ -9,7 +9,6 @@
 #' test.epistats <- build_epistats(city_name = "Atlanta")
 #' test.netparams <- build_netparams(epistats = test.epistats)
 #' 
-#' 
 build_netparams <- function(epistats) { 
   
   ## Data ##
