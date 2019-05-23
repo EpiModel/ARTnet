@@ -76,6 +76,9 @@ out$attr <- list()
 attr_age <- runif(num, min = min(ages), max = max(ages) + (51/52))
 out$attr$age <- attr_age
 
+attr_sqrt.age <- sqrt(attr_age)
+out$attr$sqrt.age <- attr_sqrt.age
+
 age.breaks <- out$demog$age.breaks <- c(0, 25, 35, 45, 55, 65, 100)
 attr_age.grp <- cut(attr_age, age.breaks, labels = FALSE)
 out$attr$age.grp <- attr_age.grp
@@ -111,48 +114,56 @@ attr_diag.status <- rbinom(num, 1, preds)
 out$attr$diag.status <- attr_diag.status
 
 
-# 1. Main Partnership Stats --------------------------------------------------
+# 1. Main Model -----------------------------------------------------------
 
 out$main <- list()
 
-# 1A: edges
+## edges
 if (edges_avg_nfrace == FALSE) {
   out$main$edges <- (nstats$main$md.main * num) / 2
 } else {
   out$main$edges <- sum(unname(table(out$attr$race)) * nstats$main$nf.race)/2
 }
 
-# 1B: nodefactor("age.grp")
+## nodefactor("age.grp
 nodefactor_age.grp <- table(out$attr$age.grp) * nstats$main$nf.age.grp
 out$main$nodefactor_age.grp <- unname(nodefactor_age.grp)
 
-# 1C: nodematch("age.grp")
+## nodematch("age.grp")
 nodematch_age.grp <- nodefactor_age.grp/2 * nstats$main$nm.age.grp
 out$main$nodematch_age.grp <- unname(nodematch_age.grp)
 
-# 1D: nodefactor("race")
+## absdiff("age")
+absdiff_age <- out$main$edges * nstats$main$absdiff.age
+out$main$absdiff_age <- absdiff_age
+
+## absdiff("sqrt.age")
+absdiff_sqrt.age <- out$main$edges * nstats$main$absdiff.sqrt.age
+out$main$absdiff_sqrt.age <- absdiff_sqrt.age
+
+## nodefactor("race")
 nodefactor_race <- table(out$attr$race) * nstats$main$nf.race
 out$main$nodefactor_race <- unname(nodefactor_race)
 
-# 1E: nodematch("race")
+## nodematch("race")
 nodematch_race <- nodefactor_race/2 * nstats$main$nm.race
 out$main$nodematch_race <- unname(nodematch_race)
 
-# 1Eb: nodematch("race", diff = FALSE)
+## nodematch("race", diff = FALSE)
 nodematch_race <- out$main$edges * nstats$main$nm.race_diffF
 out$main$nodematch_race_diffF <- unname(nodematch_race)
 
-# 1F: nodefactor("deg.casl")
+## nodefactor("deg.casl")
 out$main$nodefactor_deg.casl <- num * nstats$main$deg.casl.dist * nstats$main$nf.deg.casl
 
-# 1G: concurrent
+## concurrent
 out$main$concurrent <- num * nstats$main$concurrent
 
-# 1H: nodefactor("diag.status")
+## nodefactor("diag.status")
 nodefactor_diag.status <- table(out$attr$diag.status) * nstats$main$nf.diag.status
 out$main$nodefactor_diag.status <- unname(nodefactor_diag.status)
 
-# Dissolution
+## Dissolution
 exp.mort <- (mean(trans.asmr.B) + mean(trans.asmr.H) + mean(trans.asmr.W)) / 3
 if (diss_nodematch == FALSE) {
   out$main$diss <- dissolution_coefs(dissolution = ~offset(edges),
@@ -165,49 +176,58 @@ if (diss_nodematch == FALSE) {
 }
 
 
-# 2. Casual Partnership Stats ------------------------------------------------
+
+# Casual Model ------------------------------------------------------------
 
 out$casl <- list()
 
-# 2A: edges
+## edges
 if (edges_avg_nfrace == FALSE) {
   out$casl$edges <- (nstats$casl$md.casl * num) / 2
 } else {
   out$casl$edges <- sum(unname(table(out$attr$race)) * nstats$casl$nf.race)/2
 }
 
-# 2B: nodefactor("age.grp")
+## nodefactor("age.grp")
 nodefactor_age.grp <- table(out$attr$age.grp) * nstats$casl$nf.age.grp
 out$casl$nodefactor_age.grp <- unname(nodefactor_age.grp)
 
-# 2C: nodematch("age.grp")
+## nodematch("age.grp")
 nodematch_age.grp <- nodefactor_age.grp/2 * nstats$casl$nm.age.grp
 out$casl$nodematch_age.grp <- unname(nodematch_age.grp)
 
-# 2D: nodefactor("race")
+## absdiff("age")
+absdiff_age <- out$casl$edges * nstats$casl$absdiff.age
+out$casl$absdiff_age <- absdiff_age
+
+## absdiff("sqrt.age")
+absdiff_sqrt.age <- out$casl$edges * nstats$casl$absdiff.sqrt.age
+out$casl$absdiff_sqrt.age <- absdiff_sqrt.age
+
+## nodefactor("race")
 nodefactor_race <- table(out$attr$race) * nstats$casl$nf.race
 out$casl$nodefactor_race <- unname(nodefactor_race)
 
-# 2E: nodematch("race")
+## nodematch("race")
 nodematch_race <- nodefactor_race/2 * nstats$casl$nm.race
 out$casl$nodematch_race <- unname(nodematch_race)
 
-# 2Eb: nodematch("race", diff = FALSE)
+## nodematch("race", diff = FALSE)
 nodematch_race <- out$casl$edges * nstats$casl$nm.race_diffF
 out$casl$nodematch_race_diffF <- unname(nodematch_race)
 
 
-# 2F: nodefactor("deg.main")
+## nodefactor("deg.main")
 out$casl$nodefactor_deg.main <- num * nstats$casl$deg.main.dist * nstats$casl$nf.deg.main
 
-# 2G: concurrent
+## concurrent
 out$casl$concurrent <- num * nstats$casl$concurrent
 
-# 2H: nodefactor("diag.status")
+## nodefactor("diag.status")
 nodefactor_diag.status <- table(out$attr$diag.status) * nstats$casl$nf.diag.status
 out$casl$nodefactor_diag.status <- unname(nodefactor_diag.status) 
 
-# Dissolution
+## Dissolution
 if (diss_nodematch == FALSE) {
   out$casl$diss <- dissolution_coefs(dissolution = ~offset(edges),
                                      duration = nstats$casl$durs.casl.homog$mean.dur.adj,
@@ -219,46 +239,55 @@ if (diss_nodematch == FALSE) {
 }
 
 
-# 3. One-Off Partnership Stats -----------------------------------------------
+
+# One-Time Model ----------------------------------------------------------
 
 out$inst <- list()
 
-# 3A: edges
+## edges
 if (edges_avg_nfrace == FALSE) {
   out$inst$edges <- (nstats$inst$md.inst * num) / 2
 } else {
   out$inst$edges <- sum(unname(table(out$attr$race)) * nstats$inst$nf.race)/2
 }
 
-# 3B: nodefactor("age.grp")
+## nodefactor("age.grp")
 nodefactor_age.grp <- table(out$attr$age.grp) * nstats$inst$nf.age.grp
 out$inst$nodefactor_age.grp <- unname(nodefactor_age.grp)
 
-# 3C: nodematch("age.grp")
+## nodematch("age.grp")
 nodematch_age.grp <- nodefactor_age.grp/2 * nstats$inst$nm.age.grp
 out$inst$nodematch_age.grp <- unname(nodematch_age.grp)
 
-# 3D: nodefactor("race")
+## absdiff("age")
+absdiff_age <- out$inst$edges * nstats$inst$absdiff.age
+out$inst$absdiff_age <- absdiff_age
+
+## absdiff("sqrt.age")
+absdiff_sqrt.age <- out$inst$edges * nstats$inst$absdiff.sqrt.age
+out$inst$absdiff_sqrt.age <- absdiff_sqrt.age
+
+## nodefactor("race")
 nodefactor_race <- table(out$attr$race) * nstats$inst$nf.race
 out$inst$nodefactor_race <- unname(nodefactor_race)
 
-# 3E: nodematch("race")
+## nodematch("race")
 nodematch_race <- nodefactor_race/2 * nstats$inst$nm.race
 out$inst$nodematch_race <- unname(nodematch_race)
 
-# 3Eb: nodematch("race", diff = FALSE)
+## nodematch("race", diff = FALSE)
 nodematch_race <- out$inst$edges * nstats$inst$nm.race_diffF
 out$inst$nodematch_race_diffF <- unname(nodematch_race)
 
-# 3F: nodefactor("risk.grp")
+## nodefactor("risk.grp")
 nodefactor_risk.grp <- table(out$attr$risk.grp) * nstats$inst$nf.risk.grp
 out$inst$nodefactor_risk.grp <- unname(nodefactor_risk.grp)
 
-# 3G: nodefactor("deg.tot")
+## nodefactor("deg.tot")
 nodefactor_deg.tot <- table(out$attr$deg.tot) * nstats$inst$nf.deg.tot
 out$inst$nodefactor_deg.tot <- unname(nodefactor_deg.tot) * nstats$inst$nf.deg.tot
 
-# 3H: nodefactor("diag.status")
+## nodefactor("diag.status")
 nodefactor_diag.status <- table(out$attr$diag.status) * nstats$inst$nf.diag.status
 out$inst$nodefactor_diag.status <- unname(nodefactor_diag.status)
 
