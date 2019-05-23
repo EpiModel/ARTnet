@@ -15,7 +15,7 @@ netstats <- build_netstats(epistats, netparams)
 
 # 0. Initialize Network ---------------------------------------------------
 
-num <- netstats$num
+num <- netstats$demog$num
 nw <- network::network.initialize(num, directed = FALSE)
 
 attr.names <- names(netstats$attr)
