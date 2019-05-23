@@ -251,7 +251,7 @@ build_epistats <- function(city_name = "Atlanta") {
   # Save Out File -----------------------------------------------------------
   
   out <- list()
-  
+  out$city_name <- city_name
   out$acts.mod <- acts.mod
   out$cond.mc.mod <- cond.mc.mod
   out$cond.oo.mod <- cond.oo.mod
