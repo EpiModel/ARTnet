@@ -159,10 +159,10 @@ build_netstats <- function(epistats, netparams) {
 
   ## Dissolution
   exp.mort <- (mean(trans.asmr.B) + mean(trans.asmr.H) + mean(trans.asmr.W)) / 3
-  out$main$diss.byage <- dissolution_coefs(dissolution = ~offset(edges),
+  out$main$diss.homog <- dissolution_coefs(dissolution = ~offset(edges),
                                            duration = netparams$main$durs.main.homog$mean.dur.adj,
                                            d.rate = exp.mort)
-  out$main$diss.homog <- dissolution_coefs(dissolution = ~offset(edges) + offset(nodematch("age.grp", diff = TRUE)),
+  out$main$diss.byage <- dissolution_coefs(dissolution = ~offset(edges) + offset(nodematch("age.grp", diff = TRUE)),
                                            duration = netparams$main$durs.main.byage$mean.dur.adj,
                                            d.rate = exp.mort)
 
@@ -219,10 +219,10 @@ build_netstats <- function(epistats, netparams) {
   out$casl$nodefactor_diag.status <- unname(nodefactor_diag.status)
 
   ## Dissolution
-  out$casl$diss.byage <- dissolution_coefs(dissolution = ~offset(edges),
+  out$casl$diss.homog <- dissolution_coefs(dissolution = ~offset(edges),
                                            duration = netparams$casl$durs.casl.homog$mean.dur.adj,
                                            d.rate = exp.mort)
-  out$casl$diss.homog <- dissolution_coefs(dissolution = ~offset(edges) + offset(nodematch("age.grp", diff = TRUE)),
+  out$casl$diss.byage <- dissolution_coefs(dissolution = ~offset(edges) + offset(nodematch("age.grp", diff = TRUE)),
                                            duration = netparams$casl$durs.casl.byage$mean.dur.adj,
                                            d.rate = exp.mort)
 
