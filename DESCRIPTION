@@ -14,5 +14,7 @@ Depends:
     ARTnetData,
     EpiModel,
     tidyverse
+Imports:
+    dplyr
 RoxygenNote: 6.1.1
 Encoding: UTF-8
