@@ -2,7 +2,7 @@ Package: ARTnet
 Version: 1.0.0
 Date: 2019-05-23
 Title: Epidemic and Network Model Parameterization with the ARTnet Dataset
-Description: ToDO
+Description: Epidemic and Network Model Parameterization with the ARTnet Dataset.
 Maintainer: Samuel Jenness <samuel.m.jenness@emory.edu>
 Authors@R: c(person("Samuel", "Jenness",
     role=c("cre","aut"), email="samuel.m.jenness@emory.edu"))
@@ -14,6 +14,5 @@ Depends:
     ARTnetData,
     EpiModel,
     tidyverse
-VignetteBuilder: knitr
 RoxygenNote: 6.1.1
 Encoding: UTF-8
