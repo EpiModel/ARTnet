@@ -6,7 +6,7 @@ Description: Epidemic and Network Model Parameterization with the ARTnet Dataset
 Maintainer: Samuel Jenness <samuel.m.jenness@emory.edu>
 Authors@R: c(person("Samuel", "Jenness",
     role=c("cre","aut"), email="samuel.m.jenness@emory.edu"))
-License: GPL-3
+License: GPL (>= 3)
 URL: http://github.com/EpiModel/ARTnet
 BugReports: https://github.com/EpiModel/ARTnet/issues
 Depends:
