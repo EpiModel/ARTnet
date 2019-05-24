@@ -4,12 +4,20 @@
 \alias{build_netstats}
 \title{Build EpiStats}
 \usage{
-build_netstats(epistats, netparams, expect.mort = 0.0005762142)
+build_netstats(epistats, netparams, network.size = 10000,
+  expect.mort = 0.0005762142, browser = FALSE)
 }
 \arguments{
 \item{epistats}{Output from \code{\link{build_epistats}}.}
 
 \item{netparams}{Output from \code{\link{build_netparams}}.}
+
+\item{network.size}{Size of the starting network.}
+
+\item{expect.mort}{Expected average mortality level to pass into
+\code{\link{dissolution_coefs}} function.}
+
+\item{browser}{Run function in interactive browser mode.}
 }
 \description{
 Build EpiStats

@@ -3,6 +3,10 @@
 #'
 #' @param epistats Output from \code{\link{build_epistats}}.
 #' @param netparams Output from \code{\link{build_netparams}}.
+#' @param network.size Size of the starting network.
+#' @param expect.mort Expected average mortality level to pass into
+#'        \code{\link{dissolution_coefs}} function.
+#' @param browser Run function in interactive browser mode.
 #'
 #' @export
 #'
@@ -12,11 +16,16 @@
 #' netstats <- build_netstats(epistats, netparams)
 #'
 build_netstats <- function(epistats, netparams,
-                           expect.mort = 0.0005762142) {
+                           network.size = 10000,
+                           expect.mort = 0.0005762142,
+                           browser = FALSE) {
+
+  if (browser == TRUE) {
+    browser()
+  }
 
   ## Inputs ##
   city_name <- epistats$city_name
-  network_size <- 10000
   edges_avg_nfrace <- FALSE
 
 
@@ -29,7 +38,7 @@ build_netstats <- function(epistats, netparams,
   num <- out$demog$num <- network_size
 
   # Population size by race group
-  race.dist.3cat
+  # race.dist.3cat
   props <- race.dist.3cat[which(race.dist.3cat$City == city_name), -1]/100
 
   num.B <- out$demog$num.B <- round(num * props$Black)
