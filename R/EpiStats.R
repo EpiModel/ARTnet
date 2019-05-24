@@ -2,13 +2,18 @@
 #' Build EpiStats
 #'
 #' @param city_name City name for ARTnet statistics.
+#' @param browser Run function in interactive browser mode.
 #'
 #' @export
 #'
 #' @examples
 #' epistats <- build_epistats(city_name = "Atlanta")
 #'
-build_epistats <- function(city_name = "Atlanta") {
+build_epistats <- function(city_name = "Atlanta", browser = FALSE) {
+
+  if (browser == TRUE) {
+    browser()
+  }
 
   ## Data ##
   d <- ARTnet.wide

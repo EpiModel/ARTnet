@@ -4,10 +4,12 @@
 \alias{build_epistats}
 \title{Build EpiStats}
 \usage{
-build_epistats(city_name = "Atlanta")
+build_epistats(city_name = "Atlanta", browser = FALSE)
 }
 \arguments{
 \item{city_name}{City name for ARTnet statistics.}
+
+\item{browser}{Run function in interactive browser mode.}
 }
 \description{
 Build EpiStats
