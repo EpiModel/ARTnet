@@ -272,7 +272,7 @@ build_netstats <- function(epistats, netparams,
 
   ## nodefactor("deg.tot")
   nodefactor_deg.tot <- table(out$attr$deg.tot) * netparams$inst$nf.deg.tot
-  out$inst$nodefactor_deg.tot <- unname(nodefactor_deg.tot) * netparams$inst$nf.deg.tot
+  out$inst$nodefactor_deg.tot <- unname(nodefactor_deg.tot)
 
   ## nodefactor("diag.status")
   nodefactor_diag.status <- table(out$attr$diag.status) * netparams$inst$nf.diag.status
