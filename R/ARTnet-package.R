@@ -12,10 +12,9 @@
 #'
 #' @name ARTnet-package
 #' @aliases ARTnet
-#' @import ARTnetData EpiModel tidyverse
+#' @import ARTnetData EpiModel dplyr
 #' @importFrom stats binomial glm lm median poisson predict rbinom runif
 #' @importFrom utils head
-#' @importFrom dplyr filter
 #'
 #' @docType package
 #' @keywords package

@@ -12,8 +12,7 @@ BugReports: https://github.com/EpiModel/ARTnet/issues
 Depends:
     R (>= 3.2),
     ARTnetData,
-    EpiModel,
-    tidyverse
+    EpiModel
 Imports:
     dplyr
 RoxygenNote: 6.1.1
