@@ -4,10 +4,15 @@
 \alias{build_netparams}
 \title{Build NetParams}
 \usage{
-build_netparams(epistats)
+build_netparams(epistats, smooth.main.dur.55p = FALSE, browser = FALSE)
 }
 \arguments{
 \item{epistats}{Output from \code{\link{build_epistats}}.}
+
+\item{smooth.main.dur.55p}{If \code{TRUE}, average main durations for age
+45-55 and 55+ age groups.}
+
+\item{browser}{Run function in interactive browser mode.}
 }
 \description{
 Build NetParams

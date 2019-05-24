@@ -2,6 +2,9 @@
 #' Build NetParams
 #'
 #' @param epistats Output from \code{\link{build_epistats}}.
+#' @param smooth.main.dur.55p If \code{TRUE}, average main durations for age
+#'        45-55 and 55+ age groups.
+#' @param browser Run function in interactive browser mode.
 #'
 #' @export
 #'
@@ -10,7 +13,12 @@
 #' netparams <- build_netparams(epistats = epistats)
 #'
 build_netparams <- function(epistats,
-                            smooth.main.dur.55p = FALSE) {
+                            smooth.main.dur.55p = FALSE,
+                            browser = FALSE) {
+
+  if (browser == TRUE) {
+    browser()
+  }
 
   ## Data ##
   d <- ARTnet.wide
