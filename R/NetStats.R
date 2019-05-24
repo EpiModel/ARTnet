@@ -13,7 +13,7 @@
 #' @examples
 #' epistats <- build_epistats(city_name = "Atlanta")
 #' netparams <- build_netparams(epistats = epistats)
-#' netstats <- build_netstats(epistats, netparams)
+#' netstats <- build_netstats(epistats, netparams, smooth.main.dur.55p = TRUE)
 #'
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,
@@ -35,7 +35,7 @@ build_netstats <- function(epistats, netparams,
   out$demog <- list()
 
   # Overall network size
-  num <- out$demog$num <- network_size
+  num <- out$demog$num <- network.size
 
   # Population size by race group
   # race.dist.3cat

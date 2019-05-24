@@ -25,6 +25,6 @@ Build EpiStats
 \examples{
 epistats <- build_epistats(city_name = "Atlanta")
 netparams <- build_netparams(epistats = epistats)
-netstats <- build_netstats(epistats, netparams)
+netstats <- build_netstats(epistats, netparams, smooth.main.dur.55p = TRUE)
 
 }

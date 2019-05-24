@@ -10,7 +10,7 @@
 #'
 #' @examples
 #' epistats <- build_epistats(city_name = "Atlanta")
-#' netparams <- build_netparams(epistats = epistats)
+#' netparams <- build_netparams(epistats = epistats, smooth.main.dur.55p = TRUE)
 #'
 build_netparams <- function(epistats,
                             smooth.main.dur.55p = FALSE,
