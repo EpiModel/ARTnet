@@ -17,7 +17,7 @@
 #'
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,
-                           expect.mort = 0.0005762142,
+                           expect.mort = 0.000478213,
                            browser = FALSE) {
 
   if (browser == TRUE) {
