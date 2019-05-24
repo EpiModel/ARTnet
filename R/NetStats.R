@@ -12,8 +12,8 @@
 #'
 #' @examples
 #' epistats <- build_epistats(city_name = "Atlanta")
-#' netparams <- build_netparams(epistats = epistats)
-#' netstats <- build_netstats(epistats, netparams, smooth.main.dur.55p = TRUE)
+#' netparams <- build_netparams(epistats = epistats, smooth.main.dur.55p = TRUE)
+#' netstats <- build_netstats(epistats, netparams)
 #'
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,

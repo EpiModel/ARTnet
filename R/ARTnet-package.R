@@ -13,7 +13,7 @@
 #' @name ARTnet-package
 #' @aliases ARTnet
 #' @import ARTnetData EpiModel tidyverse
-#' @importFrom stats binomial filter glm lm median poisson predict rbinom runif
+#' @importFrom stats binomial glm lm median poisson predict rbinom runif
 #' @importFrom utils head
 #'
 #' @docType package
