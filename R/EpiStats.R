@@ -9,7 +9,7 @@
 #' @examples
 #' epistats <- build_epistats(city_name = "Atlanta")
 #'
-build_epistats <- function(city_name = "Atlanta", browser = FALSE) {
+build_epistats <- function(city = "Atlanta", race = NULL, browser = FALSE) {
 
   if (browser == TRUE) {
     browser()
@@ -19,13 +19,29 @@ build_epistats <- function(city_name = "Atlanta", browser = FALSE) {
   d <- ARTnet.wide
   l <- ARTnet.long
 
-  ## Derivatives ##
-  coef_name <- paste0("city2", city_name)
+  #geog.args <- is.null(sys.call())[1:4]
+  #if (sum(geog.args) > 1){
+  #  stop("Only one geographical factor may be chosen at a time")
+  #}
+
+
+  #Delete: # Derivatives ##
+  #Delete: geog_name <- paste0("city2", city_name)
 
   # names(l)
 
 
   # Data Processing ---------------------------------------------------------
+
+  # city
+
+
+  if (!is.null(city)){
+   coef_name <- paste0("city2", city)
+   l$cityYN <- ifelse(l$city2 == city, 1, 0)
+   d$cityYN <- ifelse(d$city2 == city, 1, 0)
+  }
+
 
   # Age
   # table(l$age, useNA = "always")
@@ -34,7 +50,7 @@ build_epistats <- function(city_name = "Atlanta", browser = FALSE) {
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
 
-
+  if (race == TRUE){
   # Race
   # table(d$race.cat)
   d$race.cat3 <- rep(NA, nrow(d))
@@ -84,6 +100,7 @@ build_epistats <- function(city_name = "Atlanta", browser = FALSE) {
 
   # table(l$race.combo)
   l <- select(l, -c(race.cat3, p_race.cat3))
+  }
 
 
   # HIV
@@ -112,31 +129,46 @@ build_epistats <- function(city_name = "Atlanta", browser = FALSE) {
   dlim <- select(d, c(AMIS_ID, survey.year, prep))
   l <- left_join(l, dlim, by = "AMIS_ID")
 
-  # city
-  l$cityYN <- ifelse(l$city2 == city_name, 1, 0)
-  d$cityYN <- ifelse(d$city2 == city_name, 1, 0)
-
 
   # Act Rates ---------------------------------------------------------------
 
   # acts/per week/per partnership for main and casual partnerships
 
   # Pull Data
+  if (race == TRUE){
   la <- select(l, ptype, duration, comb.age, city = cityYN,
                race.combo, RAI, IAI, hiv.concord.pos, prep,
                acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
     filter(ptype %in% 1:2) %>%
     filter(RAI == 1 | IAI == 1)
   la <- select(la, -c(RAI, IAI))
-  # head(la, 25)
-  # nrow(la)
+  }
+
+  else {
+    la <- select(l, ptype, duration, comb.age, city = cityYN,
+                 RAI, IAI, hiv.concord.pos, prep,
+                 acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
+      filter(ptype %in% 1:2) %>%
+      filter(RAI == 1 | IAI == 1)
+    la <- select(la, -c(RAI, IAI))
+  }
 
 
   # Poisson Model
+  if (race == TRUE){
   acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) + as.factor(race.combo) +
                     as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
                     hiv.concord.pos + city,
                   family = poisson(), data = la)
+  }
+
+  else {
+    acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) +
+                      as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
+                      hiv.concord.pos + city,
+                    family = poisson(), data = la)
+  }
+
   # summary(acts.mod)
   #
   # x <- expand.grid(duration = 100,
@@ -173,10 +205,18 @@ build_epistats <- function(city_name = "Atlanta", browser = FALSE) {
   la$never.cond <- ifelse(la$prob.cond == 0, 1, 0)
   # table(la$never.cond)
 
+  if (race == TRUE) {
   cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) + as.factor(race.combo) +
                        as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
                        hiv.concord.pos + prep + city,
                      family = binomial(), data = la)
+  }
+  else {
+    cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) +
+                         as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
+                         hiv.concord.pos + prep + city,
+                       family = binomial(), data = la)
+  }
   # summary(cond.mc.mod)
   #
   # x <- expand.grid(duration = 50,
@@ -192,16 +232,20 @@ build_epistats <- function(city_name = "Atlanta", browser = FALSE) {
 
 
   # Condom Use // Inst ------------------------------------------------------
-
+  if (race == TRUE){
   lb <- select(l, ptype, comb.age, city = cityYN,
                race.combo, hiv.concord.pos, prep,
                RAI, IAI, RECUAI, INSUAI) %>%
     filter(ptype == 3) %>%
     filter(RAI == 1 | IAI == 1)
-  # head(lb, 40)
-
-  # table(lb$RAI, lb$RECUAI, useNA = "always")
-  # table(lb$IAI, lb$RAI)
+  }
+  else {
+    lb <- select(l, ptype, comb.age, city = cityYN,
+                 hiv.concord.pos, prep,
+                 RAI, IAI, RECUAI, INSUAI) %>%
+      filter(ptype == 3) %>%
+      filter(RAI == 1 | IAI == 1)
+  }
 
   lb$prob.cond <- rep(NA, nrow(lb))
   lb$prob.cond[lb$RAI == 1 & lb$IAI == 0] <- lb$RECUAI[lb$RAI == 1 & lb$IAI == 0] /
@@ -217,10 +261,17 @@ build_epistats <- function(city_name = "Atlanta", browser = FALSE) {
   lb <- select(lb, -c(RAI, IAI, RECUAI, INSUAI))
   # head(lb, 40)
 
-  cond.oo.mod <- glm(prob.cond ~ as.factor(race.combo) +
+  if (race == TRUE) {
+    cond.oo.mod <- glm(prob.cond ~ as.factor(race.combo) +
                        comb.age + I(comb.age^2) +
                        hiv.concord.pos + prep + city,
                      family = binomial(), data = lb)
+  }
+  else {
+    cond.oo.mod <- glm(prob.cond ~ comb.age + I(comb.age^2) +
+                         hiv.concord.pos + prep + city,
+                       family = binomial(), data = lb)
+  }
   # summary(cond.oo.mod)
   #
   # x <- expand.grid(race.combo = 1:6,
@@ -236,10 +287,19 @@ build_epistats <- function(city_name = "Atlanta", browser = FALSE) {
 
   # Init HIV Status ---------------------------------------------------------
 
-  d1 <- select(d, race.cat3, cityYN, age, hiv2)
+  if (race == TRUE){
+    d1 <- select(d, race.cat3, cityYN, age, hiv2)
 
-  hiv.mod <- glm(hiv2 ~ age + cityYN + as.factor(race.cat3) + cityYN*as.factor(race.cat3),
+    hiv.mod <- glm(hiv2 ~ age + cityYN + as.factor(race.cat3) + cityYN*as.factor(race.cat3),
                  data = d1, family = binomial())
+  }
+
+  else {
+    d1 <- select(d, cityYN, age, hiv2)
+
+    hiv.mod <- glm(hiv2 ~ age + cityYN,
+                   data = d1, family = binomial())
+  }
   # summary(hiv.mod)
   # x <- expand.grid(age = 15:65, race.cat3 = 1:3, cityYN = 0:1)
   # pred <- predict(hiv.mod, newdata = x)
@@ -256,7 +316,7 @@ build_epistats <- function(city_name = "Atlanta", browser = FALSE) {
   # Save Out File -----------------------------------------------------------
 
   out <- list()
-  out$city_name <- city_name
+  out$city_name <- city
   out$acts.mod <- acts.mod
   out$cond.mc.mod <- cond.mc.mod
   out$cond.oo.mod <- cond.oo.mod
