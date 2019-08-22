@@ -9,7 +9,7 @@
 #' @examples
 #' epistats <- build_epistats(city_name = "Atlanta")
 #'
-build_epistats <- function(city = "Atlanta", race = NULL, browser = FALSE) {
+build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE) {
 
   if (browser == TRUE) {
     browser()
@@ -34,14 +34,57 @@ build_epistats <- function(city = "Atlanta", race = NULL, browser = FALSE) {
   # Data Processing ---------------------------------------------------------
 
   # city
-
-
-  if (!is.null(city)){
-   coef_name <- paste0("city2", city)
-   l$cityYN <- ifelse(l$city2 == city, 1, 0)
-   d$cityYN <- ifelse(d$city2 == city, 1, 0)
+  if(length(geog) > 1){
+    stop("Only one geographical factor may be chosen at a time.")
   }
 
+  if(length(vars) > 1){
+    stop("Only one variable name may be chosen at a time.")
+  }
+
+
+
+  if (!is.null(geog)){
+    if (vars = "city"){
+      if (!(vars %in% unique(d$city))){
+        stop("City name not found")
+      }
+      l <- left_join(l, d[,c("AMIS_ID", "city")])
+      l$geogYN <- ifelse(l[,"city"] == var, 1, 0)
+      d$geogYN <- ifelse(d[,"city"] == var, 1, 0)
+
+    }
+
+    if (vars = "state"){
+      if (!(vars %in% unique(d$State))){
+        stop("State name not found")
+      }
+      l <- left_join(l, d[,c("AMIS_ID", "State")])
+      l$geogYN <- ifelse(l[,"State"] == var, 1, 0)
+      d$geogYN <- ifelse(d[,"State"] == var, 1, 0)
+
+    }
+
+    if (vars = "div"){
+      if (!(vars %in% unique(d$DIVCODE))){
+        stop("Division number not found")
+      }
+      l <- left_join(l, d[,c("AMIS_ID", "DIVCODE")])
+      l$geogYN <- ifelse(l[,"DIVCODE"] == var, 1, 0)
+      d$geogYN <- ifelse(d[,"DIVCODE"] == var, 1, 0)
+
+    }
+
+    if (vars = "reg"){
+      if (!(vars %in% unique(d$REGCODE))){
+        stop("Regional code not found")
+      }
+      l <- left_join(l, d[,c("AMIS_ID", "REGCODE")])
+      l$geogYN <- ifelse(l[,"REGCODE"] == var, 1, 0)
+      d$geogYN <- ifelse(d[,"REGCODE"] == var, 1, 0)
+
+    }
+  }
 
   # Age
   # table(l$age, useNA = "always")
