@@ -15,6 +15,8 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
     browser()
   }
 
+  geog_names <-
+
   ## Data ##
   d <- ARTnet.wide
   l <- ARTnet.long
@@ -33,20 +35,20 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
 
   # Data Processing ---------------------------------------------------------
 
-  # city
+  # Geograph
   if(length(geog) > 1){
     stop("Only one geographical factor may be chosen at a time.")
   }
 
-  if(length(vars) > 1){
+  if(length(var) > 1){
     stop("Only one variable name may be chosen at a time.")
   }
 
 
 
   if (!is.null(geog)){
-    if (vars = "city"){
-      if (!(vars %in% unique(d$city))){
+    if (geog == "city"){
+      if (!(var %in% unique(d$city))){
         stop("City name not found")
       }
       l <- left_join(l, d[,c("AMIS_ID", "city")])
@@ -55,8 +57,8 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
 
     }
 
-    if (vars = "state"){
-      if (!(vars %in% unique(d$State))){
+    if (geog == "state"){
+      if (!(var %in% unique(d$State))){
         stop("State name not found")
       }
       l <- left_join(l, d[,c("AMIS_ID", "State")])
@@ -65,8 +67,8 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
 
     }
 
-    if (vars = "div"){
-      if (!(vars %in% unique(d$DIVCODE))){
+    if (geog == "div"){
+      if (!(var %in% unique(d$DIVCODE))){
         stop("Division number not found")
       }
       l <- left_join(l, d[,c("AMIS_ID", "DIVCODE")])
@@ -75,8 +77,8 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
 
     }
 
-    if (vars = "reg"){
-      if (!(vars %in% unique(d$REGCODE))){
+    if (geog == "reg"){
+      if (!(var %in% unique(d$REGCODE))){
         stop("Regional code not found")
       }
       l <- left_join(l, d[,c("AMIS_ID", "REGCODE")])
@@ -179,7 +181,7 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
 
   # Pull Data
   if (race == TRUE){
-  la <- select(l, ptype, duration, comb.age, city = cityYN,
+  la <- select(l, ptype, duration, comb.age, geogYN = geogYN,
                race.combo, RAI, IAI, hiv.concord.pos, prep,
                acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
     filter(ptype %in% 1:2) %>%
@@ -188,7 +190,7 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
   }
 
   else {
-    la <- select(l, ptype, duration, comb.age, city = cityYN,
+    la <- select(l, ptype, duration, comb.age, geogYN = geogYN,
                  RAI, IAI, hiv.concord.pos, prep,
                  acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
       filter(ptype %in% 1:2) %>%
@@ -201,14 +203,14 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
   if (race == TRUE){
   acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) + as.factor(race.combo) +
                     as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
-                    hiv.concord.pos + city,
+                    hiv.concord.pos + geogYN,
                   family = poisson(), data = la)
   }
 
   else {
     acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) +
                       as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
-                      hiv.concord.pos + city,
+                      hiv.concord.pos + geogYN,
                     family = poisson(), data = la)
   }
 
@@ -251,13 +253,13 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
   if (race == TRUE) {
   cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) + as.factor(race.combo) +
                        as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
-                       hiv.concord.pos + prep + city,
+                       hiv.concord.pos + prep + geogYN,
                      family = binomial(), data = la)
   }
   else {
     cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) +
                          as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
-                         hiv.concord.pos + prep + city,
+                         hiv.concord.pos + prep + geogYN,
                        family = binomial(), data = la)
   }
   # summary(cond.mc.mod)
@@ -276,14 +278,14 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
 
   # Condom Use // Inst ------------------------------------------------------
   if (race == TRUE){
-  lb <- select(l, ptype, comb.age, city = cityYN,
+  lb <- select(l, ptype, comb.age, geogYN = geogYN,
                race.combo, hiv.concord.pos, prep,
                RAI, IAI, RECUAI, INSUAI) %>%
     filter(ptype == 3) %>%
     filter(RAI == 1 | IAI == 1)
   }
   else {
-    lb <- select(l, ptype, comb.age, city = cityYN,
+    lb <- select(l, ptype, comb.age, geogYN = geogYN,
                  hiv.concord.pos, prep,
                  RAI, IAI, RECUAI, INSUAI) %>%
       filter(ptype == 3) %>%
@@ -307,12 +309,12 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
   if (race == TRUE) {
     cond.oo.mod <- glm(prob.cond ~ as.factor(race.combo) +
                        comb.age + I(comb.age^2) +
-                       hiv.concord.pos + prep + city,
+                       hiv.concord.pos + prep + geogYN,
                      family = binomial(), data = lb)
   }
   else {
     cond.oo.mod <- glm(prob.cond ~ comb.age + I(comb.age^2) +
-                         hiv.concord.pos + prep + city,
+                         hiv.concord.pos + prep + geogYN,
                        family = binomial(), data = lb)
   }
   # summary(cond.oo.mod)
@@ -331,16 +333,16 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
   # Init HIV Status ---------------------------------------------------------
 
   if (race == TRUE){
-    d1 <- select(d, race.cat3, cityYN, age, hiv2)
+    d1 <- select(d, race.cat3, geogYN, age, hiv2)
 
-    hiv.mod <- glm(hiv2 ~ age + cityYN + as.factor(race.cat3) + cityYN*as.factor(race.cat3),
+    hiv.mod <- glm(hiv2 ~ age + geogYN + as.factor(race.cat3) + geogYN*as.factor(race.cat3),
                  data = d1, family = binomial())
   }
 
   else {
-    d1 <- select(d, cityYN, age, hiv2)
+    d1 <- select(d, geogYN, age, hiv2)
 
-    hiv.mod <- glm(hiv2 ~ age + cityYN,
+    hiv.mod <- glm(hiv2 ~ age + geogYN,
                    data = d1, family = binomial())
   }
   # summary(hiv.mod)
@@ -359,11 +361,15 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
   # Save Out File -----------------------------------------------------------
 
   out <- list()
-  out$city_name <- city
+  out$geog_name <- geog
+  out$var_name  <- var
+  out$race <- race
   out$acts.mod <- acts.mod
   out$cond.mc.mod <- cond.mc.mod
   out$cond.oo.mod <- cond.oo.mod
   out$hiv.mod <- hiv.mod
+  out$long <- l
+  out$wide <- d
   # fn <- paste("data/artnet.EpiStats", gsub(" ", "", city_name), "rda", sep = ".")
   # saveRDS(out, file = fn)
   return(out)

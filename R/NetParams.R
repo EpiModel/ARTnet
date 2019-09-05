@@ -25,10 +25,46 @@ build_netparams <- function(epistats,
   l <- ARTnet.long
 
   ## Inputs ##
-  city_name <- epistats$city_name
+  geog_name <- epistats$geog_name
+  var_name <- epistats$var_name
 
 
   # 0. Data Processing ------------------------------------------------------
+
+  # Geograph
+
+  if (!is.null(epistats$geog)){
+    if (epistats$geog == "city"){
+      if (!(var %in% unique(d$city))){
+        stop("City name not found")
+      }
+      l <- left_join(l, d[,c("AMIS_ID", "city")])
+      l$geogYN <- ifelse(l[,"city"] == var, 1, 0)
+      d$geogYN <- ifelse(d[,"city"] == var, 1, 0)
+
+    }
+
+    if (epistats$geog == "state"){
+      l <- left_join(l, d[,c("AMIS_ID", "State")])
+      l$geogYN <- ifelse(l[,"State"] == var, 1, 0)
+      d$geogYN <- ifelse(d[,"State"] == var, 1, 0)
+
+    }
+
+    if (epistats$geog == "div"){
+      l <- left_join(l, d[,c("AMIS_ID", "DIVCODE")])
+      l$geogYN <- ifelse(l[,"DIVCODE"] == var, 1, 0)
+      d$geogYN <- ifelse(d[,"DIVCODE"] == var, 1, 0)
+
+    }
+
+    if (epistats$geog == "reg"){
+      l <- left_join(l, d[,c("AMIS_ID", "REGCODE")])
+      l$geogYN <- ifelse(l[,"REGCODE"] == var, 1, 0)
+      d$geogYN <- ifelse(d[,"REGCODE"] == var, 1, 0)
+
+    }
+  }
 
   ## Degree calculations ##
 
@@ -97,6 +133,7 @@ build_netparams <- function(epistats,
   # table(d$count.oo.part.trunc)
 
 
+  if (epistats$race == TRUE) {
   ## Race/Ethnicity
   # table(d$race.cat)
   d$race.cat3 <- rep(NA, nrow(d))
@@ -135,6 +172,7 @@ build_netparams <- function(epistats,
   l$p_race.cat3[imp_white] <- sample(1:3, length(imp_white), TRUE, probs[3, ])
 
   # table(l$race.cat3, l$p_race.cat3, useNA = "always")
+  }
 
 
   ## HIV status
@@ -168,11 +206,11 @@ build_netparams <- function(epistats,
 
   ## edges ----
 
-  mod <- glm(deg.main ~ city2,
+  mod <- glm(deg.main ~ geogYN,
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(city2 = city_name)
+  dat <- data.frame(geogYN = geog_name)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$md.main <- as.numeric(pred)
@@ -187,11 +225,11 @@ build_netparams <- function(epistats,
 
   lmain$same.age.grp <- ifelse(lmain$index.age.grp == lmain$part.age.grp, 1, 0)
 
-  mod <- glm(same.age.grp ~ city2 + index.age.grp,
+  mod <- glm(same.age.grp ~ geogYN + index.age.grp,
              data = lmain, family = binomial())
   # summary(mod)
 
-  dat <- data.frame(city2 = city_name, index.age.grp = 1:5)
+  dat <- data.frame(geogYN = geog_name, index.age.grp = 1:5)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$nm.age.grp <- as.numeric(pred)
@@ -202,10 +240,10 @@ build_netparams <- function(epistats,
   lmain$ad <- abs(lmain$age - lmain$p_age_imp)
   lmain$ad.sr <- abs(sqrt(lmain$age) - sqrt(lmain$p_age_imp))
 
-  mod <- lm(ad ~ city2, data = lmain)
+  mod <- lm(ad ~ geogYN, data = lmain)
   # summary(mod)
 
-  dat <- data.frame(city2 = city_name)
+  dat <- data.frame(geogYN = geog_name)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$absdiff.age <- as.numeric(pred)
@@ -213,10 +251,10 @@ build_netparams <- function(epistats,
 
   ## absdiff("sqrt.age") ----
 
-  mod <- lm(ad.sr ~ city2, data = lmain)
+  mod <- lm(ad.sr ~ geogYN, data = lmain)
   # summary(mod)
 
-  dat <- data.frame(city2 = city_name)
+  dat <- data.frame(geogYN = geog_name)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$absdiff.sqrt.age <- as.numeric(pred)
@@ -226,11 +264,11 @@ build_netparams <- function(epistats,
 
   d$age.grp <- cut(d$age, age.breaks, labels = FALSE)
 
-  mod <- glm(deg.main ~ city2 + age.grp + sqrt(age.grp),
+  mod <- glm(deg.main ~ geogYN + age.grp + sqrt(age.grp),
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(city2 = city_name, age.grp = 1:5)
+  dat <- data.frame(geogYN = geog_name, age.grp = 1:5)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$nf.age.grp <- as.numeric(pred)
@@ -244,11 +282,11 @@ build_netparams <- function(epistats,
   # group_by(lmain, race.cat3) %>%
   #   summarise(mn = mean(same.race))
 
-  mod <- glm(same.race ~ city2 + as.factor(race.cat3),
+  mod <- glm(same.race ~ geogYN + as.factor(race.cat3),
              data = lmain, family = binomial())
   # summary(mod)
 
-  dat <- data.frame(city2 = city_name, race.cat3 = 1:3)
+  dat <- data.frame(geogYN = geog_name, race.cat3 = 1:3)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$nm.race <- as.numeric(pred)
@@ -256,11 +294,11 @@ build_netparams <- function(epistats,
 
   ## nodematch("race", diff = FALSE) ----
 
-  mod <- glm(same.race ~ city2,
+  mod <- glm(same.race ~ geogYN,
              data = lmain, family = binomial())
   # summary(mod)
 
-  dat <- data.frame(city2 = city_name)
+  dat <- data.frame(geogYN = geog_name)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$nm.race_diffF <- as.numeric(pred)
@@ -268,11 +306,11 @@ build_netparams <- function(epistats,
 
   ## nodefactor("race") ----
 
-  mod <- glm(deg.main ~ city2 + as.factor(race.cat3),
+  mod <- glm(deg.main ~ geogYN + as.factor(race.cat3),
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(city2 = city_name, race.cat3 = 1:3)
+  dat <- data.frame(geogYN = geog_name, race.cat3 = 1:3)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$nf.race <- as.numeric(pred)
@@ -280,11 +318,11 @@ build_netparams <- function(epistats,
 
   ## nodefactor("deg.casl") ----
 
-  mod <- glm(deg.main ~ city2 + deg.casl,
+  mod <- glm(deg.main ~ geogYN + deg.casl,
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(city2 = city_name, deg.casl = sort(unique(d$deg.casl)))
+  dat <- data.frame(geogYN = geog_name, deg.casl = sort(unique(d$deg.casl)))
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$nf.deg.casl <- as.numeric(pred)
