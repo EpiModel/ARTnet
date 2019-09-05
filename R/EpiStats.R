@@ -47,13 +47,15 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
 
 
   if (!is.null(geog)){
-    if (geog == "city"){
+    if (geog == "city2"){
       if (!(var %in% unique(d$city))){
         stop("City name not found")
       }
-      l <- left_join(l, d[,c("AMIS_ID", "city")])
-      l$geogYN <- ifelse(l[,"city"] == var, 1, 0)
-      d$geogYN <- ifelse(d[,"city"] == var, 1, 0)
+      l <- left_join(l, d[,c("AMIS_ID", "city2")])
+      l$geogYN <- ifelse(l[,"city2"] == var, 1, 0)
+      l$var <- l$city
+      d$geogYN <- ifelse(d[,"city2"] == var, 1, 0)
+
 
     }
 
@@ -63,6 +65,7 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
       }
       l <- left_join(l, d[,c("AMIS_ID", "State")])
       l$geogYN <- ifelse(l[,"State"] == var, 1, 0)
+      l$var <- l$State
       d$geogYN <- ifelse(d[,"State"] == var, 1, 0)
 
     }
@@ -73,6 +76,7 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
       }
       l <- left_join(l, d[,c("AMIS_ID", "DIVCODE")])
       l$geogYN <- ifelse(l[,"DIVCODE"] == var, 1, 0)
+      l$var <- l$DIVCODE
       d$geogYN <- ifelse(d[,"DIVCODE"] == var, 1, 0)
 
     }
@@ -83,6 +87,7 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
       }
       l <- left_join(l, d[,c("AMIS_ID", "REGCODE")])
       l$geogYN <- ifelse(l[,"REGCODE"] == var, 1, 0)
+      l$var <- l$REGCODE
       d$geogYN <- ifelse(d[,"REGCODE"] == var, 1, 0)
 
     }

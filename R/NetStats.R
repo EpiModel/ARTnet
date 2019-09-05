@@ -25,7 +25,7 @@ build_netstats <- function(epistats, netparams,
   }
 
   ## Inputs ##
-  city_name <- epistats$city_name
+  var_name <- epistats$var_name
   edges_avg_nfrace <- FALSE
 
 
@@ -56,6 +56,7 @@ build_netstats <- function(epistats, netparams,
   asmr.W <- c(0.00059, 0.00117, 0.00144, 0.00168, 0.00194,
               0.00249, 0.00367, 0.00593, 0.00881, 0.01255)
 
+  if (race == TRUE){
   # transformed to weekly rates
   trans.asmr.B <- 1 - (1 - asmr.B)^(1/52)
   trans.asmr.H <- 1 - (1 - asmr.H)^(1/52)
@@ -68,7 +69,20 @@ build_netstats <- function(epistats, netparams,
   asmr <- data.frame(age = 1:65, vec.asmr.B, vec.asmr.H, vec.asmr.W)
 
   out$demog$asmr <- asmr
+  } else {
+   asmr.O <-  rbind (asmr.B, asmr.H, asmr.W)
+   asmr.O <- colMeans(asmr.O)
 
+   # transformed to weekly rates
+   trans.asmr <- 1-(1-asmr.O)^(1/52)
+
+   # Null rate for 0-14, transformed rates, total rate for 65
+   vec.asmr <- c(rep(0,14), rep(trans.asmr, each = 5),1)
+   asmr <- data.frame(age = 1:65, vec.asmr)
+
+  }
+
+  #What does this do?
   out$demog$city <- gsub(" ", "", city_name)
 
 
@@ -88,8 +102,10 @@ build_netstats <- function(epistats, netparams,
   out$attr$age.grp <- attr_age.grp
 
   # race attribute
+  if (race == TRUE){
   attr_race <- apportion_lr(num, 1:3, c(num.B/num, num.H/num, num.W/num), shuffled = TRUE)
   out$attr$race <- attr_race
+  }
 
   # deg.casl attribute
   attr_deg.casl <- apportion_lr(num, 0:3, netparams$main$deg.casl.dist, shuffled = TRUE)
@@ -123,10 +139,25 @@ build_netstats <- function(epistats, netparams,
   out$main <- list()
 
   ## edges
+  if (race == TRUE){
   if (edges_avg_nfrace == FALSE) {
     out$main$edges <- (netparams$main$md.main * num) / 2
   } else {
     out$main$edges <- sum(unname(table(out$attr$race)) * netparams$main$nf.race)/2
+  }
+    ## nodefactor("race")
+    nodefactor_race <- table(out$attr$race) * netparams$main$nf.race
+    out$main$nodefactor_race <- unname(nodefactor_race)
+
+    ## nodematch("race")
+    nodematch_race <- nodefactor_race/2 * netparams$main$nm.race
+    out$main$nodematch_race <- unname(nodematch_race)
+
+    ## nodematch("race", diff = FALSE)
+    nodematch_race <- out$main$edges * netparams$main$nm.race_diffF
+    out$main$nodematch_race_diffF <- unname(nodematch_race)
+  } else {
+    out$main$edges <- (netparams$main$md.main * num) / 2
   }
 
   ## nodefactor("age.grp
@@ -144,18 +175,6 @@ build_netstats <- function(epistats, netparams,
   ## absdiff("sqrt.age")
   absdiff_sqrt.age <- out$main$edges * netparams$main$absdiff.sqrt.age
   out$main$absdiff_sqrt.age <- absdiff_sqrt.age
-
-  ## nodefactor("race")
-  nodefactor_race <- table(out$attr$race) * netparams$main$nf.race
-  out$main$nodefactor_race <- unname(nodefactor_race)
-
-  ## nodematch("race")
-  nodematch_race <- nodefactor_race/2 * netparams$main$nm.race
-  out$main$nodematch_race <- unname(nodematch_race)
-
-  ## nodematch("race", diff = FALSE)
-  nodematch_race <- out$main$edges * netparams$main$nm.race_diffF
-  out$main$nodematch_race_diffF <- unname(nodematch_race)
 
   ## nodefactor("deg.casl")
   out$main$nodefactor_deg.casl <- num * netparams$main$deg.casl.dist * netparams$main$nf.deg.casl
@@ -182,10 +201,25 @@ build_netstats <- function(epistats, netparams,
   out$casl <- list()
 
   ## edges
+  if (race == TRUE){
   if (edges_avg_nfrace == FALSE) {
     out$casl$edges <- (netparams$casl$md.casl * num) / 2
   } else {
     out$casl$edges <- sum(unname(table(out$attr$race)) * netparams$casl$nf.race)/2
+  }
+    ## nodefactor("race")
+    nodefactor_race <- table(out$attr$race) * netparams$casl$nf.race
+    out$casl$nodefactor_race <- unname(nodefactor_race)
+
+    ## nodematch("race")
+    nodematch_race <- nodefactor_race/2 * netparams$casl$nm.race
+    out$casl$nodematch_race <- unname(nodematch_race)
+
+    ## nodematch("race", diff = FALSE)
+    nodematch_race <- out$casl$edges * netparams$casl$nm.race_diffF
+    out$casl$nodematch_race_diffF <- unname(nodematch_race)
+  } else {
+    out$casl$edges <- (netparams$casl$md.casl * num) / 2
   }
 
   ## nodefactor("age.grp")
@@ -203,19 +237,6 @@ build_netstats <- function(epistats, netparams,
   ## absdiff("sqrt.age")
   absdiff_sqrt.age <- out$casl$edges * netparams$casl$absdiff.sqrt.age
   out$casl$absdiff_sqrt.age <- absdiff_sqrt.age
-
-  ## nodefactor("race")
-  nodefactor_race <- table(out$attr$race) * netparams$casl$nf.race
-  out$casl$nodefactor_race <- unname(nodefactor_race)
-
-  ## nodematch("race")
-  nodematch_race <- nodefactor_race/2 * netparams$casl$nm.race
-  out$casl$nodematch_race <- unname(nodematch_race)
-
-  ## nodematch("race", diff = FALSE)
-  nodematch_race <- out$casl$edges * netparams$casl$nm.race_diffF
-  out$casl$nodematch_race_diffF <- unname(nodematch_race)
-
 
   ## nodefactor("deg.main")
   out$casl$nodefactor_deg.main <- num * netparams$casl$deg.main.dist * netparams$casl$nf.deg.main
@@ -241,10 +262,25 @@ build_netstats <- function(epistats, netparams,
   out$inst <- list()
 
   ## edges
+  if (race == TRUE){
   if (edges_avg_nfrace == FALSE) {
     out$inst$edges <- (netparams$inst$md.inst * num) / 2
   } else {
     out$inst$edges <- sum(unname(table(out$attr$race)) * netparams$inst$nf.race)/2
+  }
+    ## nodefactor("race")
+    nodefactor_race <- table(out$attr$race) * netparams$inst$nf.race
+    out$inst$nodefactor_race <- unname(nodefactor_race)
+
+    ## nodematch("race")
+    nodematch_race <- nodefactor_race/2 * netparams$inst$nm.race
+    out$inst$nodematch_race <- unname(nodematch_race)
+
+    ## nodematch("race", diff = FALSE)
+    nodematch_race <- out$inst$edges * netparams$inst$nm.race_diffF
+    out$inst$nodematch_race_diffF <- unname(nodematch_race)
+  } else {
+    out$inst$edges <- (netparams$inst$md.inst * num) / 2
   }
 
   ## nodefactor("age.grp")
@@ -262,18 +298,6 @@ build_netstats <- function(epistats, netparams,
   ## absdiff("sqrt.age")
   absdiff_sqrt.age <- out$inst$edges * netparams$inst$absdiff.sqrt.age
   out$inst$absdiff_sqrt.age <- absdiff_sqrt.age
-
-  ## nodefactor("race")
-  nodefactor_race <- table(out$attr$race) * netparams$inst$nf.race
-  out$inst$nodefactor_race <- unname(nodefactor_race)
-
-  ## nodematch("race")
-  nodematch_race <- nodefactor_race/2 * netparams$inst$nm.race
-  out$inst$nodematch_race <- unname(nodematch_race)
-
-  ## nodematch("race", diff = FALSE)
-  nodematch_race <- out$inst$edges * netparams$inst$nm.race_diffF
-  out$inst$nodematch_race_diffF <- unname(nodematch_race)
 
   ## nodefactor("risk.grp")
   nodefactor_risk.grp <- table(out$attr$risk.grp) * netparams$inst$nf.risk.grp
