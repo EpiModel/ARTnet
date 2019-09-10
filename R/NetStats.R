@@ -24,9 +24,16 @@ build_netstats <- function(epistats, netparams,
     browser()
   }
 
+  ## Data ##
+  d <- epistats$wide
+  l <- epistats$long
+
   ## Inputs ##
   var_name <- epistats$var_name
   edges_avg_nfrace <- FALSE
+  geog_name <- epistats$geog_name
+  var_name <- epistats$var_name
+  race <- epistats$race
 
 
   # Demographic Initialization ----------------------------------------------
@@ -39,11 +46,17 @@ build_netstats <- function(epistats, netparams,
 
   # Population size by race group
   # race.dist.3cat
-  props <- race.dist.3cat[which(race.dist.3cat$City == city_name), -1]/100
 
+  if (geog_name == "city"){
+    if (race == TRUE){
+  props <- race.dist.3cat[which(race.dist.3cat$City == var_name), -1]/100
   num.B <- out$demog$num.B <- round(num * props$Black)
   num.H <- out$demog$num.H <- round(num * props$Hispanic)
   num.W <- out$demog$num.W <- num - num.B - num.H
+    }
+  }
+
+
 
   ## Age-sex-specific mortality rates (B, H, W)
   #    in 5-year age decrments starting with age 15
@@ -82,8 +95,8 @@ build_netstats <- function(epistats, netparams,
 
   }
 
-  #What does this do?
-  out$demog$city <- gsub(" ", "", city_name)
+  #CHECK: What does this do?
+  #out$demog$city <- gsub(" ", "", city_name)
 
 
   # Nodal Attribute Initialization ------------------------------------------

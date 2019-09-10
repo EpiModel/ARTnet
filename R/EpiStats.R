@@ -9,18 +9,21 @@
 #' @examples
 #' epistats <- build_epistats(city_name = "Atlanta")
 #'
-build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE) {
+build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = NULL, browser = FALSE) {
 
   if (browser == TRUE) {
     browser()
   }
 
-  geog_names <-
 
   ## Data ##
   d <- ARTnet.wide
   l <- ARTnet.long
 
+  geog_names <- c("city", "state", "region", "division")
+  if (!(geog %in% geog_names)){
+    stop("Selected geographic feature must be one of: city, state, region or division")
+  }
   #geog.args <- is.null(sys.call())[1:4]
   #if (sum(geog.args) > 1){
   #  stop("Only one geographical factor may be chosen at a time")
@@ -36,59 +39,63 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
   # Data Processing ---------------------------------------------------------
 
   # Geograph
-  if(length(geog) > 1){
+  if(length(geog.lvl) > 1){
     stop("Only one geographical factor may be chosen at a time.")
   }
 
-  if(length(var) > 1){
+  if(length(geog.cat) > 1){
     stop("Only one variable name may be chosen at a time.")
   }
 
 
 
-  if (!is.null(geog)){
-    if (geog == "city2"){
+  if (!is.null(geog.cat)){
+    if (geog.cat == "city"){
       if (!(var %in% unique(d$city))){
         stop("City name not found")
       }
       l <- left_join(l, d[,c("AMIS_ID", "city2")])
       l$geogYN <- ifelse(l[,"city2"] == var, 1, 0)
-      l$var <- l$city
+      l$geog <- l$city2
       d$geogYN <- ifelse(d[,"city2"] == var, 1, 0)
+      d$geog <- d$city2
 
 
     }
 
-    if (geog == "state"){
+    if (geog.cat == "state"){
       if (!(var %in% unique(d$State))){
         stop("State name not found")
       }
       l <- left_join(l, d[,c("AMIS_ID", "State")])
       l$geogYN <- ifelse(l[,"State"] == var, 1, 0)
-      l$var <- l$State
+      l$geog <- l$State
       d$geogYN <- ifelse(d[,"State"] == var, 1, 0)
+      d$geog <- d$State
 
     }
 
-    if (geog == "div"){
+    if (geog.cat == "division"){
       if (!(var %in% unique(d$DIVCODE))){
         stop("Division number not found")
       }
       l <- left_join(l, d[,c("AMIS_ID", "DIVCODE")])
       l$geogYN <- ifelse(l[,"DIVCODE"] == var, 1, 0)
-      l$var <- l$DIVCODE
+      l$geog <- l$DIVCODE
       d$geogYN <- ifelse(d[,"DIVCODE"] == var, 1, 0)
+      d$geog <- d$DIVCODE
 
     }
 
-    if (geog == "reg"){
+    if (geog.cat == "region"){
       if (!(var %in% unique(d$REGCODE))){
         stop("Regional code not found")
       }
       l <- left_join(l, d[,c("AMIS_ID", "REGCODE")])
       l$geogYN <- ifelse(l[,"REGCODE"] == var, 1, 0)
-      l$var <- l$REGCODE
+      l$geog <- l$REGCODE
       d$geogYN <- ifelse(d[,"REGCODE"] == var, 1, 0)
+      d$geog <- d$REGCODE
 
     }
   }
@@ -366,8 +373,8 @@ build_epistats <- function(geog = NULL, var = NULL, race = NULL, browser = FALSE
   # Save Out File -----------------------------------------------------------
 
   out <- list()
-  out$geog_name <- geog
-  out$var_name  <- var
+  out$geog.lvl <- geog.lvl
+  out$geog.cat  <- geog.cat
   out$race <- race
   out$acts.mod <- acts.mod
   out$cond.mc.mod <- cond.mc.mod

@@ -26,8 +26,8 @@ build_netparams <- function(epistats,
 
   ## Inputs ##
   #Changed: city_name <- epistats$city_name
-  geog_name <- epistats$geog_name
-  var_name <- epistats$var_name
+  geog.lvl <- epistats$geog.lvl
+  geog.cat <- epistats$geog.cat
   race <- epistats$race
 
   # 0. Data Processing ------------------------------------------------------
@@ -99,7 +99,7 @@ build_netparams <- function(epistats,
   # table(d$count.oo.part.trunc)
 
 
-  if (race = TRUE){
+  if (race == TRUE){
   ## Race/Ethnicity
   # table(d$race.cat)
   d$race.cat3 <- rep(NA, nrow(d))
@@ -171,11 +171,11 @@ build_netparams <- function(epistats,
 
   ## edges ----
 
-  mod <- glm(deg.main ~ var,
+  mod <- glm(deg.main ~ geog,
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(var = var_name)
+  dat <- data.frame(geog = geog.cat)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$md.main <- as.numeric(pred)
@@ -190,11 +190,11 @@ build_netparams <- function(epistats,
 
   lmain$same.age.grp <- ifelse(lmain$index.age.grp == lmain$part.age.grp, 1, 0)
 
-  mod <- glm(same.age.grp ~ var + index.age.grp,
+  mod <- glm(same.age.grp ~ geog + index.age.grp,
              data = lmain, family = binomial())
   # summary(mod)
 
-  dat <- data.frame(var = var_name, index.age.grp = 1:5)
+  dat <- data.frame(geog = geog.cat, index.age.grp = 1:5)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$nm.age.grp <- as.numeric(pred)
@@ -205,10 +205,10 @@ build_netparams <- function(epistats,
   lmain$ad <- abs(lmain$age - lmain$p_age_imp)
   lmain$ad.sr <- abs(sqrt(lmain$age) - sqrt(lmain$p_age_imp))
 
-  mod <- lm(ad ~ var, data = lmain)
+  mod <- lm(ad ~ geog, data = lmain)
   # summary(mod)
 
-  dat <- data.frame(var = var_name)
+  dat <- data.frame(geog = geog.cat)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$absdiff.age <- as.numeric(pred)
@@ -216,10 +216,10 @@ build_netparams <- function(epistats,
 
   ## absdiff("sqrt.age") ----
 
-  mod <- lm(ad.sr ~ var, data = lmain)
+  mod <- lm(ad.sr ~ geog, data = lmain)
   # summary(mod)
 
-  dat <- data.frame(var = var_name)
+  dat <- data.frame(geog = geog.cat)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$absdiff.sqrt.age <- as.numeric(pred)
@@ -229,11 +229,11 @@ build_netparams <- function(epistats,
 
   d$age.grp <- cut(d$age, age.breaks, labels = FALSE)
 
-  mod <- glm(deg.main ~ var + age.grp + sqrt(age.grp),
+  mod <- glm(deg.main ~ geog + age.grp + sqrt(age.grp),
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(var = var_name, age.grp = 1:5)
+  dat <- data.frame(geog = geog.cat, age.grp = 1:5)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$nf.age.grp <- as.numeric(pred)
@@ -243,15 +243,16 @@ build_netparams <- function(epistats,
 
   # prop.table(table(lmain$race.cat3, lmain$p_race.cat3), 1)
 
+  if (race == TRUE){
   lmain$same.race <- ifelse(lmain$race.cat3 == lmain$p_race.cat3, 1, 0)
   # group_by(lmain, race.cat3) %>%
   #   summarise(mn = mean(same.race))
 
-  mod <- glm(same.race ~ var + as.factor(race.cat3),
+  mod <- glm(same.race ~ geog + as.factor(race.cat3),
              data = lmain, family = binomial())
   # summary(mod)
 
-  dat <- data.frame(var = var_name, race.cat3 = 1:3)
+  dat <- data.frame(geog = geog.cat, race.cat3 = 1:3)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$nm.race <- as.numeric(pred)
@@ -259,11 +260,11 @@ build_netparams <- function(epistats,
 
   ## nodematch("race", diff = FALSE) ----
 
-  mod <- glm(same.race ~ var,
+  mod <- glm(same.race ~ geog,
              data = lmain, family = binomial())
   # summary(mod)
 
-  dat <- data.frame(var = var_name)
+  dat <- data.frame(geog = geog.cat)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$nm.race_diffF <- as.numeric(pred)
@@ -271,38 +272,38 @@ build_netparams <- function(epistats,
 
   ## nodefactor("race") ----
 
-  mod <- glm(deg.main ~ var + as.factor(race.cat3),
+  mod <- glm(deg.main ~ geog + as.factor(race.cat3),
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(var = var_name, race.cat3 = 1:3)
+  dat <- data.frame(geog = geog.cat, race.cat3 = 1:3)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$nf.race <- as.numeric(pred)
-
+}
 
   ## nodefactor("deg.casl") ----
 
-  mod <- glm(deg.main ~ var + deg.casl,
+  mod <- glm(deg.main ~ geog + deg.casl,
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(var = var_name, deg.casl = sort(unique(d$deg.casl)))
+  dat <- data.frame(geog = geog.cat, deg.casl = sort(unique(d$deg.casl)))
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$nf.deg.casl <- as.numeric(pred)
 
-  deg.casl.dist <- prop.table(table(d$deg.casl[d$var == var_name]))
+  deg.casl.dist <- prop.table(table(d$deg.casl[d$geog == geog.cat]))
   out$main$deg.casl.dist <- as.numeric(deg.casl.dist)
 
 
   ## concurrent ----
 
-  mod <- glm(deg.main.conc ~ var,
+  mod <- glm(deg.main.conc ~ geog,
              data = d, family = binomial())
   # summary(mod)
 
-  dat <- data.frame(var = var_name)
+  dat <- data.frame(geog = geog.cat)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$concurrent <- as.numeric(pred)
@@ -310,11 +311,11 @@ build_netparams <- function(epistats,
 
   ## nodefactor("diag.status") ----
 
-  mod <- glm(deg.main ~ var + hiv2,
+  mod <- glm(deg.main ~ geog + hiv2,
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(var = var_name, hiv2 = 0:1)
+  dat <- data.frame(geog = geog.cat, hiv2 = 0:1)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$main$nf.diag.status <- as.numeric(pred)
@@ -336,7 +337,7 @@ build_netparams <- function(epistats,
     filter(RAI == 1 | IAI == 1) %>%
     filter(index.age.grp < 6) %>%
     filter(ongoing2 == 1) %>%
-    filter(var == var_name) %>%
+    filter(geog == geog.cat) %>%
     summarise(mean.dur = mean(duration, na.rm = TRUE),
               median.dur = median(duration, na.rm = TRUE)) %>%
     as.data.frame()
@@ -399,11 +400,11 @@ build_netparams <- function(epistats,
 
   ## edges ----
 
-  mod <- glm(deg.casl ~ var,
+  mod <- glm(deg.casl ~ geog,
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(var = var_name)
+  dat <- data.frame(geog = geog.cat)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$casl$md.casl <- as.numeric(pred)
@@ -418,11 +419,11 @@ build_netparams <- function(epistats,
 
   lcasl$same.age.grp <- ifelse(lcasl$index.age.grp == lcasl$part.age.grp, 1, 0)
 
-  mod <- glm(same.age.grp ~ var + index.age.grp,
+  mod <- glm(same.age.grp ~ geog + index.age.grp,
              data = lcasl, family = binomial())
   # summary(mod)
 
-  dat <- data.frame(var = var_name, index.age.grp = 1:5)
+  dat <- data.frame(geog = geog.cat, index.age.grp = 1:5)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$casl$nm.age.grp <- as.numeric(pred)
@@ -433,10 +434,10 @@ build_netparams <- function(epistats,
   lcasl$ad <- abs(lcasl$age - lcasl$p_age_imp)
   lcasl$ad.sr <- abs(sqrt(lcasl$age) - sqrt(lcasl$p_age_imp))
 
-  mod <- lm(ad ~ var, data = lcasl)
+  mod <- lm(ad ~ geog, data = lcasl)
   # summary(mod)
 
-  dat <- data.frame(var = var_name)
+  dat <- data.frame(geog = geog.cat)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$casl$absdiff.age <- as.numeric(pred)
@@ -444,10 +445,10 @@ build_netparams <- function(epistats,
 
   ## absdiff("sqrt.age") ----
 
-  mod <- lm(ad.sr ~ var, data = lcasl)
+  mod <- lm(ad.sr ~ geog, data = lcasl)
   # summary(mod)
 
-  dat <- data.frame(var = var_name)
+  dat <- data.frame(geog = geog.cat)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$casl$absdiff.sqrt.age <- as.numeric(pred)
@@ -457,15 +458,17 @@ build_netparams <- function(epistats,
 
   d$age.grp <- cut(d$age, age.breaks, labels = FALSE)
 
-  mod <- glm(deg.casl ~ var + age.grp + sqrt(age.grp),
+  mod <- glm(deg.casl ~ geog + age.grp + sqrt(age.grp),
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(var = var_name, age.grp = 1:5)
+  dat <- data.frame(geog = geog.cat, age.grp = 1:5)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$casl$nf.age.grp <- as.numeric(pred)
 
+
+  if (race == TRUE){
 
   ## nodematch("race") ----
 
@@ -473,11 +476,11 @@ build_netparams <- function(epistats,
 
   lcasl$same.race <- ifelse(lcasl$race.cat3 == lcasl$p_race.cat3, 1, 0)
 
-  mod <- glm(same.race ~ var + as.factor(race.cat3),
+  mod <- glm(same.race ~ geog + as.factor(race.cat3),
              data = lcasl, family = binomial())
   # summary(mod)
 
-  dat <- data.frame(var = var_name, race.cat3 = 1:3)
+  dat <- data.frame(geog = geog.cat, race.cat3 = 1:3)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$casl$nm.race <- as.numeric(pred)
@@ -485,11 +488,11 @@ build_netparams <- function(epistats,
 
   ## nodematch("race", diff = FALSE) ----
 
-  mod <- glm(same.race ~ var,
+  mod <- glm(same.race ~ geog,
              data = lcasl, family = binomial())
   # summary(mod)
 
-  dat <- data.frame(var = var_name)
+  dat <- data.frame(geog = geog.cat)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$casl$nm.race_diffF <- as.numeric(pred)
@@ -497,38 +500,38 @@ build_netparams <- function(epistats,
 
   ## nodefactor("race", diff = TRUE) ----
 
-  mod <- glm(deg.casl ~ var + as.factor(race.cat3),
+  mod <- glm(deg.casl ~ geog + as.factor(race.cat3),
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(var = var_name, race.cat3 = 1:3)
+  dat <- data.frame(geog = geog.cat, race.cat3 = 1:3)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$casl$nf.race <- as.numeric(pred)
-
+}
 
   ## nodefactor("deg.main") ----
 
-  mod <- glm(deg.casl ~ var + deg.main,
+  mod <- glm(deg.casl ~ geog + deg.main,
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(var = var_name, deg.main = 0:2)
+  dat <- data.frame(geog = geog.cat, deg.main = 0:2)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$casl$nf.deg.main <- as.numeric(pred)
 
-  deg.main.dist <- prop.table(table(d$deg.main[d$var == var_name]))
+  deg.main.dist <- prop.table(table(d$deg.main[d$geog == geog.cat]))
   out$casl$deg.main.dist <- as.numeric(deg.main.dist)
 
 
   ## concurrent ----
 
-  mod <- glm(deg.casl.conc ~ var,
+  mod <- glm(deg.casl.conc ~ geog,
              data = d, family = binomial())
   # summary(mod)
 
-  dat <- data.frame(var = var_name)
+  dat <- data.frame(geog = geog.cat)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$casl$concurrent <- as.numeric(pred)
@@ -536,11 +539,11 @@ build_netparams <- function(epistats,
 
   ## nodefactor("diag.status") ----
 
-  mod <- glm(deg.casl ~ var + hiv2,
+  mod <- glm(deg.casl ~ geog + hiv2,
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(var = var_name, hiv2 = 0:1)
+  dat <- data.frame(geog = geog.cat, hiv2 = 0:1)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$casl$nf.diag.status <- as.numeric(pred)
@@ -562,7 +565,7 @@ build_netparams <- function(epistats,
     filter(RAI == 1 | IAI == 1) %>%
     filter(index.age.grp < 6) %>%
     filter(ongoing2 == 1) %>%
-    filter(var == var_name) %>%
+    filter(geog == geog.cat) %>%
     summarise(mean.dur = mean(duration, na.rm = TRUE),
               median.dur = median(duration, na.rm = TRUE)) %>%
     as.data.frame()
@@ -628,11 +631,11 @@ build_netparams <- function(epistats,
   d$rate.oo.part <- d$count.oo.part/52
   # summary(d$rate.oo.part)
 
-  mod <- glm(count.oo.part ~ var,
+  mod <- glm(count.oo.part ~ geog,
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(var = var_name)
+  dat <- data.frame(geog = geog.cat)
   pred <- predict(mod, newdata = dat, type = "response")/52
 
   out$inst$md.inst <- as.numeric(pred)
@@ -647,11 +650,11 @@ build_netparams <- function(epistats,
 
   linst$same.age.grp <- ifelse(linst$index.age.grp == linst$part.age.grp, 1, 0)
 
-  mod <- glm(same.age.grp ~ var + index.age.grp,
+  mod <- glm(same.age.grp ~ geog + index.age.grp,
              data = linst, family = binomial())
   # summary(mod)
 
-  dat <- data.frame(var = var_name, index.age.grp = 1:5)
+  dat <- data.frame(geog = geog.cat, index.age.grp = 1:5)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$inst$nm.age.grp <- as.numeric(pred)
@@ -662,10 +665,10 @@ build_netparams <- function(epistats,
   linst$ad <- abs(linst$age - linst$p_age_imp)
   linst$ad.sr <- abs(sqrt(linst$age) - sqrt(linst$p_age_imp))
 
-  mod <- lm(ad ~ var, data = linst)
+  mod <- lm(ad ~ geog, data = linst)
   # summary(mod)
 
-  dat <- data.frame(var = var_name)
+  dat <- data.frame(geog = geog.cat)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$inst$absdiff.age <- as.numeric(pred)
@@ -673,10 +676,10 @@ build_netparams <- function(epistats,
 
   ## absdiff("sqrt.age") ----
 
-  mod <- lm(ad.sr ~ var, data = linst)
+  mod <- lm(ad.sr ~ geog, data = linst)
   # summary(mod)
 
-  dat <- data.frame(var = var_name)
+  dat <- data.frame(geog = geog.cat)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$inst$absdiff.sqrt.age <- as.numeric(pred)
@@ -686,15 +689,17 @@ build_netparams <- function(epistats,
 
   d$age.grp <- cut(d$age, age.breaks, labels = FALSE)
 
-  mod <- glm(count.oo.part ~ var + age.grp + sqrt(age.grp),
+  mod <- glm(count.oo.part ~ geog + age.grp + sqrt(age.grp),
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(var = var_name, age.grp = 1:5)
+  dat <- data.frame(geog = geog.cat, age.grp = 1:5)
   pred <- predict(mod, newdata = dat, type = "response")/52
 
   out$inst$nf.age.grp <- as.numeric(pred)
 
+
+  if (race == TRUE){
 
   ## nodematch("race", diff = TRUE) ----
 
@@ -702,11 +707,11 @@ build_netparams <- function(epistats,
 
   linst$same.race <- ifelse(linst$race.cat3 == linst$p_race.cat3, 1, 0)
 
-  mod <- glm(same.race ~ var + as.factor(race.cat3),
+  mod <- glm(same.race ~ geog + as.factor(race.cat3),
              data = linst, family = binomial())
   # summary(mod)
 
-  dat <- data.frame(var = var_name, race.cat3 = 1:3)
+  dat <- data.frame(geog = geog.cat, race.cat3 = 1:3)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$inst$nm.race <- as.numeric(pred)
@@ -714,11 +719,11 @@ build_netparams <- function(epistats,
 
   ## nodematch("race", diff = FALSE) ----
 
-  mod <- glm(same.race ~ var,
+  mod <- glm(same.race ~ geog,
              data = linst, family = binomial())
   # summary(mod)
 
-  dat <- data.frame(var = var_name)
+  dat <- data.frame(geog = geog.cat)
   pred <- predict(mod, newdata = dat, type = "response")
 
   out$inst$nm.race_diffF <- as.numeric(pred)
@@ -726,20 +731,20 @@ build_netparams <- function(epistats,
 
   ## nodefactor("race") ----
 
-  mod <- glm(count.oo.part ~ var + as.factor(race.cat3),
+  mod <- glm(count.oo.part ~ geog + as.factor(race.cat3),
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(var = var_name, race.cat3 = 1:3)
+  dat <- data.frame(geog = geog.cat, race.cat3 = 1:3)
   pred <- predict(mod, newdata = dat, type = "response")/52
 
   out$inst$nf.race <- as.numeric(pred)
-
+}
 
   ## nodefactor("risk.grp") ----
 
   # city-specific wts
-  wt <- mean(d$rate.oo.part[d$var == var_name], na.rm = TRUE)/mean(d$rate.oo.part, na.rm = TRUE)
+  wt <- mean(d$rate.oo.part[d$geog == geog.cat], na.rm = TRUE)/mean(d$rate.oo.part, na.rm = TRUE)
   wt.rate <- d$rate.oo.part * wt
 
   nquants <- 5
@@ -777,14 +782,14 @@ build_netparams <- function(epistats,
   d$deg.tot3 <- ifelse(d$deg.tot >= 3, 3, d$deg.tot)
   # table(d$deg.tot3)
 
-  deg.tot.dist <- prop.table(table(d$deg.tot3[d$var == var_name]))
+  deg.tot.dist <- prop.table(table(d$deg.tot3[d$geog == geog.cat]))
   out$inst$deg.tot.dist <- as.numeric(deg.tot.dist)
 
-  mod <- glm(count.oo.part ~ var + deg.tot3 + sqrt(deg.tot3),
+  mod <- glm(count.oo.part ~ geog + deg.tot3 + sqrt(deg.tot3),
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(var = var_name, deg.tot3 = 0:3)
+  dat <- data.frame(geog = geog.cat, deg.tot3 = 0:3)
   pred <- predict(mod, newdata = dat, type = "response")/52
 
   out$inst$nf.deg.tot <- as.numeric(pred)
@@ -792,11 +797,11 @@ build_netparams <- function(epistats,
 
   ## nodefactor("diag.status") ----
 
-  mod <- glm(count.oo.part ~ var + hiv2,
+  mod <- glm(count.oo.part ~ geog + hiv2,
              data = d, family = poisson())
   # summary(mod)
 
-  dat <- data.frame(var = var_name, hiv2 = 0:1)
+  dat <- data.frame(geog = geog.cat, hiv2 = 0:1)
   pred <- predict(mod, newdata = dat, type = "response")/52
 
   out$inst$nf.diag.status <- as.numeric(pred)
