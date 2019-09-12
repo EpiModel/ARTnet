@@ -11,7 +11,7 @@
 #' @export
 #'
 #' @examples
-#' epistats <- build_epistats(city_name = "Atlanta")
+#' epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta")
 #' netparams <- build_netparams(epistats = epistats, smooth.main.dur.55p = TRUE)
 #' netstats <- build_netstats(epistats, netparams)
 #'
@@ -29,10 +29,9 @@ build_netstats <- function(epistats, netparams,
   l <- epistats$long
 
   ## Inputs ##
-  var_name <- epistats$var_name
+  geog.cat <- epistats$geog.cat
+  geog.lvl <- epistats$geog.lvl
   edges_avg_nfrace <- FALSE
-  geog_name <- epistats$geog_name
-  var_name <- epistats$var_name
   race <- epistats$race
 
 
@@ -47,9 +46,9 @@ build_netstats <- function(epistats, netparams,
   # Population size by race group
   # race.dist.3cat
 
-  if (geog_name == "city"){
+  if (geog.lvl == "city"){
     if (race == TRUE){
-  props <- race.dist.3cat[which(race.dist.3cat$City == var_name), -1]/100
+  props <- race.dist.3cat[which(race.dist.3cat$City == geog.cat), -1]/100
   num.B <- out$demog$num.B <- round(num * props$Black)
   num.H <- out$demog$num.H <- round(num * props$Hispanic)
   num.W <- out$demog$num.W <- num - num.B - num.H

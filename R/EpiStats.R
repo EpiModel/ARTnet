@@ -1,15 +1,28 @@
 
 #' Build EpiStats
 #'
-#' @param city_name City name for ARTnet statistics.
+#' @param geog.lvl Specifies geographic feature for ARTnet statistics..
+#' @param geog.cat Specifies geographic stratum to base ARTnet statistics on.
 #' @param browser Run function in interactive browser mode.
+#' @param race Whether to stratify by racial status. Default is TRUE.
 #'
 #' @export
 #'
 #' @examples
-#' epistats <- build_epistats(city_name = "Atlanta")
 #'
-build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = NULL, browser = FALSE) {
+#' epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta")
+#'
+#' epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "Seattle")
+#'
+#' epistats3 <- build_epistats(geog.lvl = "region", geog.cat = "Atlanta")
+#'
+#' epistats4 <- build_epistats(geog.lvl = "division", geog.cat = "Seattle")
+#'
+#' #No racial stratification
+#' epistats5 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE)
+#'
+#'
+build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE, browser = FALSE) {
 
   if (browser == TRUE) {
     browser()
@@ -21,7 +34,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = NULL, browse
   l <- ARTnet.long
 
   geog_names <- c("city", "state", "region", "division")
-  if (!(geog %in% geog_names)){
+  if (!(geog.lvl %in% geog_names)){
     stop("Selected geographic feature must be one of: city, state, region or division")
   }
   #geog.args <- is.null(sys.call())[1:4]
@@ -49,52 +62,52 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = NULL, browse
 
 
 
-  if (!is.null(geog.cat)){
-    if (geog.cat == "city"){
-      if (!(var %in% unique(d$city))){
+  if (!is.null(geog.lvl)){
+    if (geog.lvl == "city"){
+      if (!(geog.cat %in% unique(d$city))){
         stop("City name not found")
       }
       l <- left_join(l, d[,c("AMIS_ID", "city2")])
-      l$geogYN <- ifelse(l[,"city2"] == var, 1, 0)
+      l$geogYN <- ifelse(l[,"city2"] == geog.cat, 1, 0)
       l$geog <- l$city2
-      d$geogYN <- ifelse(d[,"city2"] == var, 1, 0)
+      d$geogYN <- ifelse(d[,"city2"] == geog.cat, 1, 0)
       d$geog <- d$city2
 
 
     }
 
-    if (geog.cat == "state"){
-      if (!(var %in% unique(d$State))){
+    if (geog.lvl == "state"){
+      if (!(geog.lvl %in% unique(d$State))){
         stop("State name not found")
       }
       l <- left_join(l, d[,c("AMIS_ID", "State")])
-      l$geogYN <- ifelse(l[,"State"] == var, 1, 0)
+      l$geogYN <- ifelse(l[,"State"] == geog.cat, 1, 0)
       l$geog <- l$State
-      d$geogYN <- ifelse(d[,"State"] == var, 1, 0)
+      d$geogYN <- ifelse(d[,"State"] == geog.cat, 1, 0)
       d$geog <- d$State
 
     }
 
-    if (geog.cat == "division"){
-      if (!(var %in% unique(d$DIVCODE))){
+    if (geog.lvl == "division"){
+      if (!(geog.lvl %in% unique(d$DIVCODE))){
         stop("Division number not found")
       }
       l <- left_join(l, d[,c("AMIS_ID", "DIVCODE")])
-      l$geogYN <- ifelse(l[,"DIVCODE"] == var, 1, 0)
+      l$geogYN <- ifelse(l[,"DIVCODE"] == geog.cat, 1, 0)
       l$geog <- l$DIVCODE
-      d$geogYN <- ifelse(d[,"DIVCODE"] == var, 1, 0)
+      d$geogYN <- ifelse(d[,"DIVCODE"] == geog.cat, 1, 0)
       d$geog <- d$DIVCODE
 
     }
 
-    if (geog.cat == "region"){
-      if (!(var %in% unique(d$REGCODE))){
+    if (geog.lvl == "region"){
+      if (!(geog.lvl %in% unique(d$REGCODE))){
         stop("Regional code not found")
       }
       l <- left_join(l, d[,c("AMIS_ID", "REGCODE")])
-      l$geogYN <- ifelse(l[,"REGCODE"] == var, 1, 0)
+      l$geogYN <- ifelse(l[,"REGCODE"] == geog.cat, 1, 0)
       l$geog <- l$REGCODE
-      d$geogYN <- ifelse(d[,"REGCODE"] == var, 1, 0)
+      d$geogYN <- ifelse(d[,"REGCODE"] == geog.cat, 1, 0)
       d$geog <- d$REGCODE
 
     }
