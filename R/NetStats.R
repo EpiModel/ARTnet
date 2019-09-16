@@ -48,7 +48,7 @@ build_netstats <- function(epistats, netparams,
 
   if (geog.lvl == "city"){
     if (race == TRUE){
-  props <- race.dist.city[which(race.dist.city$Geog == geog.cat), -1]/100
+  props <- race.dist.city[which(race.dist.city$Geog == geog.cat), -c(1,2)]/100
   num.B <- out$demog$num.B <- round(num * props$Black)
   num.H <- out$demog$num.H <- round(num * props$Hispanic)
   num.W <- out$demog$num.W <- num - num.B - num.H
@@ -57,7 +57,7 @@ build_netstats <- function(epistats, netparams,
 
   if (geog.lvl == "state"){
     if (race == TRUE){
-      props <- race.dist.city[which(race.dist.state$Geog == geog.cat), -1]/100
+      props <- race.dist.city[which(race.dist.state$Geog == geog.cat), -c(1,2)]/100
       num.B <- out$demog$num.B <- round(num * props$Black)
       num.H <- out$demog$num.H <- round(num * props$Hispanic)
       num.W <- out$demog$num.W <- num - num.B - num.H
@@ -66,7 +66,7 @@ build_netstats <- function(epistats, netparams,
 
   if (geog.lvl == "region"){
     if (race == TRUE){
-      props <- race.dist.city[which(race.dist.census.region$Geog == geog.cat), -1]/100
+      props <- race.dist.city[which(race.dist.census.region$Geog == geog.cat), -c(1,2)]/100
       num.B <- out$demog$num.B <- round(num * props$Black)
       num.H <- out$demog$num.H <- round(num * props$Hispanic)
       num.W <- out$demog$num.W <- num - num.B - num.H
@@ -75,7 +75,7 @@ build_netstats <- function(epistats, netparams,
 
   if (geog.lvl == "division"){
     if (race == TRUE){
-      props <- race.dist.city[which(race.dist.census.division$Geog == geog.cat), -1]/100
+      props <- race.dist.city[which(race.dist.census.division$Geog == geog.cat), -c(1,2)]/100
       num.B <- out$demog$num.B <- round(num * props$Black)
       num.H <- out$demog$num.H <- round(num * props$Hispanic)
       num.W <- out$demog$num.W <- num - num.B - num.H
