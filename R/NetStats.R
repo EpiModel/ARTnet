@@ -118,6 +118,7 @@ build_netstats <- function(epistats, netparams,
    # Null rate for 0-14, transformed rates, total rate for 65
    vec.asmr <- c(rep(0,14), rep(trans.asmr, each = 5),1)
    asmr <- data.frame(age = 1:65, vec.asmr)
+   out$demog$asmr <- asmr
 
   }
 
@@ -141,10 +142,8 @@ build_netstats <- function(epistats, netparams,
   out$attr$age.grp <- attr_age.grp
 
   # race attribute
-  if (race == TRUE){
   attr_race <- apportion_lr(num, 1:3, c(num.B/num, num.H/num, num.W/num), shuffled = TRUE)
   out$attr$race <- attr_race
-  }
 
   # deg.casl attribute
   attr_deg.casl <- apportion_lr(num, 0:3, netparams$main$deg.casl.dist, shuffled = TRUE)
