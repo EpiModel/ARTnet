@@ -47,42 +47,32 @@ build_netstats <- function(epistats, netparams,
   # race.dist.3cat
 
   if (geog.lvl == "city"){
-    if (race == TRUE){
   props <- race.dist.city[which(race.dist.city$Geog == geog.cat), -c(1,2)]/100
   num.B <- out$demog$num.B <- round(num * props$Black)
   num.H <- out$demog$num.H <- round(num * props$Hispanic)
   num.W <- out$demog$num.W <- num - num.B - num.H
-    }
-  }
+      }
 
   if (geog.lvl == "state"){
-    if (race == TRUE){
       props <- race.dist.city[which(race.dist.state$Geog == geog.cat), -c(1,2)]/100
       num.B <- out$demog$num.B <- round(num * props$Black)
       num.H <- out$demog$num.H <- round(num * props$Hispanic)
       num.W <- out$demog$num.W <- num - num.B - num.H
-    }
-  }
+      }
 
   if (geog.lvl == "region"){
-    if (race == TRUE){
       props <- race.dist.city[which(race.dist.census.region$Geog == geog.cat), -c(1,2)]/100
       num.B <- out$demog$num.B <- round(num * props$Black)
       num.H <- out$demog$num.H <- round(num * props$Hispanic)
       num.W <- out$demog$num.W <- num - num.B - num.H
-    }
-  }
+      }
 
   if (geog.lvl == "division"){
-    if (race == TRUE){
       props <- race.dist.city[which(race.dist.census.division$Geog == geog.cat), -c(1,2)]/100
       num.B <- out$demog$num.B <- round(num * props$Black)
       num.H <- out$demog$num.H <- round(num * props$Hispanic)
       num.W <- out$demog$num.W <- num - num.B - num.H
-    }
-  }
-
-
+      }
 
   ## Age-sex-specific mortality rates (B, H, W)
   #    in 5-year age decrments starting with age 15
