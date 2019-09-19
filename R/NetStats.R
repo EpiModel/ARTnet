@@ -107,7 +107,7 @@ build_netstats <- function(epistats, netparams,
 
    # Null rate for 0-14, transformed rates, total rate for 65
    vec.asmr <- c(rep(0,14), rep(trans.asmr, each = 5),1)
-   asmr <- data.frame(age = 1:65, vec.asmr)
+   asmr <- data.frame(age = 1:65, vec.asmr, vec.asmr, vec.asmr)
    out$demog$asmr <- asmr
 
   }
