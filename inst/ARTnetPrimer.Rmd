@@ -1,0 +1,93 @@
+---
+title: "Update to ARTnet Workflow"
+author: "Shawnee M. Anderson"
+date: "September 21, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(MASS)
+load("C:/Users/smande6/Box Sync/Comb-Prev-Calibration-staging/tdf.ATL.1race.gcct.rda")
+opts_chunk$set(echo=FALSE,
+               cache=TRUE, autodep=TRUE, cache.comments=FALSE,
+               message=FALSE, warning=FALSE)
+```
+
+<style>
+  .col2 {
+    columns: 2 200px;         /* number of columns and width in pixels*/
+    -webkit-columns: 2 200px; /* chrome, safari */
+    -moz-columns: 2 200px;    /* firefox */
+  }
+  .col3 {
+    columns: 3 100px;
+    -webkit-columns: 3 100px;
+    -moz-columns: 3 100px;
+  }
+</style>
+
+## ARTnet Workflow Update
+
+ARTnet has been updated, and will continue to be updated, to allow for greater flexibility in modeling of network structures for use in EpiModel. Current ARTnet funcgtionality only allows for modeling of network at the "city" level of resolution:
+
+```{r, echo = TRUE, eval = FALSE}
+suppressMessages(library("EpiModelHIV"))
+suppressMessages(library("ARTnet"))
+
+epistats <- build_epistats(city_name = "Atlanta")
+saveRDS(epistats, file = "est/epistats.rda")
+```
+
+Now, ARTnet 2.0 removes the `city_name` variable and inserts a `geog.cat` variable; this variable is introduced along with the variable `geog.lvl` which specifies the level of geographic resolution desired by the user:
+
+```{r, echo = TRUE, eval = FALSE}
+epistats1 <- build_epistats(geog.lvl = "city", "geog.cat" = "Atlanta")
+saveRDS(epistats, file = "est/epistats.rda")
+```
+
+This new input tells `build_epistats` that the geographical level of interest is the city level and that the geographical region of interest is Atlanta. There are five levels of geographical subsetting available in ARTnet: city, state, census division and geographic region. These are called by `geog.lvl = ` city, state, div, and reg respectively in the `build_epistats` function call. An individual who would like to build a network structure based on, say, Georgia, would then use:
+
+```{r, echo = TRUE, eval = FALSE}
+epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "GA")
+saveRDS(epistats, file = "est/epistats.rda")
+```
+
+Similarly, if one wishes to use the other levels of geographic stratification they can do so as above:
+
+```{r, echo = TRUE, eval = FALSE}
+epistats2 <- build_epistats(geog.lvl = "div", geog.cat = "5")
+epistats3 <- build_epistats(geog.lvl = "reg", geog.cat = "1")
+```
+
+For a list of available geographic categories per geographic level use the helper function `ARTnet.help()`:
+
+```{r, echo = TRUE, eval = FALSE}
+#NOTE: not implemented yet; how should this look? Just list all possible variables or worth listing variables and their descriptions? Should user be expected to know all this?
+ARTnet.help(geog = "city")
+```
+
+for example will print out a list of all available cities within the ARTnet data set.
+
+A further change made to ARTnet is the ability for users to choose whether or not to add race into network estimation. Previously, this was "on"" by default; however now, with the `race = ` option in build_epistats, users are able to choose between `TRUE` or `FALSE` denoting race and no-race stratification:
+
+```{r, echo = TRUE, eval = FALSE}
+#Racial stratification
+epistats4 <- build_epistats(geog.level = "state", geog.cat = "WA", race = TRUE)
+
+#No racial stratification
+epistats5 <- build_epistats(geog.level = "state", geog.cat = "WA", race = FALSE)
+```
+
+Racial stratification is set to true by default.
+
+# Future Updates
+
+Work will continue on updating ARTnet to be more flexible and useful to the end-user. Upcoming changes will allow more demographic stratification, such as straifying by age-group, as well as further quality of life updates.
+
+
+
+
+
+
+
