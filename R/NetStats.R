@@ -11,8 +11,8 @@
 #' @export
 #'
 #' @examples
-#' epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta")
-#' netparams <- build_netparams(epistats = epistats, smooth.main.dur.55p = TRUE)
+#' epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15,65))
+#' netparams <- build_netparams(epistats = epistats, age.cat = 6, smooth.main.dur.55p = TRUE)
 #' netstats <- build_netstats(epistats, netparams)
 #'
 build_netstats <- function(epistats, netparams,

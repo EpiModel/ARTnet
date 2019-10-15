@@ -3,6 +3,7 @@
 #'
 #' @param geog.lvl Specifies geographic feature for ARTnet statistics..
 #' @param geog.cat Specifies geographic stratum to base ARTnet statistics on.
+#' @param age.lim Upper and lower limit. Age rage to subset ARTnet data by. Default is 0 to 65
 #' @param browser Run function in interactive browser mode.
 #' @param race Whether to stratify by racial status. Default is TRUE.
 #'
@@ -10,19 +11,21 @@
 #'
 #' @examples
 #'
-#' epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta")
+#' epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15, 65))
 #'
-#' epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "Seattle")
+#' epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA", age.lim = c(15, 65))
 #'
-#' epistats3 <- build_epistats(geog.lvl = "region", geog.cat = "Atlanta")
+#' epistats3 <- build_epistats(geog.lvl = "region", geog.cat = "1")
 #'
-#' epistats4 <- build_epistats(geog.lvl = "division", geog.cat = "Seattle")
+#' epistats4 <- build_epistats(geog.lvl = "division", geog.cat = "1")
 #'
 #' #No racial stratification
 #' epistats5 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE)
 #'
 #'
-build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE, browser = FALSE) {
+build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
+                           age.lim = NULL,
+                           browser = FALSE) {
 
   if (browser == TRUE) {
     browser()
@@ -67,7 +70,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE, browse
       if (!(geog.cat %in% unique(d$city))){
         stop("City name not found")
       }
-      l <- left_join(l, d[,c("AMIS_ID", "city2")])
+      l <- suppressMessages(left_join(l, d[,c("AMIS_ID", "city2")]))
       l$geogYN <- ifelse(l[,"city2"] == geog.cat, 1, 0)
       l$geog <- l$city2
       d$geogYN <- ifelse(d[,"city2"] == geog.cat, 1, 0)
@@ -77,10 +80,10 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE, browse
     }
 
     if (geog.lvl == "state"){
-      if (!(geog.lvl %in% unique(d$State))){
+      if (!(geog.cat %in% unique(d$State))){
         stop("State name not found")
       }
-      l <- left_join(l, d[,c("AMIS_ID", "State")])
+      l <- suppressMessages(left_join(l, d[,c("AMIS_ID", "State")]))
       l$geogYN <- ifelse(l[,"State"] == geog.cat, 1, 0)
       l$geog <- l$State
       d$geogYN <- ifelse(d[,"State"] == geog.cat, 1, 0)
@@ -89,10 +92,10 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE, browse
     }
 
     if (geog.lvl == "division"){
-      if (!(geog.lvl %in% unique(d$DIVCODE))){
+      if (!(geog.cat %in% unique(d$DIVCODE))){
         stop("Division number not found")
       }
-      l <- left_join(l, d[,c("AMIS_ID", "DIVCODE")])
+      l <- suppressMessages(left_join(l, d[,c("AMIS_ID", "DIVCODE")]))
       l$geogYN <- ifelse(l[,"DIVCODE"] == geog.cat, 1, 0)
       l$geog <- l$DIVCODE
       d$geogYN <- ifelse(d[,"DIVCODE"] == geog.cat, 1, 0)
@@ -101,10 +104,10 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE, browse
     }
 
     if (geog.lvl == "region"){
-      if (!(geog.lvl %in% unique(d$REGCODE))){
+      if (!(geog.cat %in% unique(d$REGCODE))){
         stop("Regional code not found")
       }
-      l <- left_join(l, d[,c("AMIS_ID", "REGCODE")])
+      l <- suppressMessages(left_join(l, d[,c("AMIS_ID", "REGCODE")]))
       l$geogYN <- ifelse(l[,"REGCODE"] == geog.cat, 1, 0)
       l$geog <- l$REGCODE
       d$geogYN <- ifelse(d[,"REGCODE"] == geog.cat, 1, 0)
@@ -116,6 +119,31 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE, browse
   # Age
   # table(l$age, useNA = "always")
   # table(l$p_age_imp, useNA = "always")
+
+  #Subset data by selected age range
+
+
+  if (!(is.null(age.lim))) {
+    #Warning if age range is out of allowed range
+    flag.ll <- age.lim[1] >= 15 & age.lim[1] <= 65
+    flag.ul <- age.lim[2] >= 15 & age.lim[2] <= 65
+    flag <- flag.ll*flag.ul
+
+    if (flag == FALSE) {
+      stop("Age range must be between 15 and 65")
+    }
+
+    age.lim <- c(min(age.lim), max(age.lim))
+
+
+  }
+
+  else {
+    age.lim <- c(0,100)
+  }
+
+  l <- subset(l, age >= age.lim[1] & age <= age.lim[2])
+  d <- subset(d, age >= age.lim[1] & age <= age.lim[2])
 
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
@@ -395,7 +423,6 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE, browse
   out$hiv.mod <- hiv.mod
   out$long <- l
   out$wide <- d
-  # fn <- paste("data/artnet.EpiStats", gsub(" ", "", city_name), "rda", sep = ".")
-  # saveRDS(out, file = fn)
+  out$age.lim <- age.lim
   return(out)
 }

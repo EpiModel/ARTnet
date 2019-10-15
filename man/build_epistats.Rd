@@ -4,10 +4,17 @@
 \alias{build_epistats}
 \title{Build EpiStats}
 \usage{
-build_epistats(city_name = "Atlanta", browser = FALSE)
+build_epistats(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
+  age.lim = NULL, browser = FALSE)
 }
 \arguments{
-\item{city_name}{City name for ARTnet statistics.}
+\item{geog.lvl}{Specifies geographic feature for ARTnet statistics..}
+
+\item{geog.cat}{Specifies geographic stratum to base ARTnet statistics on.}
+
+\item{race}{Whether to stratify by racial status. Default is TRUE.}
+
+\item{age.lim}{Upper and lower limit. Age rage to subset ARTnet data by. Default is 0 to 65}
 
 \item{browser}{Run function in interactive browser mode.}
 }
@@ -15,6 +22,17 @@ build_epistats(city_name = "Atlanta", browser = FALSE)
 Build EpiStats
 }
 \examples{
-epistats <- build_epistats(city_name = "Atlanta")
+
+epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15, 65))
+
+epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA", age.lim = c(15, 65))
+
+epistats3 <- build_epistats(geog.lvl = "region", geog.cat = "1")
+
+epistats4 <- build_epistats(geog.lvl = "division", geog.cat = "1")
+
+#No racial stratification
+epistats5 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE)
+
 
 }

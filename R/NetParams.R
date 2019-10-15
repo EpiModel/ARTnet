@@ -2,6 +2,8 @@
 #' Build NetParams
 #'
 #' @param epistats Output from \code{\link{build_epistats}}.
+#' @param age.bks Ages that define age categories. If NULL, age breaks are equally spaced.
+#' @param age.cat Total number of age categories; only used if age.bks is NULL and age.lim has been defined.
 #' @param smooth.main.dur.55p If \code{TRUE}, average main durations for age
 #'        45-55 and 55+ age groups.
 #' @param browser Run function in interactive browser mode.
@@ -9,10 +11,13 @@
 #' @export
 #'
 #' @examples
-#' epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta")
-#' netparams <- build_netparams(epistats = epistats, smooth.main.dur.55p = TRUE)
+#' epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15,65))
+#' netparams1 <- build_netparams(epistats = epistats, smooth.main.dur.55p = TRUE)
+#' netparams2 <- build_netparams(epistats = epistats, age.bks = c(20, 30, 40, 50, 60),
+#' smooth.main.dur.55p = TRUE)
+#' netparams3 <- build_netparams(epistats = epistats, age.cat = 6, smooth.main.dur.55p = TRUE)
 #'
-build_netparams <- function(epistats,
+build_netparams <- function(epistats, age.bks = NULL, age.cat = NULL,
                             smooth.main.dur.55p = FALSE,
                             browser = FALSE) {
 
@@ -25,10 +30,30 @@ build_netparams <- function(epistats,
   l <- epistats$long
 
   ## Inputs ##
-  #Changed: city_name <- epistats$city_name
   geog.lvl <- epistats$geog.lvl
   geog.cat <- epistats$geog.cat
   race <- epistats$race
+  age.lim <- epistats$age.lim
+
+  #Age Breaks
+  if (is.null(age.lim)){
+    age.bks <- c(0, 24, 34, 44, 54, 64, 100)
+  }
+
+  else {
+    if(!is.null(age.bks)){
+      age.breaks <- c(0, age.bks, 100)
+    }
+    else{
+      if (!is.null(age.cat)){
+        age.cat <- age.cat - 2
+        age.breaks <- c(0, seq(age.lim[1], age.lim[2], length.out = age.cat), 100)
+      }
+      else {
+        age.breaks <- c(0, seq(age.lim[1], age.lim[2], length.out = 7), 100)
+      }
+    }
+  }
 
   # 0. Data Processing ------------------------------------------------------
 
@@ -183,7 +208,6 @@ build_netparams <- function(epistats,
 
   ## nodematch("age.grp") ----
 
-  age.breaks <- c(0, 24, 34, 44, 54, 64, 100)
   lmain$index.age.grp <- cut(lmain$age, age.breaks, labels = FALSE)
   lmain$part.age.grp <- cut(as.numeric(lmain$p_age_imp), age.breaks, labels = FALSE)
   # data.frame(lmain$age, lmain$index.age.grp, lmain$p_age_imp, lmain$part.age.grp)
@@ -412,7 +436,6 @@ build_netparams <- function(epistats,
 
   ## nodematch("age.grp") ----
 
-  age.breaks <- c(0, 24, 34, 44, 54, 64, 100)
   lcasl$index.age.grp <- cut(lcasl$age, age.breaks, labels = FALSE)
   lcasl$part.age.grp <- cut(as.numeric(lcasl$p_age_imp), age.breaks, labels = FALSE)
   # data.frame(lcasl$age, lcasl$index.age.grp, lcasl$p_age_imp, lcasl$part.age.grp)
@@ -643,7 +666,6 @@ build_netparams <- function(epistats,
 
   ## nodematch("age.grp") ----
 
-  age.breaks <- c(0, 24, 34, 44, 54, 64, 100)
   linst$index.age.grp <- cut(linst$age, age.breaks, labels = FALSE)
   linst$part.age.grp <- cut(as.numeric(linst$p_age_imp), age.breaks, labels = FALSE)
   # data.frame(linst$age, linst$index.age.grp, linst$p_age_imp, linst$part.age.grp)

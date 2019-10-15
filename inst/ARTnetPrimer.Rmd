@@ -1,35 +1,27 @@
 ---
 title: "Update to ARTnet Workflow"
 author: "Shawnee M. Anderson"
-date: "September 21, 2019"
-output: pdf_document
+date: "October 15, 2019"
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
 library(knitr)
 library(MASS)
-load("C:/Users/smande6/Box Sync/Comb-Prev-Calibration-staging/tdf.ATL.1race.gcct.rda")
 opts_chunk$set(echo=FALSE,
                cache=TRUE, autodep=TRUE, cache.comments=FALSE,
                message=FALSE, warning=FALSE)
 ```
 
-<style>
-  .col2 {
-    columns: 2 200px;         /* number of columns and width in pixels*/
-    -webkit-columns: 2 200px; /* chrome, safari */
-    -moz-columns: 2 200px;    /* firefox */
-  }
-  .col3 {
-    columns: 3 100px;
-    -webkit-columns: 3 100px;
-    -moz-columns: 3 100px;
-  }
-</style>
+## Changes to ARTnet Functions
 
-## ARTnet Workflow Update
+ARTnet has been updated, and will continue to be updated, to allow for greater flexibility in modeling of network structures for use in EpiModel. 
 
-ARTnet has been updated, and will continue to be updated, to allow for greater flexibility in modeling of network structures for use in EpiModel. Current ARTnet funcgtionality only allows for modeling of network at the "city" level of resolution:
+### Geographic Stratification
+
+Current ARTnet functionality only allows for modeling of network at the "city" level of resolution:
 
 ```{r, echo = TRUE, eval = FALSE}
 suppressMessages(library("EpiModelHIV"))
@@ -43,14 +35,14 @@ Now, ARTnet 2.0 removes the `city_name` variable and inserts a `geog.cat` variab
 
 ```{r, echo = TRUE, eval = FALSE}
 epistats1 <- build_epistats(geog.lvl = "city", "geog.cat" = "Atlanta")
-saveRDS(epistats, file = "est/epistats.rda")
+saveRDS(epistats1, file = "est/epistats.rda")
 ```
 
 This new input tells `build_epistats` that the geographical level of interest is the city level and that the geographical region of interest is Atlanta. There are five levels of geographical subsetting available in ARTnet: city, state, census division and geographic region. These are called by `geog.lvl = ` city, state, div, and reg respectively in the `build_epistats` function call. An individual who would like to build a network structure based on, say, Georgia, would then use:
 
 ```{r, echo = TRUE, eval = FALSE}
 epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "GA")
-saveRDS(epistats, file = "est/epistats.rda")
+saveRDS(epistats2, file = "est/epistats.rda")
 ```
 
 Similarly, if one wishes to use the other levels of geographic stratification they can do so as above:
@@ -60,30 +52,63 @@ epistats2 <- build_epistats(geog.lvl = "div", geog.cat = "5")
 epistats3 <- build_epistats(geog.lvl = "reg", geog.cat = "1")
 ```
 
-For a list of available geographic categories per geographic level use the helper function `ARTnet.help()`:
-
-```{r, echo = TRUE, eval = FALSE}
-#NOTE: not implemented yet; how should this look? Just list all possible variables or worth listing variables and their descriptions? Should user be expected to know all this?
-ARTnet.help(geog = "city")
-```
-
-for example will print out a list of all available cities within the ARTnet data set.
+### Race Stratification
 
 A further change made to ARTnet is the ability for users to choose whether or not to add race into network estimation. Previously, this was "on"" by default; however now, with the `race = ` option in build_epistats, users are able to choose between `TRUE` or `FALSE` denoting race and no-race stratification:
 
 ```{r, echo = TRUE, eval = FALSE}
 #Racial stratification
-epistats4 <- build_epistats(geog.level = "state", geog.cat = "WA", race = TRUE)
+epistats4 <- build_epistats(geog.lvl = "state", geog.cat = "WA", race = TRUE)
 
 #No racial stratification
-epistats5 <- build_epistats(geog.level = "state", geog.cat = "WA", race = FALSE)
+epistats5 <- build_epistats(geog.lvl = "state", geog.cat = "WA", race = FALSE)
 ```
 
 Racial stratification is set to true by default.
 
-# Future Updates
+### Age Stratification
 
-Work will continue on updating ARTnet to be more flexible and useful to the end-user. Upcoming changes will allow more demographic stratification, such as straifying by age-group, as well as further quality of life updates.
+A further addition to the ARTnet workflow is allowing for age group subsetting and arbitrary setting of age groups. Currently ARTnet uses the full range of ages within ARTnetData and age groups are set at `0, 24, 34, 44, 54, 64, 100`. This is retained as the default behavior behavior of ARTnet with new variables `age.lim` in `build_epistats` and `age.bks` and `age.cat` allowing for age range and group specification respectively:
+
+* `age.lim`: specifies the range of values to subset ARTnetData by.
+* `age.bks`: explicitly specifies the age breaks for age categories. If `NULL` defaults to 5 equally spaced categories.
+* `age.cat`: specifies total number of age categories to use; used only if `age.bks` is not specified.
+
+```{r, echo = TRUE, eval = FALSE}
+#Set age limits
+epistats6 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = TRUE, age.lim = c(15, 65))
+
+#Specify age categories: (0-20], (20, 30], . . . (60, 100]
+netparams1 <- build_netparams(epistats = epistats6, age.bks = c(20, 30, 40, 50, 60), smooth.main.dur.55p = TRUE)
+
+#Specify the number of age categories
+netparams2 <- build_netparams(epistats = epistats6, age.cat = 6, smooth.main.dur.55p = TRUE)
+
+#Specify neither; build_netparams will default to 6
+netparams3 <- build_netparams(epistats = epistats6, smooth.main.dur.55p = TRUE)
+```
+
+## ARTnet Workflow
+
+Below is the updated workflow for generating network objects for use in contructing full network:
+
+```{r, echo = TRUE, eval = FALSE}
+#Epistats: Specify geographic features, as well as race stratification and total age range
+#under consideration
+epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15, 65))
+saveRDS(epistats, file = "est/epistats.rda")
+
+#Netparams: Specify age categories if needed, or let ARTnet determine age categories by number of 
+#categories desired
+netparams <- build_netparams(epistats = epistats, smooth.main.dur.55p = TRUE)
+
+#Netstats: Finalize network setup 
+netstats <- build_netstats(epistats, netparams, expect.mort = 0.0005, network.size = 1000)
+saveRDS(netstats, file = "est/netstats.rda")
+```
+
+
+
 
 
 
