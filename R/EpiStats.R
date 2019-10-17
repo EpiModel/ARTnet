@@ -3,8 +3,8 @@
 #'
 #' @param geog.lvl Specifies geographic feature for ARTnet statistics..
 #' @param geog.cat Specifies geographic stratum to base ARTnet statistics on.
-#' @param age.lim Upper and lower limit. Age rage to subset ARTnet data by. Default is 0 to 65
-#' @param age.bks Ages that define age categories. If NULL, age breaks are equally spaced.
+#' @param age.lim Upper and lower limit. Age rage to subset ARTnet data by. Default is 15 to 65
+#' @param age.bks Ages that define age categories. Default is c(25, 35, 45, 55, 65).
 #' @param browser Run function in interactive browser mode.
 #' @param race Whether to stratify by racial status. Default is TRUE.
 #'
@@ -13,7 +13,7 @@
 #' @examples
 #'
 #' epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15, 65),
-#' age.bks = c(0, 24, 34, 44, 54, 64, 100))
+#' age.bks = c(24, 34, 44, 54, 64))
 #'
 #' epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA")
 #'
@@ -22,7 +22,7 @@
 #'
 #'
 build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
-                           age.lim = c(15,65), age.bks = c(0, 24, 34, 44, 54, 64, 100),
+                           age.lim = c(15,65), age.bks = c(25, 35, 45, 55, 65),
                            browser = FALSE) {
 
   if (browser == TRUE) {
@@ -111,14 +111,21 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   #Warning if age range is out of allowed range
   flag.ll <- age.lim[1] >= 15 & age.lim[1] <= 65
   flag.ul <- age.lim[2] >= 15 & age.lim[2] <= 65
-  flag <- flag.ll*flag.ul
+  flag.lim <- flag.ll*flag.ul
 
-  if (flag == FALSE) {
+  if (flag.lim == FALSE) {
     stop("Age range must be between 15 and 65")
   }
 
   age.lim <- c(min(age.lim), max(age.lim))
-  age.bks <- c(0, age.bks, 100)
+
+  flag.bks <- prod(age.bks <= age.lim[2] & age.bks >= age.lim[1])
+
+  if (flag.bks == 0) {
+    stop("Age breaks must be between specified age limits")
+  }
+
+  age.bks <- sort(c(0, age.bks, 100))
 
   l <- subset(l, age >= age.lim[1] & age <= age.lim[2])
   d <- subset(d, age >= age.lim[1] & age <= age.lim[2])

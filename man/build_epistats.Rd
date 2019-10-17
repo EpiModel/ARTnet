@@ -5,7 +5,7 @@
 \title{Build EpiStats}
 \usage{
 build_epistats(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
-  age.lim = c(15, 65), age.bks = c(0, 24, 34, 44, 54, 64, 100),
+  age.lim = c(15, 65), age.bks = c(25, 35, 45, 55, 65),
   browser = FALSE)
 }
 \arguments{
@@ -15,9 +15,9 @@ build_epistats(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
 \item{race}{Whether to stratify by racial status. Default is TRUE.}
 
-\item{age.lim}{Upper and lower limit. Age rage to subset ARTnet data by. Default is 0 to 65}
+\item{age.lim}{Upper and lower limit. Age rage to subset ARTnet data by. Default is 15 to 65}
 
-\item{age.bks}{Ages that define age categories. If NULL, age breaks are equally spaced.}
+\item{age.bks}{Ages that define age categories. Default is c(25, 35, 45, 55, 65).}
 
 \item{browser}{Run function in interactive browser mode.}
 }
@@ -27,7 +27,7 @@ Build EpiStats
 \examples{
 
 epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15, 65),
-age.bks = c(0, 24, 34, 44, 54, 64, 100))
+age.bks = c(24, 34, 44, 54, 64))
 
 epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA")
 
