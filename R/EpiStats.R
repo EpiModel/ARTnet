@@ -107,44 +107,18 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
   #Subset data by selected age range
 
-  if (!(is.null(age.lim))) {
-    #Warning if age range is out of allowed range
-    flag.ll <- age.lim[1] >= 15 & age.lim[1] <= 65
-    flag.ul <- age.lim[2] >= 15 & age.lim[2] <= 65
-    flag <- flag.ll*flag.ul
 
-    if (flag == FALSE) {
-      stop("Age range must be between 15 and 65")
-    }
+  #Warning if age range is out of allowed range
+  flag.ll <- age.lim[1] >= 15 & age.lim[1] <= 65
+  flag.ul <- age.lim[2] >= 15 & age.lim[2] <= 65
+  flag <- flag.ll*flag.ul
 
-    age.lim <- c(min(age.lim), max(age.lim))
-
-
+  if (flag == FALSE) {
+    stop("Age range must be between 15 and 65")
   }
 
-  else {
-    age.lim <- c(0,100)
-  }
-
-  #Age Breaks
-  if (is.null(age.lim)){
-    age.bks <- c(0, 24, 34, 44, 54, 64, 100)
-  }
-
-  else {
-    if(!is.null(age.bks)){
-      age.breaks <- c(0, age.bks, 100)
-    }
-    else{
-      if (!is.null(age.cat)){
-        age.cat <- age.cat - 2
-        age.breaks <- c(0, seq(age.lim[1], age.lim[2], length.out = age.cat), 100)
-      }
-      else {
-        age.breaks <- c(0, seq(age.lim[1], age.lim[2], length.out = 7), 100)
-      }
-    }
-  }
+  age.lim <- c(min(age.lim), max(age.lim))
+  age.bks <- c(0, age.bks, 100)
 
   l <- subset(l, age >= age.lim[1] & age <= age.lim[2])
   d <- subset(d, age >= age.lim[1] & age <= age.lim[2])
