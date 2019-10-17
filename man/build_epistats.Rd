@@ -5,7 +5,8 @@
 \title{Build EpiStats}
 \usage{
 build_epistats(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
-  age.lim = NULL, browser = FALSE)
+  age.lim = c(15, 65), age.bks = c(0, 24, 34, 44, 54, 64, 100),
+  browser = FALSE)
 }
 \arguments{
 \item{geog.lvl}{Specifies geographic feature for ARTnet statistics..}
@@ -16,6 +17,8 @@ build_epistats(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
 \item{age.lim}{Upper and lower limit. Age rage to subset ARTnet data by. Default is 0 to 65}
 
+\item{age.bks}{Ages that define age categories. If NULL, age breaks are equally spaced.}
+
 \item{browser}{Run function in interactive browser mode.}
 }
 \description{
@@ -23,13 +26,10 @@ Build EpiStats
 }
 \examples{
 
-epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15, 65))
+epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15, 65),
+age.bks = c(0, 24, 34, 44, 54, 64, 100))
 
-epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA", age.lim = c(15, 65))
-
-epistats3 <- build_epistats(geog.lvl = "region", geog.cat = "1")
-
-epistats4 <- build_epistats(geog.lvl = "division", geog.cat = "1")
+epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA")
 
 #No racial stratification
 epistats5 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE)

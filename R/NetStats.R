@@ -11,8 +11,8 @@
 #' @export
 #'
 #' @examples
-#' epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15,65))
-#' netparams <- build_netparams(epistats = epistats, age.cat = 6, smooth.main.dur.55p = TRUE)
+#' epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta")
+#' netparams <- build_netparams(epistats = epistats, smooth.main.dur.old = TRUE)
 #' netstats <- build_netstats(epistats, netparams)
 #'
 build_netstats <- function(epistats, netparams,
@@ -76,7 +76,6 @@ build_netstats <- function(epistats, netparams,
 
   ## Age-sex-specific mortality rates (B, H, W)
   #    in 5-year age decrments starting with age 15
-  # TODO: update asmr.H for hispanics, currently just using asmr.B
   ages <- out$demog$ages <- 15:64
   asmr.B <- c(0.00078, 0.00148, 0.00157, 0.00168, 0.00198,
               0.00254, 0.00376, 0.00628, 0.00999, 0.01533)

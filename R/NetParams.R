@@ -2,23 +2,19 @@
 #' Build NetParams
 #'
 #' @param epistats Output from \code{\link{build_epistats}}.
-#' @param age.bks Ages that define age categories. If NULL, age breaks are equally spaced.
-#' @param age.cat Total number of age categories; only used if age.bks is NULL and age.lim has been defined.
-#' @param smooth.main.dur.55p If \code{TRUE}, average main durations for age
-#'        45-55 and 55+ age groups.
+#' @param smooth.main.dur.old If \code{TRUE}, average main durations for oldest and second oldest age
+#' groups. FALSE by default.
 #' @param browser Run function in interactive browser mode.
 #'
 #' @export
 #'
 #' @examples
-#' epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15,65))
-#' netparams1 <- build_netparams(epistats = epistats, smooth.main.dur.55p = TRUE)
-#' netparams2 <- build_netparams(epistats = epistats, age.bks = c(20, 30, 40, 50, 60),
-#' smooth.main.dur.55p = TRUE)
-#' netparams3 <- build_netparams(epistats = epistats, age.cat = 6, smooth.main.dur.55p = TRUE)
+#' epistats <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = TRUE, age.lim = c(15, 65),
+#' age.bks = c(20, 30, 40, 50, 60))
+#' netparams <- build_netparams(epistats = epistats, smooth.main.dur.old = TRUE)
 #'
-build_netparams <- function(epistats, age.bks = NULL, age.cat = NULL,
-                            smooth.main.dur.55p = FALSE,
+
+build_netparams <- function(epistats, smooth.main.dur.old = FALSE,
                             browser = FALSE) {
 
   if (browser == TRUE) {
@@ -33,27 +29,7 @@ build_netparams <- function(epistats, age.bks = NULL, age.cat = NULL,
   geog.lvl <- epistats$geog.lvl
   geog.cat <- epistats$geog.cat
   race <- epistats$race
-  age.lim <- epistats$age.lim
-
-  #Age Breaks
-  if (is.null(age.lim)){
-    age.bks <- c(0, 24, 34, 44, 54, 64, 100)
-  }
-
-  else {
-    if(!is.null(age.bks)){
-      age.breaks <- c(0, age.bks, 100)
-    }
-    else{
-      if (!is.null(age.cat)){
-        age.cat <- age.cat - 2
-        age.breaks <- c(0, seq(age.lim[1], age.lim[2], length.out = age.cat), 100)
-      }
-      else {
-        age.breaks <- c(0, seq(age.lim[1], age.lim[2], length.out = 7), 100)
-      }
-    }
-  }
+  age.breaks <- epistats$age.bks
 
   # 0. Data Processing ------------------------------------------------------
 
@@ -411,8 +387,12 @@ build_netparams <- function(epistats, age.bks = NULL, age.cat = NULL,
   durs.main.all <- durs.main.all[, c(3, 1, 2, 4, 5)]
   out$main$durs.main.byage <- durs.main.all
 
-  if (smooth.main.dur.55p == TRUE) {
-    out$main$durs.main.byage$mean.dur.adj[6] <- mean(out$main$durs.main.byage$mean.dur.adj[5:6])
+  if (smooth.main.dur.old == TRUE) {
+    n2 <- nrow(durs.main.all)
+    n1 <- n2-1
+    if (n2 > 3){
+    out$main$durs.main.byage$mean.dur.adj[n2] <- mean(out$main$durs.main.byage$mean.dur.adj[n1:n2])
+    }
   }
 
 

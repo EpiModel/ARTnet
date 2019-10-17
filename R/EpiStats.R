@@ -4,6 +4,7 @@
 #' @param geog.lvl Specifies geographic feature for ARTnet statistics..
 #' @param geog.cat Specifies geographic stratum to base ARTnet statistics on.
 #' @param age.lim Upper and lower limit. Age rage to subset ARTnet data by. Default is 0 to 65
+#' @param age.bks Ages that define age categories. If NULL, age breaks are equally spaced.
 #' @param browser Run function in interactive browser mode.
 #' @param race Whether to stratify by racial status. Default is TRUE.
 #'
@@ -11,20 +12,17 @@
 #'
 #' @examples
 #'
-#' epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15, 65))
+#' epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15, 65),
+#' age.bks = c(0, 24, 34, 44, 54, 64, 100))
 #'
-#' epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA", age.lim = c(15, 65))
-#'
-#' epistats3 <- build_epistats(geog.lvl = "region", geog.cat = "1")
-#'
-#' epistats4 <- build_epistats(geog.lvl = "division", geog.cat = "1")
+#' epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA")
 #'
 #' #No racial stratification
 #' epistats5 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE)
 #'
 #'
 build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
-                           age.lim = NULL,
+                           age.lim = c(15,65), age.bks = c(0, 24, 34, 44, 54, 64, 100),
                            browser = FALSE) {
 
   if (browser == TRUE) {
@@ -40,17 +38,6 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   if (!(geog.lvl %in% geog_names)){
     stop("Selected geographic feature must be one of: city, state, region or division")
   }
-  #geog.args <- is.null(sys.call())[1:4]
-  #if (sum(geog.args) > 1){
-  #  stop("Only one geographical factor may be chosen at a time")
-  #}
-
-
-  #Delete: # Derivatives ##
-  #Delete: geog_name <- paste0("city2", city_name)
-
-  # names(l)
-
 
   # Data Processing ---------------------------------------------------------
 
@@ -116,12 +103,9 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
     }
   }
 
-  # Age
-  # table(l$age, useNA = "always")
-  # table(l$p_age_imp, useNA = "always")
+  # Age Processing
 
   #Subset data by selected age range
-
 
   if (!(is.null(age.lim))) {
     #Warning if age range is out of allowed range
@@ -140,6 +124,26 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
   else {
     age.lim <- c(0,100)
+  }
+
+  #Age Breaks
+  if (is.null(age.lim)){
+    age.bks <- c(0, 24, 34, 44, 54, 64, 100)
+  }
+
+  else {
+    if(!is.null(age.bks)){
+      age.breaks <- c(0, age.bks, 100)
+    }
+    else{
+      if (!is.null(age.cat)){
+        age.cat <- age.cat - 2
+        age.breaks <- c(0, seq(age.lim[1], age.lim[2], length.out = age.cat), 100)
+      }
+      else {
+        age.breaks <- c(0, seq(age.lim[1], age.lim[2], length.out = 7), 100)
+      }
+    }
   }
 
   l <- subset(l, age >= age.lim[1] & age <= age.lim[2])
@@ -424,5 +428,6 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   out$long <- l
   out$wide <- d
   out$age.lim <- age.lim
+  out$age.bks <- age.bks
   return(out)
 }

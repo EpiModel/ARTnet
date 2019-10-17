@@ -4,18 +4,13 @@
 \alias{build_netparams}
 \title{Build NetParams}
 \usage{
-build_netparams(epistats, age.bks = NULL, age.cat = NULL,
-  smooth.main.dur.55p = FALSE, browser = FALSE)
+build_netparams(epistats, smooth.main.dur.old = FALSE, browser = FALSE)
 }
 \arguments{
 \item{epistats}{Output from \code{\link{build_epistats}}.}
 
-\item{age.bks}{Ages that define age categories. If NULL, age breaks are equally spaced.}
-
-\item{age.cat}{Total number of age categories; only used if age.bks is NULL and age.lim has been defined.}
-
-\item{smooth.main.dur.55p}{If \code{TRUE}, average main durations for age
-45-55 and 55+ age groups.}
+\item{smooth.main.dur.old}{If \code{TRUE}, average main durations for oldest and second oldest age
+groups. FALSE by default.}
 
 \item{browser}{Run function in interactive browser mode.}
 }
@@ -23,10 +18,8 @@ build_netparams(epistats, age.bks = NULL, age.cat = NULL,
 Build NetParams
 }
 \examples{
-epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15,65))
-netparams1 <- build_netparams(epistats = epistats, smooth.main.dur.55p = TRUE)
-netparams2 <- build_netparams(epistats = epistats, age.bks = c(20, 30, 40, 50, 60),
-smooth.main.dur.55p = TRUE)
-netparams3 <- build_netparams(epistats = epistats, age.cat = 6, smooth.main.dur.55p = TRUE)
+epistats <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = TRUE, age.lim = c(15, 65),
+age.bks = c(20, 30, 40, 50, 60))
+netparams <- build_netparams(epistats = epistats, smooth.main.dur.old = TRUE)
 
 }

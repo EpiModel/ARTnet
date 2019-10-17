@@ -5,6 +5,7 @@ date: "October 15, 2019"
 output:
   html_document:
     df_print: paged
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -34,7 +35,7 @@ saveRDS(epistats, file = "est/epistats.rda")
 Now, ARTnet 2.0 removes the `city_name` variable and inserts a `geog.cat` variable; this variable is introduced along with the variable `geog.lvl` which specifies the level of geographic resolution desired by the user:
 
 ```{r, echo = TRUE, eval = FALSE}
-epistats1 <- build_epistats(geog.lvl = "city", "geog.cat" = "Atlanta")
+epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta")
 saveRDS(epistats1, file = "est/epistats.rda")
 ```
 
@@ -49,7 +50,7 @@ Similarly, if one wishes to use the other levels of geographic stratification th
 
 ```{r, echo = TRUE, eval = FALSE}
 epistats2 <- build_epistats(geog.lvl = "div", geog.cat = "5")
-epistats3 <- build_epistats(geog.lvl = "reg", geog.cat = "1")
+epistats3 <- build_epistats(geog.lvl = "reg", geog.cat = "3")
 ```
 
 ### Race Stratification
@@ -61,31 +62,25 @@ A further change made to ARTnet is the ability for users to choose whether or no
 epistats4 <- build_epistats(geog.lvl = "state", geog.cat = "WA", race = TRUE)
 
 #No racial stratification
-epistats5 <- build_epistats(geog.lvl = "state", geog.cat = "WA", race = FALSE)
+epistats5 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE)
 ```
 
 Racial stratification is set to true by default.
 
 ### Age Stratification
 
-A further addition to the ARTnet workflow is allowing for age group subsetting and arbitrary setting of age groups. Currently ARTnet uses the full range of ages within ARTnetData and age groups are set at `0, 24, 34, 44, 54, 64, 100`. This is retained as the default behavior behavior of ARTnet with new variables `age.lim` in `build_epistats` and `age.bks` and `age.cat` allowing for age range and group specification respectively:
+A further addition to the ARTnet workflow is allowing for age group subsetting and arbitrary setting of age groups. Currently ARTnet uses the full range of ages within ARTnetData and age groups are set at `0, 24, 34, 44, 54, 64, 100`. This is retained as the default behavior behavior of ARTnet with new variables `age.lim` in `build_epistats` and `age.bks` allowing for age range and group specification respectively:
 
 * `age.lim`: specifies the range of values to subset ARTnetData by.
 * `age.bks`: explicitly specifies the age breaks for age categories. If `NULL` defaults to 5 equally spaced categories.
-* `age.cat`: specifies total number of age categories to use; used only if `age.bks` is not specified.
 
 ```{r, echo = TRUE, eval = FALSE}
 #Set age limits
-epistats6 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = TRUE, age.lim = c(15, 65))
+epistats6 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = TRUE, age.lim = c(15, 65),
+                            age.bks = c(20, 30, 40, 50, 60))
 
 #Specify age categories: (0-20], (20, 30], . . . (60, 100]
-netparams1 <- build_netparams(epistats = epistats6, age.bks = c(20, 30, 40, 50, 60), smooth.main.dur.55p = TRUE)
-
-#Specify the number of age categories
-netparams2 <- build_netparams(epistats = epistats6, age.cat = 6, smooth.main.dur.55p = TRUE)
-
-#Specify neither; build_netparams will default to 6
-netparams3 <- build_netparams(epistats = epistats6, smooth.main.dur.55p = TRUE)
+netparams1 <- build_netparams(epistats = epistats6, smooth.main.dur.old = TRUE)
 ```
 
 ## ARTnet Workflow
@@ -95,12 +90,13 @@ Below is the updated workflow for generating network objects for use in contruct
 ```{r, echo = TRUE, eval = FALSE}
 #Epistats: Specify geographic features, as well as race stratification and total age range
 #under consideration
-epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15, 65))
+epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", race = TRUE, age.lim = c(15, 65),
+                            age.bks = c(20, 30, 40, 50, 60))
 saveRDS(epistats, file = "est/epistats.rda")
 
 #Netparams: Specify age categories if needed, or let ARTnet determine age categories by number of 
 #categories desired
-netparams <- build_netparams(epistats = epistats, smooth.main.dur.55p = TRUE)
+netparams <- build_netparams(epistats = epistats, smooth.main.dur.old = TRUE)
 
 #Netstats: Finalize network setup 
 netstats <- build_netstats(epistats, netparams, expect.mort = 0.0005, network.size = 1000)
