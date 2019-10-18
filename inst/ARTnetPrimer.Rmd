@@ -85,7 +85,7 @@ netparams1 <- build_netparams(epistats = epistats6, smooth.main.dur.old = TRUE)
 
 ## ARTnet Workflow
 
-Below is the updated workflow for generating network objects for use in contructing full network:
+Below is the updated workflow for generating network objects for use in constructing full network:
 
 ```{r, echo = TRUE, eval = FALSE}
 #Epistats: Specify geographic features, as well as race stratification and total age range
@@ -102,13 +102,3 @@ netparams <- build_netparams(epistats = epistats, smooth.main.dur.old = TRUE)
 netstats <- build_netstats(epistats, netparams, expect.mort = 0.0005, network.size = 1000)
 saveRDS(netstats, file = "est/netstats.rda")
 ```
-
-
-
-
-
-
-
-
-
-
