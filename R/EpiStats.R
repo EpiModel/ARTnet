@@ -34,7 +34,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   d <- ARTnet.wide
   l <- ARTnet.long
 
-  geog_names <- c("city", "state", "region", "division")
+  geog_names <- c("city", "state", "region", "division", "all")
   if (!(geog.lvl %in% geog_names)){
     stop("Selected geographic feature must be one of: city, state, region or division")
   }
@@ -215,19 +215,37 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
   # Pull Data
   if (race == TRUE){
-  la <- select(l, ptype, duration, comb.age, geogYN = geogYN,
+  if (geog.lvl == "all"){
+  la <- select(l, ptype, duration, comb.age,
                race.combo, RAI, IAI, hiv.concord.pos, prep,
                acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
     filter(ptype %in% 1:2) %>%
     filter(RAI == 1 | IAI == 1)
   la <- select(la, -c(RAI, IAI))
+  } else {
+    la <- select(l, ptype, duration, comb.age, geogYN = geogYN,
+                 race.combo, RAI, IAI, hiv.concord.pos, prep,
+                 acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
+      filter(ptype %in% 1:2) %>%
+      filter(RAI == 1 | IAI == 1)
+    la <- select(la, -c(RAI, IAI))
+  }
   }  else {
+    if (geog.lvl == "all"){
     la <- select(l, ptype, duration, comb.age, geogYN = geogYN,
                  RAI, IAI, hiv.concord.pos, prep,
                  acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
       filter(ptype %in% 1:2) %>%
       filter(RAI == 1 | IAI == 1)
     la <- select(la, -c(RAI, IAI))
+    } else {
+      la <- select(l, ptype, duration, comb.age, geogYN = geogYN,
+                   RAI, IAI, hiv.concord.pos, prep,
+                   acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
+        filter(ptype %in% 1:2) %>%
+        filter(RAI == 1 | IAI == 1)
+      la <- select(la, -c(RAI, IAI))
+    }
   }
 
 
@@ -293,18 +311,34 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
   # Condom Use // Inst ------------------------------------------------------
   if (race == TRUE){
-  lb <- select(l, ptype, comb.age, geogYN = geogYN,
+    if (geog.lvl == "all"){
+  lb <- select(l, ptype, comb.age,
                race.combo, hiv.concord.pos, prep,
                RAI, IAI, RECUAI, INSUAI) %>%
     filter(ptype == 3) %>%
     filter(RAI == 1 | IAI == 1)
+    } else {
+      lb <- select(l, ptype, comb.age, geogYN = geogYN,
+                   race.combo, hiv.concord.pos, prep,
+                   RAI, IAI, RECUAI, INSUAI) %>%
+        filter(ptype == 3) %>%
+        filter(RAI == 1 | IAI == 1)
+    }
   }
   else {
+    if (geog.lvl == "all"){
     lb <- select(l, ptype, comb.age, geogYN = geogYN,
                  hiv.concord.pos, prep,
                  RAI, IAI, RECUAI, INSUAI) %>%
       filter(ptype == 3) %>%
       filter(RAI == 1 | IAI == 1)
+    } else {
+      lb <- select(l, ptype, comb.age, geogYN = geogYN,
+                   hiv.concord.pos, prep,
+                   RAI, IAI, RECUAI, INSUAI) %>%
+        filter(ptype == 3) %>%
+        filter(RAI == 1 | IAI == 1)
+    }
   }
 
   lb$prob.cond <- rep(NA, nrow(lb))
