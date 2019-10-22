@@ -113,7 +113,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   flag.ul <- age.lim[2] >= 15 & age.lim[2] <= 65
   flag.lim <- flag.ll*flag.ul
 
-  if (flag.lim == FALSE) {
+  if (flag.lim == 0) {
     stop("Age range must be between 15 and 65")
   }
 
@@ -188,7 +188,6 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
   # HIV
   l$p_hiv2 <- ifelse(l$p_hiv == 1, 1, 0)
-  # table(l$hiv2, l$p_hiv, useNA = "always")
 
   hiv.combo <- rep(NA, nrow(l))
   hiv.combo[l$hiv2 == 0 & l$p_hiv == 0] <- 1
@@ -197,8 +196,6 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   hiv.combo[l$hiv2 == 0 & l$p_hiv == 1] <- 3
   hiv.combo[l$hiv2 == 0 & l$p_hiv == 2] <- 4
   hiv.combo[l$hiv2 == 1 & l$p_hiv == 2] <- 5
-  # table(hiv.combo, useNA = "always")
-
   l$hiv.concord.pos <- ifelse(hiv.combo == 2, 1, 0)
   # table(l$hiv.concord.pos)
 
@@ -207,7 +204,6 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   # table(d$artnetPREP_CURRENT, useNA = "always")
   # table(d$PREP_REVISED, d$artnetPREP_CURRENT, useNA = "always")
   d$prep <- ifelse(d$artnetPREP_CURRENT == 0 | is.na(d$artnetPREP_CURRENT), 0, 1)
-  # table(d$prep, useNA = "always")
 
   dlim <- select(d, c(AMIS_ID, survey.year, prep))
   l <- left_join(l, dlim, by = "AMIS_ID")
@@ -225,9 +221,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
     filter(ptype %in% 1:2) %>%
     filter(RAI == 1 | IAI == 1)
   la <- select(la, -c(RAI, IAI))
-  }
-
-  else {
+  }  else {
     la <- select(l, ptype, duration, comb.age, geogYN = geogYN,
                  RAI, IAI, hiv.concord.pos, prep,
                  acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
@@ -239,80 +233,63 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
   # Poisson Model
   if (race == TRUE){
+    if (geog.lvl == "all"){
   acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) + as.factor(race.combo) +
                     as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
-                    hiv.concord.pos + geogYN,
+                    hiv.concord.pos,
                   family = poisson(), data = la)
-  }
-
-  else {
+    } else {
+      acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) + as.factor(race.combo) +
+                        as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
+                        hiv.concord.pos + geogYN,
+                      family = poisson(), data = la)
+    }
+  }  else {
+    if (geog.lvl == "all"){
     acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) +
                       as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
-                      hiv.concord.pos + geogYN,
+                      hiv.concord.pos,
                     family = poisson(), data = la)
+    } else {
+      acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) +
+                        as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
+                        hiv.concord.pos + geogYN,
+                      family = poisson(), data = la)
+    }
   }
-
-  # summary(acts.mod)
-  #
-  # x <- expand.grid(duration = 100,
-  #                  ptype = 2,
-  #                  race.combo = 1:6,
-  #                  comb.age = 40,
-  #                  hiv.concord.pos = 0,
-  #                  city = 1)
-  # pred <- predict(acts.mod, newdata = x, type = "response", se.fit = FALSE)
-  # pred.acts <- cbind(x, pred = pred/52)
-  # pred.acts
-
 
   # Condom Use // Main Casual -----------------------------------------------
 
-  # par(mar = c(3,3,1,1), mgp = c(2,1,0))
-  # plot(la$acts, la$cp.acts)
-  # plot(la$acts, la$cp.acts, xlim = c(0, 10), ylim = c(0, 10))
-
-  # summary(la$cp.acts)
-
   la$prob.cond <- la$cp.acts / la$acts
-  # head(la, 25)
-
-  # table(la$acts, useNA = "always")
-  #
-  # hist(la$prob.cond)
-  # table(la$prob.cond)
-  # summary(la$prob.cond)
-  # summary(la$prob.cond[la$ptype == 1])
-  # summary(la$prob.cond[la$ptype == 2])
-
   la$any.cond <- ifelse(la$prob.cond > 0, 1, 0)
   la$never.cond <- ifelse(la$prob.cond == 0, 1, 0)
   # table(la$never.cond)
 
   if (race == TRUE) {
+    if (geog.lvl == "all"){
   cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) + as.factor(race.combo) +
                        as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
-                       hiv.concord.pos + prep + geogYN,
+                       hiv.concord.pos + prep,
                      family = binomial(), data = la)
-  }
-  else {
+    } else {
+      cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) + as.factor(race.combo) +
+                           as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
+                           hiv.concord.pos + prep + geogYN,
+                         family = binomial(), data = la)
+    }
+  }  else {
+    if (geog.lvl == "all"){
     cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) +
                          as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
-                         hiv.concord.pos + prep + geogYN,
+                         hiv.concord.pos + prep,
                        family = binomial(), data = la)
+    } else{
+      cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) +
+                           as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
+                           hiv.concord.pos + prep + geogYN,
+                         family = binomial(), data = la)
+    }
   }
-  # summary(cond.mc.mod)
-  #
-  # x <- expand.grid(duration = 50,
-  #                  ptype = 2,
-  #                  race.combo = 1:6,
-  #                  comb.age = 40,
-  #                  hiv.concord.pos = 0,
-  #                  prep = 0:1,
-  #                  city = 1)
-  # pred <- predict(cond.mc.mod, newdata = x, type = "response")
-  # pred.cond <- cbind(x, pred)
-  # pred.cond
-
 
   # Condom Use // Inst ------------------------------------------------------
   if (race == TRUE){
@@ -340,61 +317,61 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
     (lb$RAI[lb$RAI == 1 & lb$IAI == 1] + lb$IAI[lb$RAI == 1 & lb$IAI == 1])
   lb$prob.cond[which(lb$prob.cond == 0.5)] <- 0
   lb$prob.cond[which(lb$prob.cond %in% c(88, 99, 44))] <- NA
-  # table(lb$prob.cond)
   lb <- select(lb, -c(RAI, IAI, RECUAI, INSUAI))
-  # head(lb, 40)
 
   if (race == TRUE) {
+    if (geog.lvl == "all"){
     cond.oo.mod <- glm(prob.cond ~ as.factor(race.combo) +
                        comb.age + I(comb.age^2) +
-                       hiv.concord.pos + prep + geogYN,
+                       hiv.concord.pos + prep,
                      family = binomial(), data = lb)
+    } else {
+      cond.oo.mod <- glm(prob.cond ~ as.factor(race.combo) +
+                           comb.age + I(comb.age^2) +
+                           hiv.concord.pos + prep + geogYN,
+                         family = binomial(), data = lb)
+    }
   }
   else {
+    if (geog.lvl == "all"){
     cond.oo.mod <- glm(prob.cond ~ comb.age + I(comb.age^2) +
-                         hiv.concord.pos + prep + geogYN,
+                         hiv.concord.pos + prep,
                        family = binomial(), data = lb)
+    } else {
+      cond.oo.mod <- glm(prob.cond ~ comb.age + I(comb.age^2) +
+                           hiv.concord.pos + prep + geogYN,
+                         family = binomial(), data = lb)
+    }
   }
-  # summary(cond.oo.mod)
-  #
-  # x <- expand.grid(race.combo = 1:6,
-  #                  comb.age = 40,
-  #                  hiv.concord.pos = 0,
-  #                  prep = 0:1,
-  #                  city = 1)
-  # pred <- predict(cond.oo.mod, newdata = x, type = "response")
-  # pred.cond <- cbind(x, pred)
-  # pred.cond
-
-
 
   # Init HIV Status ---------------------------------------------------------
 
   if (race == TRUE){
-    d1 <- select(d, race.cat3, geogYN, age, hiv2)
+    if (geog.lvl == "all"){
+    d1 <- select(d, race.cat3, age, hiv2)
 
-    hiv.mod <- glm(hiv2 ~ age + geogYN + as.factor(race.cat3) + geogYN*as.factor(race.cat3),
+    hiv.mod <- glm(hiv2 ~ age + as.factor(race.cat3),
                  data = d1, family = binomial())
+    } else{
+      d1 <- select(d, race.cat3, geogYN, age, hiv2)
+      hiv.mod <- glm(hiv2 ~ age + geogYN + as.factor(race.cat3) + geogYN*as.factor(race.cat3),
+                     data = d1, family = binomial())
+    }
   }
 
   else {
-    d1 <- select(d, geogYN, age, hiv2)
+    if (geog.lvl == "all"){
+    d1 <- select(d, age, hiv2)
 
-    hiv.mod <- glm(hiv2 ~ age + geogYN,
+    hiv.mod <- glm(hiv2 ~ age ,
                    data = d1, family = binomial())
+    } else {
+      d1 <- select(d, geogYN, age, hiv2)
+
+      hiv.mod <- glm(hiv2 ~ age + geogYN,
+                               data = d1, family = binomial())
+      }
   }
-  # summary(hiv.mod)
-  # x <- expand.grid(age = 15:65, race.cat3 = 1:3, cityYN = 0:1)
-  # pred <- predict(hiv.mod, newdata = x)
-  # pred <- cbind(x, est = plogis(pred))
-  # pred
-
-  # ggplot(pred, aes(age, est, color = as.factor(race.cat3), lty = as.factor(cityYN))) +
-  #   geom_line() +
-  #   scale_color_viridis_d() +
-  #   theme_minimal()
-
-
 
   # Save Out File -----------------------------------------------------------
 
@@ -406,8 +383,10 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   out$cond.mc.mod <- cond.mc.mod
   out$cond.oo.mod <- cond.oo.mod
   out$hiv.mod <- hiv.mod
-  out$long <- l
-  out$wide <- d
+  out$geogYN.l <- l$geogYN
+  out$geogYN.d <- d$geogYN
+  out$geog.l <- l$geog
+  out$geog.d <- d$geog
   out$age.lim <- age.lim
   out$age.bks <- age.bks
   return(out)

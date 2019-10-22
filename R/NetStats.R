@@ -160,9 +160,7 @@ build_netstats <- function(epistats, netparams,
   preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
   attr_diag.status <- rbinom(num, 1, preds)
   out$attr$diag.status <- attr_diag.status
-  }
-
-  else {
+  }  else {
     xs <- data.frame(age = attr_age, geogYN = 1)
     preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
     attr_diag.status <- rbinom(num, 1, preds)
