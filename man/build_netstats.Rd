@@ -2,7 +2,7 @@
 % Please edit documentation in R/NetStats.R
 \name{build_netstats}
 \alias{build_netstats}
-\title{Build EpiStats}
+\title{Build NetStats}
 \usage{
 build_netstats(epistats, netparams, network.size = 10000,
   expect.mort = 0.000478213, browser = FALSE)
@@ -20,7 +20,7 @@ build_netstats(epistats, netparams, network.size = 10000,
 \item{browser}{Run function in interactive browser mode.}
 }
 \description{
-Build EpiStats
+Build NetStats
 }
 \examples{
 epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta")

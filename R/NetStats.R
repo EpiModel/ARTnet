@@ -1,5 +1,5 @@
 
-#' Build EpiStats
+#' Build NetStats
 #'
 #' @param epistats Output from \code{\link{build_epistats}}.
 #' @param netparams Output from \code{\link{build_netparams}}.
