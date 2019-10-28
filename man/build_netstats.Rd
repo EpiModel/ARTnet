@@ -2,10 +2,10 @@
 % Please edit documentation in R/NetStats.R
 \name{build_netstats}
 \alias{build_netstats}
-\title{Build NetStats}
+\title{Build Network Statistics for Network Estimation}
 \usage{
 build_netstats(epistats, netparams, network.size = 10000,
-  expect.mort = 0.000478213, browser = FALSE)
+  expect.mort = 0.000478213, edges_avg_nfrace = FALSE)
 }
 \arguments{
 \item{epistats}{Output from \code{\link{build_epistats}}.}
@@ -17,10 +17,16 @@ build_netstats(epistats, netparams, network.size = 10000,
 \item{expect.mort}{Expected average mortality level to pass into
 \code{\link{dissolution_coefs}} function.}
 
-\item{browser}{Run function in interactive browser mode.}
+\item{edges_avg_nfrace}{Whether degree differences exist along race. TRUE
+or FALSE; default of FALSE.}
 }
 \description{
-Build NetStats
+Build Network Statistics for Network Estimation
+}
+\details{
+\code{build_netstats} takes output from \code{\link{build_epistats}} and
+\code{\link{build_netparams}} to build the relevant network statistics
+that will be used in network estimation using package \link{EpiModel}.
 }
 \examples{
 epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta")

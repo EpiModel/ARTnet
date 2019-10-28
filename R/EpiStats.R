@@ -1,26 +1,64 @@
 
-#' Build EpiStats
+#' @title Epidemic Models for Act Rates and Probability of Condom Use
 #'
-#' @param geog.lvl Specifies geographic feature for ARTnet statistics..
+#' @description Builds epidemic models governing act rates and probability of condom use
+#' among main, casual and one-of sexual partnerships.
+#'
+#' @param geog.lvl Specifies geographic feature for ARTnet statistics.
 #' @param geog.cat Specifies geographic stratum to base ARTnet statistics on.
-#' @param age.lim Upper and lower limit. Age rage to subset ARTnet data by. Default is 15 to 65
-#' @param age.bks Ages that define age categories. Default is c(25, 35, 45, 55, 65).
-#' @param browser Run function in interactive browser mode.
+#' @param age.lim Upper and lower limit. Age range to subset ARTnet data by. Default is 15 to 65
+#' @param age.bks Ages that define the upper age categories. Default is c(25, 35, 45, 55, 65), which
+#' corresponds to (0, 25], (25, 35], (35, 45], (45, 55], (55, 65], (65, 100].
+#' @param browser Run function in interactive browser mode. Default is FALSE
 #' @param race Whether to stratify by racial status. Default is TRUE.
 #'
-#' @export
+#' @details
+#' \code{build_epistats}, through input of geographic, age and racial parameters, builds the neccessary
+#' epidemic models governing sexual activity and condom use during sexual activity in main, casual and
+#' one-off partnerships among men-who-have-sex-with-men (MSM). Estimation of these linear models is done using
+#' data from the ARTnetData package, a package containing the results of the online ARTnet survey of HIV-related
+#' risk behaviors, testing and use of preventive services among MSM in the United States. Accepted values for
+#' each input parameter are provided below.
+#'
+#' @section Parameter Values:
+#' \itemize{
+#' \item \code{geog.lvl}: level of geographic stratification desired. Acceptable values are "city",
+#'  "state", "region", "division", and "all" corresponding to cirty, state, census region, census
+#'  division and complete geographic area respectively.
+#' \item \code{geog.cat}: given a geographic level above, `geog.cat` gives the desired feature of
+#' interest. Acceptable values are based on the chosen geographic level:
+#'   \itemize{
+#' \item \code{city}: Atlanta, Boston, Chicago, Dallas, Denver, Detroit, Houston, Los Angeles, Miami,
+#' New York City, Philadelphia, San Diego, San Franciso, Seattle, Washington DC
+#' \item \code{state}: AK, AL, AR, AZ, CA, CO, CT, DC, DE, FL, GA, HI, IA, ID, IL, IN, KS, KY, LA, MA,
+#'  MD, ME, MI, MN, MO, MS, MT, NC, ND, NE, NH, NJ, NM, NV, NY, OH, OK, OR, PA, RI, SC, SD, TN, TX, UT,
+#'   VA, VT, WA, WI, WV, WY
+#' \item \code{division}: 1 (New England), 2 (Middle Atlantic), 3 (East North Central),
+#' 4 (West North Central), 5 (South Atlantic), 6 (East South Central), 7 (West South Central), 8 (Mountain) 9 (Pacific)
+#' \item \code{region}: 1 (Northeast), 2 (Midwest), 3 (South), 4 (North)
+#' \item \code{all}:  No input required if `geog.lvl` is set to "all".
+#'  }
+#' \item \code{race}: whether to introduce modeling by racial stratification. TRUE or FALSE.
+#' FALSE by default.
+#' \item \code{age.lim}: a vector giving the lower and upper limit for the age of interest. Set
+#' to `c(15, 65)` by default.
+#' \item \code{age.bks}: a vector giving the upper age breaks to categorize data by age. Must be
+#' within the bounds specified by `age.lim`
+#' }
 #'
 #' @examples
 #'
+#' #Age and geographic stratification; city
 #' epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15, 65),
 #' age.bks = c(24, 34, 44, 54, 64))
 #'
+#' #Default age stratification
 #' epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA")
 #'
 #' #No racial stratification
-#' epistats5 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE)
+#' epistats3 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE)
 #'
-#'
+#' @export
 build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
                            age.lim = c(15,65), age.bks = c(25, 35, 45, 55, 65),
                            browser = FALSE) {
@@ -35,26 +73,26 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   l <- ARTnet.long
 
   geog_names <- c("city", "state", "region", "division", "all")
-  if (!(geog.lvl %in% geog_names)){
+  if (!(geog.lvl %in% geog_names)) {
     stop("Selected geographic feature must be one of: city, state, region or division")
   }
 
   # Data Processing ---------------------------------------------------------
 
   # Geograph
-  if(length(geog.lvl) > 1){
+  if(length(geog.lvl) > 1) {
     stop("Only one geographical factor may be chosen at a time.")
   }
 
-  if(length(geog.cat) > 1){
+  if(length(geog.cat) > 1) {
     stop("Only one variable name may be chosen at a time.")
   }
 
 
 
-  if (!is.null(geog.lvl)){
-    if (geog.lvl == "city"){
-      if (!(geog.cat %in% unique(d$city))){
+  if (!is.null(geog.lvl)) {
+    if (geog.lvl == "city") {
+      if (!(geog.cat %in% unique(d$city))) {
         stop("City name not found")
       }
       l <- suppressMessages(left_join(l, d[,c("AMIS_ID", "city2")]))
@@ -66,8 +104,8 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
     }
 
-    if (geog.lvl == "state"){
-      if (!(geog.cat %in% unique(d$State))){
+    if (geog.lvl == "state") {
+      if (!(geog.cat %in% unique(d$State))) {
         stop("State name not found")
       }
       l <- suppressMessages(left_join(l, d[,c("AMIS_ID", "State")]))
@@ -78,8 +116,8 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
     }
 
-    if (geog.lvl == "division"){
-      if (!(geog.cat %in% unique(d$DIVCODE))){
+    if (geog.lvl == "division") {
+      if (!(geog.cat %in% unique(d$DIVCODE))) {
         stop("Division number not found")
       }
       l <- suppressMessages(left_join(l, d[,c("AMIS_ID", "DIVCODE")]))
@@ -90,8 +128,8 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
     }
 
-    if (geog.lvl == "region"){
-      if (!(geog.cat %in% unique(d$REGCODE))){
+    if (geog.lvl == "region") {
+      if (!(geog.cat %in% unique(d$REGCODE))) {
         stop("Regional code not found")
       }
       l <- suppressMessages(left_join(l, d[,c("AMIS_ID", "REGCODE")]))
@@ -134,55 +172,55 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   l$diff.age <- abs(l$age - l$p_age_imp)
 
   if (race == TRUE){
-  # Race
-  # table(d$race.cat)
-  d$race.cat3 <- rep(NA, nrow(d))
-  d$race.cat3[d$race.cat == "black"] <- 1
-  d$race.cat3[d$race.cat == "hispanic"] <- 2
-  d$race.cat3[d$race.cat %in% c("white", "other")] <- 3
-  # table(d$race.cat, d$race.cat3)
+    # Race
+    # table(d$race.cat)
+    d$race.cat3 <- rep(NA, nrow(d))
+    d$race.cat3[d$race.cat == "black"] <- 1
+    d$race.cat3[d$race.cat == "hispanic"] <- 2
+    d$race.cat3[d$race.cat %in% c("white", "other")] <- 3
+    # table(d$race.cat, d$race.cat3)
 
-  # table(l$race.cat, useNA = "always")
-  # table(l$p_race.cat, useNA = "always")
-  # table(l$race.cat, l$p_race.cat, useNA = "always")
+    # table(l$race.cat, useNA = "always")
+    # table(l$p_race.cat, useNA = "always")
+    # table(l$race.cat, l$p_race.cat, useNA = "always")
 
-  l$race.cat3 <- rep(NA, nrow(l))
-  l$race.cat3[l$race.cat == "black"] <- 1
-  l$race.cat3[l$race.cat == "hispanic"] <- 2
-  l$race.cat3[l$race.cat %in% c("white", "other")] <- 3
-  # table(l$race.cat3, useNA = "always")
+    l$race.cat3 <- rep(NA, nrow(l))
+    l$race.cat3[l$race.cat == "black"] <- 1
+    l$race.cat3[l$race.cat == "hispanic"] <- 2
+    l$race.cat3[l$race.cat %in% c("white", "other")] <- 3
+    # table(l$race.cat3, useNA = "always")
 
-  # table(l$p_race.cat, useNA = "always")
-  l$p_race.cat3 <- rep(NA, nrow(l))
-  l$p_race.cat3[l$p_race.cat == "black"] <- 1
-  l$p_race.cat3[l$p_race.cat == "hispanic"] <- 2
-  l$p_race.cat3[l$p_race.cat %in% c("white", "other")] <- 3
-  # table(l$p_race.cat3, useNA = "always")
+    # table(l$p_race.cat, useNA = "always")
+    l$p_race.cat3 <- rep(NA, nrow(l))
+    l$p_race.cat3[l$p_race.cat == "black"] <- 1
+    l$p_race.cat3[l$p_race.cat == "hispanic"] <- 2
+    l$p_race.cat3[l$p_race.cat %in% c("white", "other")] <- 3
+    # table(l$p_race.cat3, useNA = "always")
 
-  # redistribute NAs in proportion to non-missing partner races
-  probs <- prop.table(table(l$race.cat3, l$p_race.cat3), 1)
+    # redistribute NAs in proportion to non-missing partner races
+    probs <- prop.table(table(l$race.cat3, l$p_race.cat3), 1)
 
-  imp_black <- which(is.na(l$p_race.cat3) & l$race.cat3 == 1)
-  l$p_race.cat3[imp_black] <- sample(1:3, length(imp_black), TRUE, probs[1, ])
+    imp_black <- which(is.na(l$p_race.cat3) & l$race.cat3 == 1)
+    l$p_race.cat3[imp_black] <- sample(1:3, length(imp_black), TRUE, probs[1, ])
 
-  imp_hisp <- which(is.na(l$p_race.cat3) & l$race.cat3 == 2)
-  l$p_race.cat3[imp_hisp] <- sample(1:3, length(imp_hisp), TRUE, probs[2, ])
+    imp_hisp <- which(is.na(l$p_race.cat3) & l$race.cat3 == 2)
+    l$p_race.cat3[imp_hisp] <- sample(1:3, length(imp_hisp), TRUE, probs[2, ])
 
-  imp_white <- which(is.na(l$p_race.cat3) & l$race.cat3 == 3)
-  l$p_race.cat3[imp_white] <- sample(1:3, length(imp_white), TRUE, probs[3, ])
+    imp_white <- which(is.na(l$p_race.cat3) & l$race.cat3 == 3)
+    l$p_race.cat3[imp_white] <- sample(1:3, length(imp_white), TRUE, probs[3, ])
 
-  # table(l$race.cat3, l$p_race.cat3, useNA = "always")
+    # table(l$race.cat3, l$p_race.cat3, useNA = "always")
 
-  l$race.combo <- rep(NA, nrow(l))
-  l$race.combo[l$race.cat3 == 1 & l$p_race.cat3 == 1] <- 1
-  l$race.combo[l$race.cat3 == 1 & l$p_race.cat3 %in% 2:3] <- 2
-  l$race.combo[l$race.cat3 == 2 & l$p_race.cat3 %in% c(1, 3)] <- 3
-  l$race.combo[l$race.cat3 == 2 & l$p_race.cat3 == 2] <- 4
-  l$race.combo[l$race.cat3 == 3 & l$p_race.cat3 %in% 1:2] <- 5
-  l$race.combo[l$race.cat3 == 3 & l$p_race.cat3 == 3] <- 6
+    l$race.combo <- rep(NA, nrow(l))
+    l$race.combo[l$race.cat3 == 1 & l$p_race.cat3 == 1] <- 1
+    l$race.combo[l$race.cat3 == 1 & l$p_race.cat3 %in% 2:3] <- 2
+    l$race.combo[l$race.cat3 == 2 & l$p_race.cat3 %in% c(1, 3)] <- 3
+    l$race.combo[l$race.cat3 == 2 & l$p_race.cat3 == 2] <- 4
+    l$race.combo[l$race.cat3 == 3 & l$p_race.cat3 %in% 1:2] <- 5
+    l$race.combo[l$race.cat3 == 3 & l$p_race.cat3 == 3] <- 6
 
-  # table(l$race.combo)
-  l <- select(l, -c(race.cat3, p_race.cat3))
+    # table(l$race.combo)
+    l <- select(l, -c(race.cat3, p_race.cat3))
   }
 
 
@@ -215,29 +253,29 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
   # Pull Data
   if (race == TRUE){
-  if (geog.lvl == "all"){
-  la <- select(l, ptype, duration, comb.age,
-               race.combo, RAI, IAI, hiv.concord.pos, prep,
-               acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
-    filter(ptype %in% 1:2) %>%
-    filter(RAI == 1 | IAI == 1)
-  la <- select(la, -c(RAI, IAI))
-  } else {
-    la <- select(l, ptype, duration, comb.age, geogYN = geogYN,
-                 race.combo, RAI, IAI, hiv.concord.pos, prep,
-                 acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
-      filter(ptype %in% 1:2) %>%
-      filter(RAI == 1 | IAI == 1)
-    la <- select(la, -c(RAI, IAI))
-  }
+    if (geog.lvl == "all") {
+      la <- select(l, ptype, duration, comb.age,
+                   race.combo, RAI, IAI, hiv.concord.pos, prep,
+                   acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
+        filter(ptype %in% 1:2) %>%
+        filter(RAI == 1 | IAI == 1)
+      la <- select(la, -c(RAI, IAI))
+    } else {
+      la <- select(l, ptype, duration, comb.age, geogYN = geogYN,
+                   race.combo, RAI, IAI, hiv.concord.pos, prep,
+                   acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
+        filter(ptype %in% 1:2) %>%
+        filter(RAI == 1 | IAI == 1)
+      la <- select(la, -c(RAI, IAI))
+    }
   }  else {
-    if (geog.lvl == "all"){
-    la <- select(l, ptype, duration, comb.age, geogYN = geogYN,
-                 RAI, IAI, hiv.concord.pos, prep,
-                 acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
-      filter(ptype %in% 1:2) %>%
-      filter(RAI == 1 | IAI == 1)
-    la <- select(la, -c(RAI, IAI))
+    if (geog.lvl == "all") {
+      la <- select(l, ptype, duration, comb.age, geogYN = geogYN,
+                   RAI, IAI, hiv.concord.pos, prep,
+                   acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
+        filter(ptype %in% 1:2) %>%
+        filter(RAI == 1 | IAI == 1)
+      la <- select(la, -c(RAI, IAI))
     } else {
       la <- select(l, ptype, duration, comb.age, geogYN = geogYN,
                    RAI, IAI, hiv.concord.pos, prep,
@@ -250,12 +288,12 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
 
   # Poisson Model
-  if (race == TRUE){
-    if (geog.lvl == "all"){
-  acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) + as.factor(race.combo) +
-                    as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
-                    hiv.concord.pos,
-                  family = poisson(), data = la)
+  if (race == TRUE) {
+    if (geog.lvl == "all") {
+      acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) + as.factor(race.combo) +
+                        as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
+                        hiv.concord.pos,
+                      family = poisson(), data = la)
     } else {
       acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) + as.factor(race.combo) +
                         as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
@@ -263,11 +301,11 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
                       family = poisson(), data = la)
     }
   }  else {
-    if (geog.lvl == "all"){
-    acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) +
-                      as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
-                      hiv.concord.pos,
-                    family = poisson(), data = la)
+    if (geog.lvl == "all") {
+      acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) +
+                        as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
+                        hiv.concord.pos,
+                      family = poisson(), data = la)
     } else {
       acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) +
                         as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
@@ -284,11 +322,11 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   # table(la$never.cond)
 
   if (race == TRUE) {
-    if (geog.lvl == "all"){
-  cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) + as.factor(race.combo) +
-                       as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
-                       hiv.concord.pos + prep,
-                     family = binomial(), data = la)
+    if (geog.lvl == "all") {
+      cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) + as.factor(race.combo) +
+                           as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
+                           hiv.concord.pos + prep,
+                         family = binomial(), data = la)
     } else {
       cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) + as.factor(race.combo) +
                            as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
@@ -296,12 +334,12 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
                          family = binomial(), data = la)
     }
   }  else {
-    if (geog.lvl == "all"){
-    cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) +
-                         as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
-                         hiv.concord.pos + prep,
-                       family = binomial(), data = la)
-    } else{
+    if (geog.lvl == "all") {
+      cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) +
+                           as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
+                           hiv.concord.pos + prep,
+                         family = binomial(), data = la)
+    } else {
       cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) +
                            as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
                            hiv.concord.pos + prep + geogYN,
@@ -310,13 +348,13 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   }
 
   # Condom Use // Inst ------------------------------------------------------
-  if (race == TRUE){
-    if (geog.lvl == "all"){
-  lb <- select(l, ptype, comb.age,
-               race.combo, hiv.concord.pos, prep,
-               RAI, IAI, RECUAI, INSUAI) %>%
-    filter(ptype == 3) %>%
-    filter(RAI == 1 | IAI == 1)
+  if (race == TRUE) {
+    if (geog.lvl == "all") {
+      lb <- select(l, ptype, comb.age,
+                   race.combo, hiv.concord.pos, prep,
+                   RAI, IAI, RECUAI, INSUAI) %>%
+        filter(ptype == 3) %>%
+        filter(RAI == 1 | IAI == 1)
     } else {
       lb <- select(l, ptype, comb.age, geogYN = geogYN,
                    race.combo, hiv.concord.pos, prep,
@@ -324,14 +362,13 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
         filter(ptype == 3) %>%
         filter(RAI == 1 | IAI == 1)
     }
-  }
-  else {
-    if (geog.lvl == "all"){
-    lb <- select(l, ptype, comb.age, geogYN = geogYN,
-                 hiv.concord.pos, prep,
-                 RAI, IAI, RECUAI, INSUAI) %>%
-      filter(ptype == 3) %>%
-      filter(RAI == 1 | IAI == 1)
+  } else {
+    if (geog.lvl == "all") {
+      lb <- select(l, ptype, comb.age, geogYN = geogYN,
+                   hiv.concord.pos, prep,
+                   RAI, IAI, RECUAI, INSUAI) %>%
+        filter(ptype == 3) %>%
+        filter(RAI == 1 | IAI == 1)
     } else {
       lb <- select(l, ptype, comb.age, geogYN = geogYN,
                    hiv.concord.pos, prep,
@@ -354,23 +391,22 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   lb <- select(lb, -c(RAI, IAI, RECUAI, INSUAI))
 
   if (race == TRUE) {
-    if (geog.lvl == "all"){
-    cond.oo.mod <- glm(prob.cond ~ as.factor(race.combo) +
-                       comb.age + I(comb.age^2) +
-                       hiv.concord.pos + prep,
-                     family = binomial(), data = lb)
+    if (geog.lvl == "all") {
+      cond.oo.mod <- glm(prob.cond ~ as.factor(race.combo) +
+                           comb.age + I(comb.age^2) +
+                           hiv.concord.pos + prep,
+                         family = binomial(), data = lb)
     } else {
       cond.oo.mod <- glm(prob.cond ~ as.factor(race.combo) +
                            comb.age + I(comb.age^2) +
                            hiv.concord.pos + prep + geogYN,
                          family = binomial(), data = lb)
     }
-  }
-  else {
-    if (geog.lvl == "all"){
-    cond.oo.mod <- glm(prob.cond ~ comb.age + I(comb.age^2) +
-                         hiv.concord.pos + prep,
-                       family = binomial(), data = lb)
+  } else {
+    if (geog.lvl == "all") {
+      cond.oo.mod <- glm(prob.cond ~ comb.age + I(comb.age^2) +
+                           hiv.concord.pos + prep,
+                         family = binomial(), data = lb)
     } else {
       cond.oo.mod <- glm(prob.cond ~ comb.age + I(comb.age^2) +
                            hiv.concord.pos + prep + geogYN,
@@ -380,31 +416,29 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
   # Init HIV Status ---------------------------------------------------------
 
-  if (race == TRUE){
-    if (geog.lvl == "all"){
-    d1 <- select(d, race.cat3, age, hiv2)
+  if (race == TRUE) {
+    if (geog.lvl == "all") {
+      d1 <- select(d, race.cat3, age, hiv2)
 
-    hiv.mod <- glm(hiv2 ~ age + as.factor(race.cat3),
-                 data = d1, family = binomial())
-    } else{
+      hiv.mod <- glm(hiv2 ~ age + as.factor(race.cat3),
+                     data = d1, family = binomial())
+    } else {
       d1 <- select(d, race.cat3, geogYN, age, hiv2)
       hiv.mod <- glm(hiv2 ~ age + geogYN + as.factor(race.cat3) + geogYN*as.factor(race.cat3),
                      data = d1, family = binomial())
     }
-  }
+  } else {
+    if (geog.lvl == "all") {
+      d1 <- select(d, age, hiv2)
 
-  else {
-    if (geog.lvl == "all"){
-    d1 <- select(d, age, hiv2)
-
-    hiv.mod <- glm(hiv2 ~ age ,
-                   data = d1, family = binomial())
+      hiv.mod <- glm(hiv2 ~ age ,
+                     data = d1, family = binomial())
     } else {
       d1 <- select(d, geogYN, age, hiv2)
 
       hiv.mod <- glm(hiv2 ~ age + geogYN,
-                               data = d1, family = binomial())
-      }
+                     data = d1, family = binomial())
+    }
   }
 
   # Save Out File -----------------------------------------------------------

@@ -2,37 +2,76 @@
 % Please edit documentation in R/EpiStats.R
 \name{build_epistats}
 \alias{build_epistats}
-\title{Build EpiStats}
+\title{Epidemic Models for Act Rates and Probability of Condom Use}
 \usage{
 build_epistats(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   age.lim = c(15, 65), age.bks = c(25, 35, 45, 55, 65),
   browser = FALSE)
 }
 \arguments{
-\item{geog.lvl}{Specifies geographic feature for ARTnet statistics..}
+\item{geog.lvl}{Specifies geographic feature for ARTnet statistics.}
 
 \item{geog.cat}{Specifies geographic stratum to base ARTnet statistics on.}
 
 \item{race}{Whether to stratify by racial status. Default is TRUE.}
 
-\item{age.lim}{Upper and lower limit. Age rage to subset ARTnet data by. Default is 15 to 65}
+\item{age.lim}{Upper and lower limit. Age range to subset ARTnet data by. Default is 15 to 65}
 
-\item{age.bks}{Ages that define age categories. Default is c(25, 35, 45, 55, 65).}
+\item{age.bks}{Ages that define the upper age categories. Default is c(25, 35, 45, 55, 65), which
+corresponds to (0, 25], (25, 35], (35, 45], (45, 55], (55, 65], (65, 100].}
 
-\item{browser}{Run function in interactive browser mode.}
+\item{browser}{Run function in interactive browser mode. Default is FALSE}
 }
 \description{
-Build EpiStats
+Builds epidemic models governing act rates and probability of condom use
+among main, casual and one-of sexual partnerships.
 }
+\details{
+\code{build_epistats}, through input of geographic, age and racial parameters, builds the neccessary
+epidemic models governing sexual activity and condom use during sexual activity in main, casual and
+one-off partnerships among men-who-have-sex-with-men (MSM). Estimation of these linear models is done using
+data from the ARTnetData package, a package containing the results of the online ARTnet survey of HIV-related
+risk behaviors, testing and use of preventive services among MSM in the United States. Accepted values for
+each input parameter are provided below.
+}
+\section{Parameter Values}{
+
+\itemize{
+\item \code{geog.lvl}: level of geographic stratification desired. Acceptable values are "city",
+ "state", "region", "division", and "all" corresponding to cirty, state, census region, census
+ division and complete geographic area respectively.
+\item \code{geog.cat}: given a geographic level above, `geog.cat` gives the desired feature of
+interest. Acceptable values are based on the chosen geographic level:
+  \itemize{
+\item \code{city}: Atlanta, Boston, Chicago, Dallas, Denver, Detroit, Houston, Los Angeles, Miami,
+New York City, Philadelphia, San Diego, San Franciso, Seattle, Washington DC
+\item \code{state}: AK, AL, AR, AZ, CA, CO, CT, DC, DE, FL, GA, HI, IA, ID, IL, IN, KS, KY, LA, MA,
+ MD, ME, MI, MN, MO, MS, MT, NC, ND, NE, NH, NJ, NM, NV, NY, OH, OK, OR, PA, RI, SC, SD, TN, TX, UT,
+  VA, VT, WA, WI, WV, WY
+\item \code{division}: 1 (New England), 2 (Middle Atlantic), 3 (East North Central),
+4 (West North Central), 5 (South Atlantic), 6 (East South Central), 7 (West South Central), 8 (Mountain) 9 (Pacific)
+\item \code{region}: 1 (Northeast), 2 (Midwest), 3 (South), 4 (North)
+\item \code{all}:  No input required if `geog.lvl` is set to "all".
+ }
+\item \code{race}: whether to introduce modeling by racial stratification. TRUE or FALSE.
+FALSE by default.
+\item \code{age.lim}: a vector giving the lower and upper limit for the age of interest. Set
+to `c(15, 65)` by default.
+\item \code{age.bks}: a vector giving the upper age breaks to categorize data by age. Must be
+within the bounds specified by `age.lim`
+}
+}
+
 \examples{
 
+#Age and geographic stratification; city
 epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15, 65),
 age.bks = c(24, 34, 44, 54, 64))
 
+#Default age stratification
 epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA")
 
 #No racial stratification
-epistats5 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE)
-
+epistats3 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE)
 
 }

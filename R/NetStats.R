@@ -1,37 +1,39 @@
 
-#' Build NetStats
+#' Build Network Statistics for Network Estimation
 #'
 #' @param epistats Output from \code{\link{build_epistats}}.
 #' @param netparams Output from \code{\link{build_netparams}}.
 #' @param network.size Size of the starting network.
 #' @param expect.mort Expected average mortality level to pass into
 #'        \code{\link{dissolution_coefs}} function.
-#' @param browser Run function in interactive browser mode.
+#' @param edges_avg_nfrace Whether degree differences exist along race. TRUE
+#' or FALSE; default of FALSE.
 #'
-#' @export
+#' @details
+#' \code{build_netstats} takes output from \code{\link{build_epistats}} and
+#' \code{\link{build_netparams}} to build the relevant network statistics
+#' that will be used in network estimation using package \link{EpiModel}.
+#'
 #'
 #' @examples
 #' epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta")
 #' netparams <- build_netparams(epistats = epistats, smooth.main.dur.old = TRUE)
 #' netstats <- build_netstats(epistats, netparams)
 #'
+#' @export
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,
                            expect.mort = 0.000478213,
-                           browser = FALSE) {
-
-  if (browser == TRUE) {
-    browser()
-  }
+                           edges_avg_nfrace = FALSE) {
 
   ## Data ##
+  #NOTE: Not actually used
   d <- epistats$wide
   l <- epistats$long
 
   ## Inputs ##
   geog.cat <- epistats$geog.cat
   geog.lvl <- epistats$geog.lvl
-  edges_avg_nfrace <- FALSE
   race <- epistats$race
 
 
@@ -46,28 +48,28 @@ build_netstats <- function(epistats, netparams,
   # Population size by race group
   # race.dist.3cat
 
-  if (geog.lvl == "city"){
+  if (geog.lvl == "city") {
   props <- race.dist.city[which(race.dist.city$Geog == geog.cat), -c(1,2)]/100
   num.B <- out$demog$num.B <- round(num * props$Black)
   num.H <- out$demog$num.H <- round(num * props$Hispanic)
   num.W <- out$demog$num.W <- num - num.B - num.H
       }
 
-  if (geog.lvl == "state"){
+  if (geog.lvl == "state") {
       props <- race.dist.city[which(race.dist.state$Geog == geog.cat), -c(1,2)]/100
       num.B <- out$demog$num.B <- round(num * props$Black)
       num.H <- out$demog$num.H <- round(num * props$Hispanic)
       num.W <- out$demog$num.W <- num - num.B - num.H
       }
 
-  if (geog.lvl == "region"){
+  if (geog.lvl == "region") {
       props <- race.dist.city[which(race.dist.census.region$Geog == geog.cat), -c(1,2)]/100
       num.B <- out$demog$num.B <- round(num * props$Black)
       num.H <- out$demog$num.H <- round(num * props$Hispanic)
       num.W <- out$demog$num.W <- num - num.B - num.H
       }
 
-  if (geog.lvl == "division"){
+  if (geog.lvl == "division") {
       props <- race.dist.city[which(race.dist.census.division$Geog == geog.cat), -c(1,2)]/100
       num.B <- out$demog$num.B <- round(num * props$Black)
       num.H <- out$demog$num.H <- round(num * props$Hispanic)
@@ -84,7 +86,7 @@ build_netstats <- function(epistats, netparams,
   asmr.W <- c(0.00059, 0.00117, 0.00144, 0.00168, 0.00194,
               0.00249, 0.00367, 0.00593, 0.00881, 0.01255)
 
-  if (race == TRUE){
+  if (race == TRUE) {
   # transformed to weekly rates
   trans.asmr.B <- 1 - (1 - asmr.B)^(1/52)
   trans.asmr.H <- 1 - (1 - asmr.H)^(1/52)
@@ -110,10 +112,6 @@ build_netstats <- function(epistats, netparams,
    out$demog$asmr <- asmr
 
   }
-
-  #CHECK: What does this do?
-  #out$demog$city <- gsub(" ", "", city_name)
-
 
   # Nodal Attribute Initialization ------------------------------------------
 
@@ -155,7 +153,7 @@ build_netstats <- function(epistats, netparams,
   out$attr$role.class <- attr_role.class
 
   # diag status
-  if (race == TRUE){
+  if (race == TRUE) {
   xs <- data.frame(age = attr_age, race.cat3 = attr_race, geogYN = 1)
   preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
   attr_diag.status <- rbinom(num, 1, preds)
@@ -173,7 +171,7 @@ build_netstats <- function(epistats, netparams,
   out$main <- list()
 
   ## edges
-  if (race == TRUE){
+  if (race == TRUE) {
   if (edges_avg_nfrace == FALSE) {
     out$main$edges <- (netparams$main$md.main * num) / 2
   } else {
@@ -235,7 +233,7 @@ build_netstats <- function(epistats, netparams,
   out$casl <- list()
 
   ## edges
-  if (race == TRUE){
+  if (race == TRUE) {
   if (edges_avg_nfrace == FALSE) {
     out$casl$edges <- (netparams$casl$md.casl * num) / 2
   } else {
@@ -296,7 +294,7 @@ build_netstats <- function(epistats, netparams,
   out$inst <- list()
 
   ## edges
-  if (race == TRUE){
+  if (race == TRUE) {
   if (edges_avg_nfrace == FALSE) {
     out$inst$edges <- (netparams$inst$md.inst * num) / 2
   } else {
