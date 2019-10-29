@@ -23,7 +23,7 @@
 #'
 #' @examples
 #' epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta")
-#' netparams <- build_netparams(epistats = epistats, smooth.main.dur.old = TRUE)
+#' netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
 #' netstats <- build_netstats(epistats, netparams)
 #'
 #' @export

@@ -4,12 +4,12 @@
 \alias{build_netparams}
 \title{Build Network Parameters for Network Models}
 \usage{
-build_netparams(epistats, smooth.main.dur.old = FALSE)
+build_netparams(epistats, smooth.main.dur = FALSE)
 }
 \arguments{
 \item{epistats}{Output from \code{\link{build_epistats}}.}
 
-\item{smooth.main.dur.old}{If \code{TRUE}, average main durations for oldest and second oldest age
+\item{smooth.main.dur}{If \code{TRUE}, average main durations for oldest and second oldest age
 groups. FALSE by default.}
 }
 \description{
@@ -20,7 +20,7 @@ Build Network Parameters for Network Models
 for use in building network models with \code{\link{build_netstats}}, building on models estimated
 using \code{\link{build_epistats}}.
 
-The paramter \code{smooth.main.dur.old} is used when partnership
+The paramter \code{smooth.main.dur} is used when partnership
 duration and mortality compete in the eldest age group; in such a case mean duration is averaged over
 the oldest and second oldest age groups (as specified by \code{age.bks} in \code{\link{build_epistats}}).
 Subsequently, this smoothing is only done if there are three or more age categories specified.
@@ -28,6 +28,6 @@ Subsequently, this smoothing is only done if there are three or more age categor
 \examples{
 epistats <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = TRUE, age.lim = c(15, 65),
 age.bks = c(20, 30, 40, 50, 60))
-netparams <- build_netparams(epistats = epistats, smooth.main.dur.old = TRUE)
+netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
 
 }
