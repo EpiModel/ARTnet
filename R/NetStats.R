@@ -6,13 +6,19 @@
 #' @param network.size Size of the starting network.
 #' @param expect.mort Expected average mortality level to pass into
 #'        \code{\link{dissolution_coefs}} function.
-#' @param edges_avg_nfrace Whether degree differences exist along race. TRUE
+#' @param edges.avg Whether degree differences exist along race. TRUE
 #' or FALSE; default of FALSE.
 #'
 #' @details
 #' \code{build_netstats} takes output from \code{\link{build_epistats}} and
 #' \code{\link{build_netparams}} to build the relevant network statistics
 #' that will be used in network estimation using package \link{EpiModel}.
+#'
+#' The param \code{edge.avg} allows a user set the network stated edges
+#' to that estimated in \code{\link{build_netparams}} (divided by 2),
+#' with "edges.avg = FALSE", or, if sample proportions do not match
+#' ARTnet population proportions, set to a weighted racial average
+#' with "edges.avg = TRUE."
 #'
 #'
 #' @examples
@@ -24,7 +30,7 @@
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,
                            expect.mort = 0.000478213,
-                           edges_avg_nfrace = FALSE) {
+                           edges.avg = FALSE) {
 
   ## Data ##
   #NOTE: Not actually used
@@ -172,7 +178,7 @@ build_netstats <- function(epistats, netparams,
 
   ## edges
   if (race == TRUE) {
-  if (edges_avg_nfrace == FALSE) {
+  if (edges.avg == FALSE) {
     out$main$edges <- (netparams$main$md.main * num) / 2
   } else {
     out$main$edges <- sum(unname(table(out$attr$race)) * netparams$main$nf.race)/2
@@ -234,7 +240,7 @@ build_netstats <- function(epistats, netparams,
 
   ## edges
   if (race == TRUE) {
-  if (edges_avg_nfrace == FALSE) {
+  if (edges.avg == FALSE) {
     out$casl$edges <- (netparams$casl$md.casl * num) / 2
   } else {
     out$casl$edges <- sum(unname(table(out$attr$race)) * netparams$casl$nf.race)/2
@@ -295,7 +301,7 @@ build_netstats <- function(epistats, netparams,
 
   ## edges
   if (race == TRUE) {
-  if (edges_avg_nfrace == FALSE) {
+  if (edges.avg == FALSE) {
     out$inst$edges <- (netparams$inst$md.inst * num) / 2
   } else {
     out$inst$edges <- sum(unname(table(out$attr$race)) * netparams$inst$nf.race)/2
