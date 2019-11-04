@@ -5,7 +5,7 @@
 \title{Epidemic Models for Act Rates and Probability of Condom Use}
 \usage{
 build_epistats(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
-  age.lim = c(15, 65), age.bks = c(25, 35, 45, 55, 65),
+  age.limits = c(15, 65), age.breaks = c(25, 35, 45, 55, 65),
   browser = FALSE)
 }
 \arguments{
@@ -15,63 +15,86 @@ build_epistats(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
 \item{race}{Whether to stratify by racial status. Default is TRUE.}
 
-\item{age.lim}{Upper and lower limit. Age range to subset ARTnet data by. Default is 15 to 65}
+\item{age.limits}{Upper and lower limit. Age range to subset ARTnet data by.
+Default is 15 to 65}
 
-\item{age.bks}{Ages that define the upper age categories. Default is c(25, 35, 45, 55, 65), which
-corresponds to (0, 25], (25, 35], (35, 45], (45, 55], (55, 65], (65, 100].}
+\item{age.breaks}{Ages that define the upper age categories. Default is
+c(25, 35, 45, 55, 65), which corresponds to (0, 25], (25, 35],
+(35, 45], (45, 55], (55, 65], (65, 100].}
 
 \item{browser}{Run function in interactive browser mode. Default is FALSE}
 }
 \description{
-Builds epidemic models governing act rates and probability of condom use
-among main, casual and one-of sexual partnerships.
+Builds epidemic models governing act rates and probability of
+condom use among main, casual and one-of sexual partnerships.
 }
 \details{
-\code{build_epistats}, through input of geographic, age and racial parameters, builds the neccessary
-epidemic models governing sexual activity and condom use during sexual activity in main, casual and
-one-off partnerships among men-who-have-sex-with-men (MSM). Estimation of these linear models is done using
-data from the ARTnetData package, a package containing the results of the online ARTnet survey of HIV-related
-risk behaviors, testing and use of preventive services among MSM in the United States. Accepted values for
-each input parameter are provided below.
+\code{build_epistats}, through input of geographic, age and racial
+parameters, builds the neccessary epidemic models governing sexual activity
+and condom use during sexual activity in main, casual and one-off partnerships
+among men-who-have-sex-with-men (MSM). Estimation of these linear models is
+done using data from the ARTnetData package, a package containing the
+results of the online ARTnet survey of HIV-related risk behaviors, testing
+and use of preventive services among MSM in the United States. Accepted
+values for each input parameter are provided below.
 }
 \section{Parameter Values}{
 
 \itemize{
-\item \code{geog.lvl}: level of geographic stratification desired. Acceptable values are "city",
- "state", "region", "division", and "all" corresponding to cirty, state, census region, census
- division and complete geographic area respectively.
-\item \code{geog.cat}: given a geographic level above, `geog.cat` gives the desired feature of
-interest. Acceptable values are based on the chosen geographic level:
+\item \code{geog.lvl}: level of geographic stratification desired. Acceptable
+ values are \code{"city"}, \code{"state"}, \code{"region"}, and
+ \code{"division"} corresponding to city, state, census region, census
+ division and complete geographic area respectively. Default value is "NULL",
+ indicating no geographic stratification.
+\item \code{geog.cat}: given a geographic level above, \code{"geog.cat"}
+is the desired feature of interest. Acceptable values are based on the
+chosen geographic level:
   \itemize{
-\item \code{city}: Atlanta, Boston, Chicago, Dallas, Denver, Detroit, Houston, Los Angeles, Miami,
-New York City, Philadelphia, San Diego, San Franciso, Seattle, Washington DC
-\item \code{state}: AK, AL, AR, AZ, CA, CO, CT, DC, DE, FL, GA, HI, IA, ID, IL, IN, KS, KY, LA, MA,
- MD, ME, MI, MN, MO, MS, MT, NC, ND, NE, NH, NJ, NM, NV, NY, OH, OK, OR, PA, RI, SC, SD, TN, TX, UT,
-  VA, VT, WA, WI, WV, WY
-\item \code{division}: 1 (New England), 2 (Middle Atlantic), 3 (East North Central),
-4 (West North Central), 5 (South Atlantic), 6 (East South Central), 7 (West South Central), 8 (Mountain) 9 (Pacific)
-\item \code{region}: 1 (Northeast), 2 (Midwest), 3 (South), 4 (North)
-\item \code{all}:  No input required if `geog.lvl` is set to "all".
+\item \code{city}: \code{"Atlanta"}, \code{"Boston"}, \code{"Chicago"},
+\code{"Dallas"}, \code{"Denver"}, \code{"Detroit"}, \code{"Houston"},
+\code{"Los Angeles"}, \code{"Miami"}, \code{"New York City"},
+\code{"Philadelphia"}, \code{"San Diego"}, \code{"San Franciso"},
+ \code{"Seattle"}, \code{"Washington DC"}
+\item \code{state}: \code{"AK"}, \code{"AL"}, \code{"AR"}, \code{"AZ"},
+ \code{"CA"}, \code{"CO"}, \code{"CT"}, \code{"DC"}, \code{"DE"},
+ \code{"FL"}, \code{"GA"}, \code{"HI"}, \code{"IA"}, \code{"ID"},
+ \code{"IL"}, \code{"IN"}, \code{"KS"}, \code{"KY"}, \code{"LA"},
+ \code{"MA"}, \code{"MD"}, \code{"ME"}, \code{"MI"}, \code{"MN"},
+ \code{"MO"}, \code{"MS"}, \code{"MT"}, \code{"NC"}, \code{"ND"},
+ \code{"NE"}, \code{"NH"}, \code{"NJ"}, \code{"NM"}, \code{"NV"},
+ \code{"NY"}, \code{"OH"}, \code{"OK"}, \code{"OR"}, \code{"PA"},
+ \code{"RI"}, \code{"SC"}, \code{"SD"}, \code{"TN"}, \code{"TX"},
+ \code{"UT"}, \code{"VA"}, \code{"VT"}, \code{"WA"}, \code{"WI"},
+  \code{"WV"}, \code{"WY"}
+\item \code{division}: \code{"1"} (New England),
+\code{"2"} (Middle Atlantic), \code{"3"} (East North Central),
+\code{"4"} (West North Central), \code{"5"} (South Atlantic),
+\code{"6"} (East South Central), \code{"7"} (West South Central),
+\code{"8"} (Mountain) \code{"9"} (Pacific)
+\item \code{region}: \code{"1"} (Northeast), \code{"2"} (Midwest),
+\code{"3"} (South), \code{"4"} (North)
  }
-\item \code{race}: whether to introduce modeling by racial stratification. TRUE or FALSE.
-FALSE by default.
-\item \code{age.lim}: a vector giving the lower and upper limit for the age of interest. Set
-to `c(15, 65)` by default.
-\item \code{age.bks}: a vector giving the upper age breaks to categorize data by age. Must be
-within the bounds specified by `age.lim`
+\item \code{race}: whether to introduce modeling by racial stratification.
+TRUE or FALSE. FALSE by default.
+\item \code{age.limits}: a vector giving the lower and upper limit for
+the age of interest. Set to `c(15, 65)` by default.
+\item \code{age.breaks}: a vector giving the upper age breaks to categorize
+data by age. Must be within the bounds specified by \code{age.limits}.
 }
 }
 
 \examples{
 
 #Age and geographic stratification; city
-epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15, 65),
-age.bks = c(24, 34, 44, 54, 64))
+epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta",
+                            age.limits = c(15, 65),age.breaks =
+                            c(24, 34, 44, 54, 64))
 
 #Default age stratification
 epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA")
 
 #No racial stratification
-epistats3 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE)
+epistats3 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
+                            race = FALSE)
 
 }

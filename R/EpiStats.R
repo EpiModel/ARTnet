@@ -1,66 +1,89 @@
 
 #' @title Epidemic Models for Act Rates and Probability of Condom Use
 #'
-#' @description Builds epidemic models governing act rates and probability of condom use
-#' among main, casual and one-of sexual partnerships.
+#' @description Builds epidemic models governing act rates and probability of
+#' condom use among main, casual and one-of sexual partnerships.
 #'
 #' @param geog.lvl Specifies geographic feature for ARTnet statistics.
 #' @param geog.cat Specifies geographic stratum to base ARTnet statistics on.
-#' @param age.lim Upper and lower limit. Age range to subset ARTnet data by. Default is 15 to 65
-#' @param age.bks Ages that define the upper age categories. Default is c(25, 35, 45, 55, 65), which
-#' corresponds to (0, 25], (25, 35], (35, 45], (45, 55], (55, 65], (65, 100].
-#' @param browser Run function in interactive browser mode. Default is FALSE
+#' @param age.limits Upper and lower limit. Age range to subset ARTnet data by.
+#'        Default is 15 to 65
+#' @param age.breaks Ages that define the upper age categories. Default is
+#'        c(25, 35, 45, 55, 65), which corresponds to (0, 25], (25, 35],
+#'        (35, 45], (45, 55], (55, 65], (65, 100].
 #' @param race Whether to stratify by racial status. Default is TRUE.
+#' @param browser Run function in interactive browser mode. Default is FALSE
 #'
 #' @details
-#' \code{build_epistats}, through input of geographic, age and racial parameters, builds the neccessary
-#' epidemic models governing sexual activity and condom use during sexual activity in main, casual and
-#' one-off partnerships among men-who-have-sex-with-men (MSM). Estimation of these linear models is done using
-#' data from the ARTnetData package, a package containing the results of the online ARTnet survey of HIV-related
-#' risk behaviors, testing and use of preventive services among MSM in the United States. Accepted values for
-#' each input parameter are provided below.
+#' \code{build_epistats}, through input of geographic, age and racial
+#'parameters, builds the neccessary epidemic models governing sexual activity
+#'and condom use during sexual activity in main, casual and one-off partnerships
+#' among men-who-have-sex-with-men (MSM). Estimation of these linear models is
+#' done using data from the ARTnetData package, a package containing the
+#' results of the online ARTnet survey of HIV-related risk behaviors, testing
+#' and use of preventive services among MSM in the United States. Accepted
+#' values for each input parameter are provided below.
 #'
 #' @section Parameter Values:
 #' \itemize{
-#' \item \code{geog.lvl}: level of geographic stratification desired. Acceptable values are "city",
-#'  "state", "region", "division", and "all" corresponding to cirty, state, census region, census
-#'  division and complete geographic area respectively.
-#' \item \code{geog.cat}: given a geographic level above, `geog.cat` gives the desired feature of
-#' interest. Acceptable values are based on the chosen geographic level:
+#' \item \code{geog.lvl}: level of geographic stratification desired. Acceptable
+#'  values are \code{"city"}, \code{"state"}, \code{"region"}, and
+#'  \code{"division"} corresponding to city, state, census region, census
+#'  division and complete geographic area respectively. Default value is "NULL",
+#'  indicating no geographic stratification.
+#' \item \code{geog.cat}: given a geographic level above, \code{"geog.cat"}
+#' is the desired feature of interest. Acceptable values are based on the
+#' chosen geographic level:
 #'   \itemize{
-#' \item \code{city}: Atlanta, Boston, Chicago, Dallas, Denver, Detroit, Houston, Los Angeles, Miami,
-#' New York City, Philadelphia, San Diego, San Franciso, Seattle, Washington DC
-#' \item \code{state}: AK, AL, AR, AZ, CA, CO, CT, DC, DE, FL, GA, HI, IA, ID, IL, IN, KS, KY, LA, MA,
-#'  MD, ME, MI, MN, MO, MS, MT, NC, ND, NE, NH, NJ, NM, NV, NY, OH, OK, OR, PA, RI, SC, SD, TN, TX, UT,
-#'   VA, VT, WA, WI, WV, WY
-#' \item \code{division}: 1 (New England), 2 (Middle Atlantic), 3 (East North Central),
-#' 4 (West North Central), 5 (South Atlantic), 6 (East South Central), 7 (West South Central), 8 (Mountain) 9 (Pacific)
-#' \item \code{region}: 1 (Northeast), 2 (Midwest), 3 (South), 4 (North)
-#' \item \code{all}:  No input required if `geog.lvl` is set to "all".
+#' \item \code{city}: \code{"Atlanta"}, \code{"Boston"}, \code{"Chicago"},
+#' \code{"Dallas"}, \code{"Denver"}, \code{"Detroit"}, \code{"Houston"},
+#' \code{"Los Angeles"}, \code{"Miami"}, \code{"New York City"},
+#' \code{"Philadelphia"}, \code{"San Diego"}, \code{"San Franciso"},
+#'  \code{"Seattle"}, \code{"Washington DC"}
+#' \item \code{state}: \code{"AK"}, \code{"AL"}, \code{"AR"}, \code{"AZ"},
+#'  \code{"CA"}, \code{"CO"}, \code{"CT"}, \code{"DC"}, \code{"DE"},
+#'  \code{"FL"}, \code{"GA"}, \code{"HI"}, \code{"IA"}, \code{"ID"},
+#'  \code{"IL"}, \code{"IN"}, \code{"KS"}, \code{"KY"}, \code{"LA"},
+#'  \code{"MA"}, \code{"MD"}, \code{"ME"}, \code{"MI"}, \code{"MN"},
+#'  \code{"MO"}, \code{"MS"}, \code{"MT"}, \code{"NC"}, \code{"ND"},
+#'  \code{"NE"}, \code{"NH"}, \code{"NJ"}, \code{"NM"}, \code{"NV"},
+#'  \code{"NY"}, \code{"OH"}, \code{"OK"}, \code{"OR"}, \code{"PA"},
+#'  \code{"RI"}, \code{"SC"}, \code{"SD"}, \code{"TN"}, \code{"TX"},
+#'  \code{"UT"}, \code{"VA"}, \code{"VT"}, \code{"WA"}, \code{"WI"},
+#'   \code{"WV"}, \code{"WY"}
+#' \item \code{division}: \code{"1"} (New England),
+#' \code{"2"} (Middle Atlantic), \code{"3"} (East North Central),
+#' \code{"4"} (West North Central), \code{"5"} (South Atlantic),
+#' \code{"6"} (East South Central), \code{"7"} (West South Central),
+#' \code{"8"} (Mountain) \code{"9"} (Pacific)
+#' \item \code{region}: \code{"1"} (Northeast), \code{"2"} (Midwest),
+#' \code{"3"} (South), \code{"4"} (North)
 #'  }
-#' \item \code{race}: whether to introduce modeling by racial stratification. TRUE or FALSE.
-#' FALSE by default.
-#' \item \code{age.lim}: a vector giving the lower and upper limit for the age of interest. Set
-#' to `c(15, 65)` by default.
-#' \item \code{age.bks}: a vector giving the upper age breaks to categorize data by age. Must be
-#' within the bounds specified by `age.lim`
+#' \item \code{race}: whether to introduce modeling by racial stratification.
+#' TRUE or FALSE. FALSE by default.
+#' \item \code{age.limits}: a vector giving the lower and upper limit for
+#' the age of interest. Set to `c(15, 65)` by default.
+#' \item \code{age.breaks}: a vector giving the upper age breaks to categorize
+#' data by age. Must be within the bounds specified by \code{age.limits}.
 #' }
 #'
 #' @examples
 #'
 #' #Age and geographic stratification; city
-#' epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", age.lim = c(15, 65),
-#' age.bks = c(24, 34, 44, 54, 64))
+#' epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta",
+#'                             age.limits = c(15, 65),age.breaks =
+#'                             c(24, 34, 44, 54, 64))
 #'
 #' #Default age stratification
 #' epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA")
 #'
 #' #No racial stratification
-#' epistats3 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE)
+#' epistats3 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
+#'                             race = FALSE)
 #'
 #' @export
 build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
-                           age.lim = c(15,65), age.bks = c(25, 35, 45, 55, 65),
+                           age.limits = c(15,65), age.breaks = c(25, 35, 45, 55, 65),
                            browser = FALSE) {
 
   if (browser == TRUE) {
@@ -73,8 +96,10 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   l <- ARTnet.long
 
   geog_names <- c("city", "state", "region", "division", "all")
-  if (!(geog.lvl %in% geog_names)) {
-    stop("Selected geographic feature must be one of: city, state, region or division")
+  if (!is.null(geog.lvl)){
+    if (!(geog.lvl %in% geog_names)) {
+      stop("Selected geographic feature must be one of: city, state, region or division")
+    }
   }
 
   # Data Processing ---------------------------------------------------------
@@ -147,26 +172,26 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
 
   #Warning if age range is out of allowed range
-  flag.ll <- age.lim[1] >= 15 & age.lim[1] <= 65
-  flag.ul <- age.lim[2] >= 15 & age.lim[2] <= 65
+  flag.ll <- age.limits[1] >= 15 & age.limits[1] <= 65
+  flag.ul <- age.limits[2] >= 15 & age.limits[2] <= 65
   flag.lim <- flag.ll*flag.ul
 
   if (flag.lim == 0) {
     stop("Age range must be between 15 and 65")
   }
 
-  age.lim <- c(min(age.lim), max(age.lim))
+  age.limits <- c(min(age.limits), max(age.limits))
 
-  flag.bks <- prod(age.bks <= age.lim[2] & age.bks >= age.lim[1])
+  flag.bks <- prod(age.breaks <= age.limits[2] & age.breaks >= age.limits[1])
 
   if (flag.bks == 0) {
     stop("Age breaks must be between specified age limits")
   }
 
-  age.bks <- sort(c(0, age.bks, 100))
+  age.breaks <- sort(c(0, age.breaks, 100))
 
-  l <- subset(l, age >= age.lim[1] & age <= age.lim[2])
-  d <- subset(d, age >= age.lim[1] & age <= age.lim[2])
+  l <- subset(l, age >= age.limits[1] & age <= age.limits[2])
+  d <- subset(d, age >= age.limits[1] & age <= age.limits[2])
 
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
@@ -253,7 +278,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
   # Pull Data
   if (race == TRUE){
-    if (geog.lvl == "all") {
+    if (is.null(geog.lvl)) {
       la <- select(l, ptype, duration, comb.age,
                    race.combo, RAI, IAI, hiv.concord.pos, prep,
                    acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
@@ -269,7 +294,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
       la <- select(la, -c(RAI, IAI))
     }
   }  else {
-    if (geog.lvl == "all") {
+    if (is.null(geog.lvl)) {
       la <- select(l, ptype, duration, comb.age, geogYN = geogYN,
                    RAI, IAI, hiv.concord.pos, prep,
                    acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
@@ -289,7 +314,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
   # Poisson Model
   if (race == TRUE) {
-    if (geog.lvl == "all") {
+    if (is.null(geog.lvl)) {
       acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) + as.factor(race.combo) +
                         as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
                         hiv.concord.pos,
@@ -301,7 +326,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
                       family = poisson(), data = la)
     }
   }  else {
-    if (geog.lvl == "all") {
+    if (is.null(geog.lvl)) {
       acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) +
                         as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
                         hiv.concord.pos,
@@ -322,7 +347,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   # table(la$never.cond)
 
   if (race == TRUE) {
-    if (geog.lvl == "all") {
+    if (is.null(geog.lvl)) {
       cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) + as.factor(race.combo) +
                            as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
                            hiv.concord.pos + prep,
@@ -334,7 +359,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
                          family = binomial(), data = la)
     }
   }  else {
-    if (geog.lvl == "all") {
+    if (is.null(geog.lvl)) {
       cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) +
                            as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
                            hiv.concord.pos + prep,
@@ -349,7 +374,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 
   # Condom Use // Inst ------------------------------------------------------
   if (race == TRUE) {
-    if (geog.lvl == "all") {
+    if (is.null(geog.lvl)) {
       lb <- select(l, ptype, comb.age,
                    race.combo, hiv.concord.pos, prep,
                    RAI, IAI, RECUAI, INSUAI) %>%
@@ -363,7 +388,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
         filter(RAI == 1 | IAI == 1)
     }
   } else {
-    if (geog.lvl == "all") {
+    if (is.null(geog.lvl)) {
       lb <- select(l, ptype, comb.age, geogYN = geogYN,
                    hiv.concord.pos, prep,
                    RAI, IAI, RECUAI, INSUAI) %>%
@@ -391,7 +416,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   lb <- select(lb, -c(RAI, IAI, RECUAI, INSUAI))
 
   if (race == TRUE) {
-    if (geog.lvl == "all") {
+    if (is.null(geog.lvl)) {
       cond.oo.mod <- glm(prob.cond ~ as.factor(race.combo) +
                            comb.age + I(comb.age^2) +
                            hiv.concord.pos + prep,
@@ -403,7 +428,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
                          family = binomial(), data = lb)
     }
   } else {
-    if (geog.lvl == "all") {
+    if (is.null(geog.lvl)) {
       cond.oo.mod <- glm(prob.cond ~ comb.age + I(comb.age^2) +
                            hiv.concord.pos + prep,
                          family = binomial(), data = lb)
@@ -417,7 +442,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   # Init HIV Status ---------------------------------------------------------
 
   if (race == TRUE) {
-    if (geog.lvl == "all") {
+    if (is.null(geog.lvl)) {
       d1 <- select(d, race.cat3, age, hiv2)
 
       hiv.mod <- glm(hiv2 ~ age + as.factor(race.cat3),
@@ -428,7 +453,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
                      data = d1, family = binomial())
     }
   } else {
-    if (geog.lvl == "all") {
+    if (is.null(geog.lvl)) {
       d1 <- select(d, age, hiv2)
 
       hiv.mod <- glm(hiv2 ~ age ,
@@ -453,9 +478,9 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   out$hiv.mod <- hiv.mod
   out$geogYN.l <- l$geogYN
   out$geogYN.d <- d$geogYN
-  out$geog.l <- l$geog
-  out$geog.d <- d$geog
-  out$age.lim <- age.lim
-  out$age.bks <- age.bks
+  out$geog.l <- as.character(l$geog)
+  out$geog.d <- as.character(d$geog)
+  out$age.limits <- age.limits
+  out$age.breaks <- age.breaks
   return(out)
 }

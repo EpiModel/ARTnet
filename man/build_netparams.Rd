@@ -9,25 +9,27 @@ build_netparams(epistats, smooth.main.dur = FALSE)
 \arguments{
 \item{epistats}{Output from \code{\link{build_epistats}}.}
 
-\item{smooth.main.dur}{If \code{TRUE}, average main durations for oldest and second oldest age
-groups. FALSE by default.}
+\item{smooth.main.dur}{If \code{TRUE}, average main durations for oldest
+and second oldest age groups. FALSE by default.}
 }
 \description{
 Build Network Parameters for Network Models
 }
 \details{
-\code{build_netparams}is a helper function that constructs the neccessary network parameters
-for use in building network models with \code{\link{build_netstats}}, building on models estimated
-using \code{\link{build_epistats}}.
+\code{build_netparams} is a helper function that constructs the neccessary
+network parameters for use in building network models with \code{\link{build_netstats}},
+building on models estimated using \code{\link{build_epistats}}.
 
-The paramter \code{smooth.main.dur} is used when partnership
-duration and mortality compete in the eldest age group; in such a case mean duration is averaged over
-the oldest and second oldest age groups (as specified by \code{age.bks} in \code{\link{build_epistats}}).
-Subsequently, this smoothing is only done if there are three or more age categories specified.
+The paramter \code{smooth.main.dur} is used when partnership duration and
+mortality compete in the eldest age group; in such a case mean duration is
+averaged over the oldest and second oldest age groups (as specified by \code{age.breaks}
+in \code{\link{build_epistats}}). Subsequently, this smoothing is only done
+if there are three or more age categories specified.
 }
 \examples{
-epistats <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = TRUE, age.lim = c(15, 65),
-age.bks = c(20, 30, 40, 50, 60))
+epistats <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = TRUE,
+                           age.limits = c(15, 65),
+                           age.breaks = c(20, 30, 40, 50, 60))
 netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
 
 }

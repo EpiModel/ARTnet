@@ -13,7 +13,7 @@
 #' @name ARTnet-package
 #' @aliases ARTnet
 #' @import ARTnetData EpiModel dplyr
-#' @importFrom stats binomial glm lm median poisson predict rbinom runif
+#' @importFrom stats binomial coef glm lm median poisson predict rbinom runif
 #' @importFrom utils head
 #'
 #' @docType package

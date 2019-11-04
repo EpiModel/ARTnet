@@ -5,7 +5,7 @@
 \title{Build Network Statistics for Network Estimation}
 \usage{
 build_netstats(epistats, netparams, network.size = 10000,
-  expect.mort = 0.000478213, edges.avg = FALSE)
+  expect.mort = 0.000478213, browser = FALSE, edges.avg = FALSE)
 }
 \arguments{
 \item{epistats}{Output from \code{\link{build_epistats}}.}
@@ -16,6 +16,8 @@ build_netstats(epistats, netparams, network.size = 10000,
 
 \item{expect.mort}{Expected average mortality level to pass into
 \code{\link{dissolution_coefs}} function.}
+
+\item{browser}{Run function in interactive browser mode.}
 
 \item{edges.avg}{Whether degree differences exist along race. TRUE
 or FALSE; default of FALSE.}

@@ -6,8 +6,9 @@
 #' @param network.size Size of the starting network.
 #' @param expect.mort Expected average mortality level to pass into
 #'        \code{\link{dissolution_coefs}} function.
+#' @param browser Run function in interactive browser mode.
 #' @param edges.avg Whether degree differences exist along race. TRUE
-#' or FALSE; default of FALSE.
+#'        or FALSE; default of FALSE.
 #'
 #' @details
 #' \code{build_netstats} takes output from \code{\link{build_epistats}} and
@@ -30,7 +31,11 @@
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,
                            expect.mort = 0.000478213,
+                           browser = FALSE,
                            edges.avg = FALSE) {
+  if (browser == TRUE){
+    browser()
+  }
 
   ## Data ##
   #NOTE: Not actually used
