@@ -83,8 +83,8 @@ Below is the updated workflow for generating network objects for use in construc
 ```{r, echo = TRUE, eval = FALSE}
 #1. Epistats: Specify geographic features, as well as race stratification and total age range
 #under consideration
-epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", race = TRUE, age.limits = c(17, 40),
-                            age.breaks = c(22, 29, 34))
+epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", race = TRUE, age.limits = c(30, 50),
+                           age.breaks = c(35, 45))
 
 #2. Netparams: Specify age categories if needed, or let ARTnet determine age categories by number of 
 #categories desired
@@ -92,7 +92,6 @@ netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
 
 #3. Netstats: Finalize network setup 
 netstats <- build_netstats(epistats, netparams, expect.mort = 0.0005, network.size = 1000, edges.avg =TRUE)
-saveRDS(netstats, file = "netstats.rda")
 
 #4. Initialize network using `netstats` object from previous step.
 num <- netstats$demog$num

@@ -32,6 +32,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   race <- epistats$race
   age.limits <- epistats$age.limits
   age.breaks <- epistats$age.breaks
+  age.grps <- length(age.breaks) - 1
 
 
   # 0. Data Processing ------------------------------------------------------
@@ -225,7 +226,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                data = lmain, family = binomial())
     # summary(mod)
 
-    dat <- data.frame(index.age.grp = 1:5)
+    dat <- data.frame(index.age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
 
     out$main$nm.age.grp <- as.numeric(pred)
@@ -234,7 +235,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                data = lmain, family = binomial())
     # summary(mod)
 
-    dat <- data.frame(geog = geog.cat, index.age.grp = 1:5)
+    dat <- data.frame(geog = geog.cat, index.age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
 
     out$main$nm.age.grp <- as.numeric(pred)
@@ -293,7 +294,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                data = d, family = poisson())
     # summary(mod)
 
-    dat <- data.frame(age.grp = 1:5)
+    dat <- data.frame(age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
 
     out$main$nf.age.grp <- as.numeric(pred)
@@ -302,7 +303,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                data = d, family = poisson())
     # summary(mod)
 
-    dat <- data.frame(geog = geog.cat, age.grp = 1:5)
+    dat <- data.frame(geog = geog.cat, age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
 
     out$main$nf.age.grp <- as.numeric(pred)
@@ -569,7 +570,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                data = lcasl, family = binomial())
     # summary(mod)
 
-    dat <- data.frame(index.age.grp = 1:5)
+    dat <- data.frame(index.age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
 
     out$casl$nm.age.grp <- as.numeric(pred)
@@ -578,7 +579,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                data = lcasl, family = binomial())
     # summary(mod)
 
-    dat <- data.frame(geog = geog.cat, index.age.grp = 1:5)
+    dat <- data.frame(geog = geog.cat, index.age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
 
     out$casl$nm.age.grp <- as.numeric(pred)
@@ -637,7 +638,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                data = d, family = poisson())
     # summary(mod)
 
-    dat <- data.frame(age.grp = 1:5)
+    dat <- data.frame(age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
 
     out$casl$nf.age.grp <- as.numeric(pred)
@@ -646,7 +647,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                data = d, family = poisson())
     # summary(mod)
 
-    dat <- data.frame(geog = geog.cat, age.grp = 1:5)
+    dat <- data.frame(geog = geog.cat, age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
 
     out$casl$nf.age.grp <- as.numeric(pred)
@@ -915,7 +916,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                data = linst, family = binomial())
     # summary(mod)
 
-    dat <- data.frame(geog = geog.cat, index.age.grp = 1:5)
+    dat <- data.frame(geog = geog.cat, index.age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
 
     out$inst$nm.age.grp <- as.numeric(pred)
@@ -924,7 +925,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                data = linst, family = binomial())
     # summary(mod)
 
-    dat <- data.frame(geog = geog.cat, index.age.grp = 1:5)
+    dat <- data.frame(geog = geog.cat, index.age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
 
     out$inst$nm.age.grp <- as.numeric(pred)
@@ -983,7 +984,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                data = d, family = poisson())
     # summary(mod)
 
-    dat <- data.frame(age.grp = 1:5)
+    dat <- data.frame(age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")/52
 
     out$inst$nf.age.grp <- as.numeric(pred)
@@ -992,7 +993,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                data = d, family = poisson())
     # summary(mod)
 
-    dat <- data.frame(geog = geog.cat, age.grp = 1:5)
+    dat <- data.frame(geog = geog.cat, age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")/52
 
     out$inst$nf.age.grp <- as.numeric(pred)
@@ -1075,8 +1076,9 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   ## nodefactor("risk.grp") ----
 
-  # city-specific wts
-  wt <- mean(d$rate.oo.part[d$geog == geog.cat], na.rm = TRUE)/mean(d$rate.oo.part, na.rm = TRUE)
+  # geography-specific wts
+  wt <- mean(d$rate.oo.part[d$geog == geog.cat],
+             na.rm = TRUE)/mean(d$rate.oo.part, na.rm = TRUE)
   wt.rate <- d$rate.oo.part * wt
 
   nquants <- 5
@@ -1112,7 +1114,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   ## nodefactor("deg.tot") ----
 
   d$deg.tot3 <- ifelse(d$deg.tot >= 3, 3, d$deg.tot)
-  # table(d$deg.tot3)
 
   deg.tot.dist <- prop.table(table(d$deg.tot3[d$geog == geog.cat]))
   out$inst$deg.tot.dist <- as.numeric(deg.tot.dist)
@@ -1184,9 +1185,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     right_join(d, by = "AMIS_ID") %>%
     as.data.frame()
   d$nIAIpart <- ifelse(is.na(d$nIAIpart), 0, d$nIAIpart)
-  # table(d$nIAIpart, useNA = "always")
-
-  # table(d$nRAIpart, d$nIAIpart, useNA = "always")
 
   # default NA for no AI
   roletype <- rep(NA, nrow(d))

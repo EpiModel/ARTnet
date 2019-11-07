@@ -349,25 +349,25 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   if (race == TRUE) {
     if (is.null(geog.lvl)) {
       cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) + as.factor(race.combo) +
-                           as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
-                           hiv.concord.pos + prep,
+                           as.factor(ptype) + duration*as.factor(ptype) + comb.age
+                         + I(comb.age^2) + hiv.concord.pos + prep,
                          family = binomial(), data = la)
     } else {
       cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) + as.factor(race.combo) +
-                           as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
-                           hiv.concord.pos + prep + geogYN,
+                           as.factor(ptype) + duration*as.factor(ptype) + comb.age
+                         + I(comb.age^2) + hiv.concord.pos + prep + geogYN,
                          family = binomial(), data = la)
     }
   }  else {
     if (is.null(geog.lvl)) {
       cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) +
-                           as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
-                           hiv.concord.pos + prep,
+                           as.factor(ptype) + duration*as.factor(ptype) + comb.age
+                         + I(comb.age^2) + hiv.concord.pos + prep,
                          family = binomial(), data = la)
     } else {
       cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) +
-                           as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
-                           hiv.concord.pos + prep + geogYN,
+                           as.factor(ptype) + duration*as.factor(ptype) + comb.age
+                         + I(comb.age^2) + whiv.concord.pos + prep + geogYN,
                          family = binomial(), data = la)
     }
   }

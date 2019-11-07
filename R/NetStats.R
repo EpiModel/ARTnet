@@ -67,21 +67,24 @@ build_netstats <- function(epistats, netparams,
       }
 
   if (geog.lvl == "state") {
-      props <- race.dist.city[which(race.dist.state$Geog == geog.cat), -c(1,2)]/100
+      props <- race.dist.city[which(race.dist.state$Geog == geog.cat),
+                              -c(1,2)]/100
       num.B <- out$demog$num.B <- round(num * props$Black)
       num.H <- out$demog$num.H <- round(num * props$Hispanic)
       num.W <- out$demog$num.W <- num - num.B - num.H
       }
 
   if (geog.lvl == "region") {
-      props <- race.dist.city[which(race.dist.census.region$Geog == geog.cat), -c(1,2)]/100
+      props <- race.dist.city[which(race.dist.census.region$Geog == geog.cat),
+                              -c(1,2)]/100
       num.B <- out$demog$num.B <- round(num * props$Black)
       num.H <- out$demog$num.H <- round(num * props$Hispanic)
       num.W <- out$demog$num.W <- num - num.B - num.H
       }
 
   if (geog.lvl == "division") {
-      props <- race.dist.city[which(race.dist.census.division$Geog == geog.cat), -c(1,2)]/100
+      props <- race.dist.city[which(race.dist.census.division$Geog == geog.cat),
+                              -c(1,2)]/100
       num.B <- out$demog$num.B <- round(num * props$Black)
       num.H <- out$demog$num.H <- round(num * props$Hispanic)
       num.W <- out$demog$num.W <- num - num.B - num.H
@@ -135,24 +138,28 @@ build_netstats <- function(epistats, netparams,
   attr_sqrt.age <- sqrt(attr_age)
   out$attr$sqrt.age <- attr_sqrt.age
 
-  age.breaks <- out$demog$age.breaks <- c(0, 25, 35, 45, 55, 65, 100)
+  age.breaks <- out$demog$age.breaks <- epistats$age.breaks
   attr_age.grp <- cut(attr_age, age.breaks, labels = FALSE)
   out$attr$age.grp <- attr_age.grp
 
   # race attribute
-  attr_race <- apportion_lr(num, 1:3, c(num.B/num, num.H/num, num.W/num), shuffled = TRUE)
+  attr_race <- apportion_lr(num, 1:3, c(num.B/num, num.H/num, num.W/num),
+                            shuffled = TRUE)
   out$attr$race <- attr_race
 
   # deg.casl attribute
-  attr_deg.casl <- apportion_lr(num, 0:3, netparams$main$deg.casl.dist, shuffled = TRUE)
+  attr_deg.casl <- apportion_lr(num, 0:3, netparams$main$deg.casl.dist,
+                                shuffled = TRUE)
   out$attr$deg.casl <- attr_deg.casl
 
   # deg main attribute
-  attr_deg.main <- apportion_lr(num, 0:2, netparams$casl$deg.main.dist, shuffled = TRUE)
+  attr_deg.main <- apportion_lr(num, 0:2, netparams$casl$deg.main.dist,
+                                shuffled = TRUE)
   out$attr$deg.main <- attr_deg.main
 
   # deg tot 3 attribute
-  attr_deg.tot <- apportion_lr(num, 0:3, netparams$inst$deg.tot.dist, shuffled = TRUE)
+  attr_deg.tot <- apportion_lr(num, 0:3, netparams$inst$deg.tot.dist,
+                               shuffled = TRUE)
   out$attr$deg.tot <- attr_deg.tot
 
   # risk group
@@ -160,7 +167,8 @@ build_netstats <- function(epistats, netparams,
   out$attr$risk.grp <- attr_risk.grp
 
   # role class
-  attr_role.class <- apportion_lr(num, 0:2, netparams$all$role.type, shuffled = TRUE)
+  attr_role.class <- apportion_lr(num, 0:2, netparams$all$role.type,
+                                  shuffled = TRUE)
   out$attr$role.class <- attr_role.class
 
   # diag status
@@ -220,13 +228,15 @@ build_netstats <- function(epistats, netparams,
   out$main$absdiff_sqrt.age <- absdiff_sqrt.age
 
   ## nodefactor("deg.casl")
-  out$main$nodefactor_deg.casl <- num * netparams$main$deg.casl.dist * netparams$main$nf.deg.casl
+  out$main$nodefactor_deg.casl <-
+    num * netparams$main$deg.casl.dist * netparams$main$nf.deg.casl
 
   ## concurrent
   out$main$concurrent <- num * netparams$main$concurrent
 
   ## nodefactor("diag.status")
-  nodefactor_diag.status <- table(out$attr$diag.status) * netparams$main$nf.diag.status
+  nodefactor_diag.status <-
+    table(out$attr$diag.status) * netparams$main$nf.diag.status
   out$main$nodefactor_diag.status <- unname(nodefactor_diag.status)
 
   ## Dissolution
