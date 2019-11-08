@@ -5,7 +5,7 @@
 \title{Epidemic Models for Act Rates and Probability of Condom Use}
 \usage{
 build_epistats(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
-  age.limits = c(15, 65), age.breaks = c(25, 35, 45, 55, 65),
+  age.limits = c(15, 65), age.breaks = c(25, 35, 45, 55),
   browser = FALSE)
 }
 \arguments{
@@ -87,8 +87,8 @@ data by age. Must be within the bounds specified by \code{age.limits}.
 
 #Age and geographic stratification; city
 epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta",
-                            age.limits = c(15, 65),age.breaks =
-                            c(24, 34, 44, 54, 64))
+                            age.limits = c(20, 50),age.breaks =
+                            c(24, 34, 44))
 
 #Default age stratification
 epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA")

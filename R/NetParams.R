@@ -18,8 +18,8 @@
 #'
 #' @examples
 #' epistats <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = TRUE,
-#'                            age.limits = c(15, 65),
-#'                            age.breaks = c(20, 30, 40, 50, 60))
+#'                            age.limits = c(20, 50),
+#'                            age.breaks = c(20, 30, 40))
 #' netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
 #'
 #' @export

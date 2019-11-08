@@ -71,8 +71,8 @@
 #'
 #' #Age and geographic stratification; city
 #' epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta",
-#'                             age.limits = c(15, 65),age.breaks =
-#'                             c(24, 34, 44, 54, 64))
+#'                             age.limits = c(20, 50),age.breaks =
+#'                             c(24, 34, 44))
 #'
 #' #Default age stratification
 #' epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA")
@@ -83,7 +83,7 @@
 #'
 #' @export
 build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
-                           age.limits = c(15,65), age.breaks = c(25, 35, 45, 55, 65),
+                           age.limits = c(15, 65), age.breaks = c(25, 35, 45, 55),
                            browser = FALSE) {
 
   if (browser == TRUE) {
@@ -188,7 +188,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
     stop("Age breaks must be between specified age limits")
   }
 
-  age.breaks <- sort(c(0, age.breaks, 100))
+  age.breaks <- unique(sort(c(15, age.breaks, 65)))
 
   l <- subset(l, age >= age.limits[1] & age <= age.limits[2])
   d <- subset(d, age >= age.limits[1] & age <= age.limits[2])
@@ -203,24 +203,16 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
     d$race.cat3[d$race.cat == "black"] <- 1
     d$race.cat3[d$race.cat == "hispanic"] <- 2
     d$race.cat3[d$race.cat %in% c("white", "other")] <- 3
-    # table(d$race.cat, d$race.cat3)
-
-    # table(l$race.cat, useNA = "always")
-    # table(l$p_race.cat, useNA = "always")
-    # table(l$race.cat, l$p_race.cat, useNA = "always")
 
     l$race.cat3 <- rep(NA, nrow(l))
     l$race.cat3[l$race.cat == "black"] <- 1
     l$race.cat3[l$race.cat == "hispanic"] <- 2
     l$race.cat3[l$race.cat %in% c("white", "other")] <- 3
-    # table(l$race.cat3, useNA = "always")
 
-    # table(l$p_race.cat, useNA = "always")
     l$p_race.cat3 <- rep(NA, nrow(l))
     l$p_race.cat3[l$p_race.cat == "black"] <- 1
     l$p_race.cat3[l$p_race.cat == "hispanic"] <- 2
     l$p_race.cat3[l$p_race.cat %in% c("white", "other")] <- 3
-    # table(l$p_race.cat3, useNA = "always")
 
     # redistribute NAs in proportion to non-missing partner races
     probs <- prop.table(table(l$race.cat3, l$p_race.cat3), 1)
@@ -234,8 +226,6 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
     imp_white <- which(is.na(l$p_race.cat3) & l$race.cat3 == 3)
     l$p_race.cat3[imp_white] <- sample(1:3, length(imp_white), TRUE, probs[3, ])
 
-    # table(l$race.cat3, l$p_race.cat3, useNA = "always")
-
     l$race.combo <- rep(NA, nrow(l))
     l$race.combo[l$race.cat3 == 1 & l$p_race.cat3 == 1] <- 1
     l$race.combo[l$race.cat3 == 1 & l$p_race.cat3 %in% 2:3] <- 2
@@ -244,7 +234,6 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
     l$race.combo[l$race.cat3 == 3 & l$p_race.cat3 %in% 1:2] <- 5
     l$race.combo[l$race.cat3 == 3 & l$p_race.cat3 == 3] <- 6
 
-    # table(l$race.combo)
     l <- select(l, -c(race.cat3, p_race.cat3))
   }
 
@@ -260,7 +249,6 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   hiv.combo[l$hiv2 == 0 & l$p_hiv == 2] <- 4
   hiv.combo[l$hiv2 == 1 & l$p_hiv == 2] <- 5
   l$hiv.concord.pos <- ifelse(hiv.combo == 2, 1, 0)
-  # table(l$hiv.concord.pos)
 
   # PrEP
   # table(d$PREP_REVISED, useNA = "always")
@@ -367,7 +355,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
     } else {
       cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) +
                            as.factor(ptype) + duration*as.factor(ptype) + comb.age
-                         + I(comb.age^2) + whiv.concord.pos + prep + geogYN,
+                         + I(comb.age^2) + hiv.concord.pos + prep + geogYN,
                          family = binomial(), data = la)
     }
   }
