@@ -41,16 +41,15 @@ num.B <- out$demog$num.B <- round(num * props$Black)
 num.H <- out$demog$num.H <- round(num * props$Hispanic)
 num.W <- out$demog$num.W <- num - num.B - num.H
 
-## Age-sex-specific mortality rates (B, H, W)
-#    in 5-year age decrments starting with age 15
-# TODO: update asmr.H for hispanics, currently just using asmr.B
+## Age-sex-specific mortality rates in men by race/ethnicity (B, H, W)
+#    in 5-year age increments starting with age 15
 ages <- out$demog$ages <- 15:64
-asmr.B <- c(0.00078, 0.00148, 0.00157, 0.00168, 0.00198,
-            0.00254, 0.00376, 0.00628, 0.00999, 0.01533)
-asmr.H <- c(0.00078, 0.00148, 0.00157, 0.00168, 0.00198,
-            0.00254, 0.00376, 0.00628, 0.00999, 0.01533)
-asmr.W <- c(0.00059, 0.00117, 0.00144, 0.00168, 0.00194,
-            0.00249, 0.00367, 0.00593, 0.00881, 0.01255)
+asmr.B <- c(0.00124, 0.00213, 0.00252, 0.00286, 0.00349,
+            0.00422, 0.00578, 0.00870, 0.01366, 0.02052)
+asmr.H <- c(0.00062, 0.00114, 0.00127, 0.00132, 0.00154,
+            0.00186, 0.00271, 0.00440, 0.00643, 0.00980)
+asmr.W <- c(0.00064, 0.00128, 0.00166, 0.00199, 0.00226,
+            0.00272, 0.00382, 0.00591, 0.00889, 0.01266)
 
 # transformed to weekly rates
 trans.asmr.B <- 1 - (1 - asmr.B)^(1/52)
@@ -225,7 +224,7 @@ out$casl$concurrent <- num * nstats$casl$concurrent
 
 ## nodefactor("diag.status")
 nodefactor_diag.status <- table(out$attr$diag.status) * nstats$casl$nf.diag.status
-out$casl$nodefactor_diag.status <- unname(nodefactor_diag.status) 
+out$casl$nodefactor_diag.status <- unname(nodefactor_diag.status)
 
 ## Dissolution
 if (diss_nodematch == FALSE) {

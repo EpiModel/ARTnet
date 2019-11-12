@@ -13,10 +13,16 @@
 #' @name ARTnet-package
 #' @aliases ARTnet
 #' @import ARTnetData EpiModel dplyr
-#' @importFrom stats binomial glm lm median poisson predict rbinom runif
+#' @importFrom stats binomial coef glm lm median poisson predict rbinom runif
 #' @importFrom utils head
 #'
 #' @docType package
 #' @keywords package
+#'
+#' @details
+#' The ARTnet package provides a suite of functions for the parameterization
+#' of epidemic and network models using data from the ARTnet cross-sectional survery of men
+#' who have sex with men (MSM) in the United States. Three functions make up this workflow
+#'  and are described below:
 #'
 NULL

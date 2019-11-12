@@ -1,5 +1,5 @@
 
-#' Build EpiStats
+#' Build Network Statistics for Network Estimation
 #'
 #' @param epistats Output from \code{\link{build_epistats}}.
 #' @param netparams Output from \code{\link{build_netparams}}.
@@ -7,26 +7,45 @@
 #' @param expect.mort Expected average mortality level to pass into
 #'        \code{\link{dissolution_coefs}} function.
 #' @param browser Run function in interactive browser mode.
+#' @param edges.avg Whether degree differences exist along race. TRUE
+#'        or FALSE; default of FALSE.
 #'
-#' @export
+#' @details
+#' \code{build_netstats} takes output from \code{\link{build_epistats}} and
+#' \code{\link{build_netparams}} to build the relevant network statistics
+#' that will be used in network estimation using package \link{EpiModel}.
+#'
+#' The param \code{edge.avg} allows a user set the network stated edges
+#' to that estimated in \code{\link{build_netparams}} (divided by 2),
+#' with "edges.avg = FALSE", or, if sample proportions do not match
+#' ARTnet population proportions, set to a weighted racial average
+#' with "edges.avg = TRUE."
+#'
 #'
 #' @examples
-#' epistats <- build_epistats(city_name = "Atlanta")
-#' netparams <- build_netparams(epistats = epistats, smooth.main.dur.55p = TRUE)
+#' epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta")
+#' netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
 #' netstats <- build_netstats(epistats, netparams)
 #'
+#' @export
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,
                            expect.mort = 0.000478213,
-                           browser = FALSE) {
-
-  if (browser == TRUE) {
+                           browser = FALSE,
+                           edges.avg = FALSE) {
+  if (browser == TRUE){
     browser()
   }
 
+  ## Data ##
+  #NOTE: Not actually used
+  d <- epistats$wide
+  l <- epistats$long
+
   ## Inputs ##
-  city_name <- epistats$city_name
-  edges_avg_nfrace <- FALSE
+  geog.cat <- epistats$geog.cat
+  geog.lvl <- epistats$geog.lvl
+  race <- epistats$race
 
 
   # Demographic Initialization ----------------------------------------------
@@ -39,15 +58,40 @@ build_netstats <- function(epistats, netparams,
 
   # Population size by race group
   # race.dist.3cat
-  props <- race.dist.3cat[which(race.dist.3cat$City == city_name), -1]/100
 
+  if (geog.lvl == "city") {
+  props <- race.dist.city[which(race.dist.city$Geog == geog.cat), -c(1,2)]/100
   num.B <- out$demog$num.B <- round(num * props$Black)
   num.H <- out$demog$num.H <- round(num * props$Hispanic)
   num.W <- out$demog$num.W <- num - num.B - num.H
+      }
+
+  if (geog.lvl == "state") {
+      props <- race.dist.city[which(race.dist.state$Geog == geog.cat),
+                              -c(1,2)]/100
+      num.B <- out$demog$num.B <- round(num * props$Black)
+      num.H <- out$demog$num.H <- round(num * props$Hispanic)
+      num.W <- out$demog$num.W <- num - num.B - num.H
+      }
+
+  if (geog.lvl == "region") {
+      props <- race.dist.city[which(race.dist.census.region$Geog == geog.cat),
+                              -c(1,2)]/100
+      num.B <- out$demog$num.B <- round(num * props$Black)
+      num.H <- out$demog$num.H <- round(num * props$Hispanic)
+      num.W <- out$demog$num.W <- num - num.B - num.H
+      }
+
+  if (geog.lvl == "division") {
+      props <- race.dist.city[which(race.dist.census.division$Geog == geog.cat),
+                              -c(1,2)]/100
+      num.B <- out$demog$num.B <- round(num * props$Black)
+      num.H <- out$demog$num.H <- round(num * props$Hispanic)
+      num.W <- out$demog$num.W <- num - num.B - num.H
+      }
 
   ## Age-sex-specific mortality rates (B, H, W)
   #    in 5-year age decrments starting with age 15
-  # TODO: update asmr.H for hispanics, currently just using asmr.B
   ages <- out$demog$ages <- 15:64
   asmr.B <- c(0.00078, 0.00148, 0.00157, 0.00168, 0.00198,
               0.00254, 0.00376, 0.00628, 0.00999, 0.01533)
@@ -56,6 +100,7 @@ build_netstats <- function(epistats, netparams,
   asmr.W <- c(0.00059, 0.00117, 0.00144, 0.00168, 0.00194,
               0.00249, 0.00367, 0.00593, 0.00881, 0.01255)
 
+  if (race == TRUE) {
   # transformed to weekly rates
   trans.asmr.B <- 1 - (1 - asmr.B)^(1/52)
   trans.asmr.H <- 1 - (1 - asmr.H)^(1/52)
@@ -68,9 +113,19 @@ build_netstats <- function(epistats, netparams,
   asmr <- data.frame(age = 1:65, vec.asmr.B, vec.asmr.H, vec.asmr.W)
 
   out$demog$asmr <- asmr
+  } else {
+   asmr.O <-  rbind (asmr.B, asmr.H, asmr.W)
+   asmr.O <- colMeans(asmr.O)
 
-  out$demog$city <- gsub(" ", "", city_name)
+   # transformed to weekly rates
+   trans.asmr <- 1-(1-asmr.O)^(1/52)
 
+   # Null rate for 0-14, transformed rates, total rate for 65
+   vec.asmr <- c(rep(0,14), rep(trans.asmr, each = 5),1)
+   asmr <- data.frame(age = 1:65, vec.asmr, vec.asmr, vec.asmr)
+   out$demog$asmr <- asmr
+
+  }
 
   # Nodal Attribute Initialization ------------------------------------------
 
@@ -83,24 +138,28 @@ build_netstats <- function(epistats, netparams,
   attr_sqrt.age <- sqrt(attr_age)
   out$attr$sqrt.age <- attr_sqrt.age
 
-  age.breaks <- out$demog$age.breaks <- c(0, 25, 35, 45, 55, 65, 100)
+  age.breaks <- out$demog$age.breaks <- epistats$age.breaks
   attr_age.grp <- cut(attr_age, age.breaks, labels = FALSE)
   out$attr$age.grp <- attr_age.grp
 
   # race attribute
-  attr_race <- apportion_lr(num, 1:3, c(num.B/num, num.H/num, num.W/num), shuffled = TRUE)
+  attr_race <- apportion_lr(num, 1:3, c(num.B/num, num.H/num, num.W/num),
+                            shuffled = TRUE)
   out$attr$race <- attr_race
 
   # deg.casl attribute
-  attr_deg.casl <- apportion_lr(num, 0:3, netparams$main$deg.casl.dist, shuffled = TRUE)
+  attr_deg.casl <- apportion_lr(num, 0:3, netparams$main$deg.casl.dist,
+                                shuffled = TRUE)
   out$attr$deg.casl <- attr_deg.casl
 
   # deg main attribute
-  attr_deg.main <- apportion_lr(num, 0:2, netparams$casl$deg.main.dist, shuffled = TRUE)
+  attr_deg.main <- apportion_lr(num, 0:2, netparams$casl$deg.main.dist,
+                                shuffled = TRUE)
   out$attr$deg.main <- attr_deg.main
 
   # deg tot 3 attribute
-  attr_deg.tot <- apportion_lr(num, 0:3, netparams$inst$deg.tot.dist, shuffled = TRUE)
+  attr_deg.tot <- apportion_lr(num, 0:3, netparams$inst$deg.tot.dist,
+                               shuffled = TRUE)
   out$attr$deg.tot <- attr_deg.tot
 
   # risk group
@@ -108,14 +167,22 @@ build_netstats <- function(epistats, netparams,
   out$attr$risk.grp <- attr_risk.grp
 
   # role class
-  attr_role.class <- apportion_lr(num, 0:2, netparams$all$role.type, shuffled = TRUE)
+  attr_role.class <- apportion_lr(num, 0:2, netparams$all$role.type,
+                                  shuffled = TRUE)
   out$attr$role.class <- attr_role.class
 
   # diag status
-  xs <- data.frame(age = attr_age, race.cat3 = attr_race, cityYN = 1)
+  if (race == TRUE) {
+  xs <- data.frame(age = attr_age, race.cat3 = attr_race, geogYN = 1)
   preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
   attr_diag.status <- rbinom(num, 1, preds)
   out$attr$diag.status <- attr_diag.status
+  }  else {
+    xs <- data.frame(age = attr_age, geogYN = 1)
+    preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
+    attr_diag.status <- rbinom(num, 1, preds)
+    out$attr$diag.status <- attr_diag.status
+  }
 
 
   # Main Model -----------------------------------------------------------
@@ -123,10 +190,25 @@ build_netstats <- function(epistats, netparams,
   out$main <- list()
 
   ## edges
-  if (edges_avg_nfrace == FALSE) {
+  if (race == TRUE) {
+  if (edges.avg == FALSE) {
     out$main$edges <- (netparams$main$md.main * num) / 2
   } else {
     out$main$edges <- sum(unname(table(out$attr$race)) * netparams$main$nf.race)/2
+  }
+    ## nodefactor("race")
+    nodefactor_race <- table(out$attr$race) * netparams$main$nf.race
+    out$main$nodefactor_race <- unname(nodefactor_race)
+
+    ## nodematch("race")
+    nodematch_race <- nodefactor_race/2 * netparams$main$nm.race
+    out$main$nodematch_race <- unname(nodematch_race)
+
+    ## nodematch("race", diff = FALSE)
+    nodematch_race <- out$main$edges * netparams$main$nm.race_diffF
+    out$main$nodematch_race_diffF <- unname(nodematch_race)
+  } else {
+    out$main$edges <- (netparams$main$md.main * num) / 2
   }
 
   ## nodefactor("age.grp
@@ -145,26 +227,16 @@ build_netstats <- function(epistats, netparams,
   absdiff_sqrt.age <- out$main$edges * netparams$main$absdiff.sqrt.age
   out$main$absdiff_sqrt.age <- absdiff_sqrt.age
 
-  ## nodefactor("race")
-  nodefactor_race <- table(out$attr$race) * netparams$main$nf.race
-  out$main$nodefactor_race <- unname(nodefactor_race)
-
-  ## nodematch("race")
-  nodematch_race <- nodefactor_race/2 * netparams$main$nm.race
-  out$main$nodematch_race <- unname(nodematch_race)
-
-  ## nodematch("race", diff = FALSE)
-  nodematch_race <- out$main$edges * netparams$main$nm.race_diffF
-  out$main$nodematch_race_diffF <- unname(nodematch_race)
-
   ## nodefactor("deg.casl")
-  out$main$nodefactor_deg.casl <- num * netparams$main$deg.casl.dist * netparams$main$nf.deg.casl
+  out$main$nodefactor_deg.casl <-
+    num * netparams$main$deg.casl.dist * netparams$main$nf.deg.casl
 
   ## concurrent
   out$main$concurrent <- num * netparams$main$concurrent
 
   ## nodefactor("diag.status")
-  nodefactor_diag.status <- table(out$attr$diag.status) * netparams$main$nf.diag.status
+  nodefactor_diag.status <-
+    table(out$attr$diag.status) * netparams$main$nf.diag.status
   out$main$nodefactor_diag.status <- unname(nodefactor_diag.status)
 
   ## Dissolution
@@ -182,10 +254,25 @@ build_netstats <- function(epistats, netparams,
   out$casl <- list()
 
   ## edges
-  if (edges_avg_nfrace == FALSE) {
+  if (race == TRUE) {
+  if (edges.avg == FALSE) {
     out$casl$edges <- (netparams$casl$md.casl * num) / 2
   } else {
     out$casl$edges <- sum(unname(table(out$attr$race)) * netparams$casl$nf.race)/2
+  }
+    ## nodefactor("race")
+    nodefactor_race <- table(out$attr$race) * netparams$casl$nf.race
+    out$casl$nodefactor_race <- unname(nodefactor_race)
+
+    ## nodematch("race")
+    nodematch_race <- nodefactor_race/2 * netparams$casl$nm.race
+    out$casl$nodematch_race <- unname(nodematch_race)
+
+    ## nodematch("race", diff = FALSE)
+    nodematch_race <- out$casl$edges * netparams$casl$nm.race_diffF
+    out$casl$nodematch_race_diffF <- unname(nodematch_race)
+  } else {
+    out$casl$edges <- (netparams$casl$md.casl * num) / 2
   }
 
   ## nodefactor("age.grp")
@@ -203,19 +290,6 @@ build_netstats <- function(epistats, netparams,
   ## absdiff("sqrt.age")
   absdiff_sqrt.age <- out$casl$edges * netparams$casl$absdiff.sqrt.age
   out$casl$absdiff_sqrt.age <- absdiff_sqrt.age
-
-  ## nodefactor("race")
-  nodefactor_race <- table(out$attr$race) * netparams$casl$nf.race
-  out$casl$nodefactor_race <- unname(nodefactor_race)
-
-  ## nodematch("race")
-  nodematch_race <- nodefactor_race/2 * netparams$casl$nm.race
-  out$casl$nodematch_race <- unname(nodematch_race)
-
-  ## nodematch("race", diff = FALSE)
-  nodematch_race <- out$casl$edges * netparams$casl$nm.race_diffF
-  out$casl$nodematch_race_diffF <- unname(nodematch_race)
-
 
   ## nodefactor("deg.main")
   out$casl$nodefactor_deg.main <- num * netparams$casl$deg.main.dist * netparams$casl$nf.deg.main
@@ -241,10 +315,25 @@ build_netstats <- function(epistats, netparams,
   out$inst <- list()
 
   ## edges
-  if (edges_avg_nfrace == FALSE) {
+  if (race == TRUE) {
+  if (edges.avg == FALSE) {
     out$inst$edges <- (netparams$inst$md.inst * num) / 2
   } else {
     out$inst$edges <- sum(unname(table(out$attr$race)) * netparams$inst$nf.race)/2
+  }
+    ## nodefactor("race")
+    nodefactor_race <- table(out$attr$race) * netparams$inst$nf.race
+    out$inst$nodefactor_race <- unname(nodefactor_race)
+
+    ## nodematch("race")
+    nodematch_race <- nodefactor_race/2 * netparams$inst$nm.race
+    out$inst$nodematch_race <- unname(nodematch_race)
+
+    ## nodematch("race", diff = FALSE)
+    nodematch_race <- out$inst$edges * netparams$inst$nm.race_diffF
+    out$inst$nodematch_race_diffF <- unname(nodematch_race)
+  } else {
+    out$inst$edges <- (netparams$inst$md.inst * num) / 2
   }
 
   ## nodefactor("age.grp")
@@ -262,18 +351,6 @@ build_netstats <- function(epistats, netparams,
   ## absdiff("sqrt.age")
   absdiff_sqrt.age <- out$inst$edges * netparams$inst$absdiff.sqrt.age
   out$inst$absdiff_sqrt.age <- absdiff_sqrt.age
-
-  ## nodefactor("race")
-  nodefactor_race <- table(out$attr$race) * netparams$inst$nf.race
-  out$inst$nodefactor_race <- unname(nodefactor_race)
-
-  ## nodematch("race")
-  nodematch_race <- nodefactor_race/2 * netparams$inst$nm.race
-  out$inst$nodematch_race <- unname(nodematch_race)
-
-  ## nodematch("race", diff = FALSE)
-  nodematch_race <- out$inst$edges * netparams$inst$nm.race_diffF
-  out$inst$nodematch_race_diffF <- unname(nodematch_race)
 
   ## nodefactor("risk.grp")
   nodefactor_risk.grp <- table(out$attr$risk.grp) * netparams$inst$nf.risk.grp
