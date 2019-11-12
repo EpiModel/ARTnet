@@ -6,6 +6,9 @@ latex: false
 r:
   - release
 
+r_github_packages:
+  - EpiModel/ARTnetData
+
 warnings_are_errors: true
 
 notifications:
