@@ -102,7 +102,7 @@ attr.values <- netstats$attr
 nw <- network::set.vertex.attribute(nw, attr.names, attr.values)
 nw_main <- nw_casl <- nw_inst <- nw
 
-# 5. Main Model ---------------------------------------------------------
+# 5. Main Model
 
 #Formula: 
 model_main <- ~edges +
@@ -140,7 +140,7 @@ fit_main <- netest(nw_main,
                                                    SAN.nsteps.times = 3),
                    verbose = FALSE)
 
-# 6. Casual Model ---------------------------------------------------------
+# 6. Casual Model
 
 # Formula
 model_casl <- ~edges +
@@ -180,7 +180,7 @@ fit_casl <- netest(nw_casl,
                                                    SAN.nsteps.times = 3),
                    verbose = FALSE)
 
-# 7. One-Off Model --------------------------------------------------------
+# 7. One-Off Model
 
 # Formula
 model_inst <- ~edges +
@@ -218,10 +218,10 @@ fit_inst <- netest(nw_inst,
                                                    SAN.nsteps.times = 3),
                    verbose = FALSE)
 
-# 8. Save Data ------------------------------------------------------------
+# 8. Save Data
 
 out <- list(fit_main, fit_casl, fit_inst)
 
-saveRDS(out, file = "netest.rda")
+# saveRDS(out, file = "netest.rda")
 
 ```
