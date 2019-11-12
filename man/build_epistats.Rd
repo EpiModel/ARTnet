@@ -16,13 +16,13 @@ build_epistats(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
 \item{race}{Whether to stratify by racial status. Default is TRUE.}
 
 \item{age.limits}{Upper and lower limit. Age range to subset ARTnet data by.
-Default is 15 to 65}
+Default is 15 to 65.}
 
 \item{age.breaks}{Ages that define the upper age categories. Default is
-c(25, 35, 45, 55, 65), which corresponds to (0, 25], (25, 35],
+\code{c(25, 35, 45, 55, 65)}, which corresponds to (0, 25], (25, 35],
 (35, 45], (45, 55], (55, 65], (65, 100].}
 
-\item{browser}{Run function in interactive browser mode. Default is FALSE}
+\item{browser}{Run function in interactive browser mode. Default is FALSE.}
 }
 \description{
 Builds epidemic models governing act rates and probability of
@@ -84,11 +84,11 @@ data by age. Must be within the bounds specified by \code{age.limits}.
 }
 
 \examples{
-
-#Age and geographic stratification; city
-epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta",
-                            age.limits = c(20, 50),age.breaks =
-                            c(24, 34, 44))
+# Age and geographic stratification; city
+epistats1 <- build_epistats(geog.lvl = "city",
+                            geog.cat = "Atlanta",
+                            age.limits = c(20, 50),
+                            age.breaks = c(24, 34, 44))
 
 #Default age stratification
 epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA")

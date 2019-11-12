@@ -7,17 +7,17 @@
 #' @param geog.lvl Specifies geographic feature for ARTnet statistics.
 #' @param geog.cat Specifies geographic stratum to base ARTnet statistics on.
 #' @param age.limits Upper and lower limit. Age range to subset ARTnet data by.
-#'        Default is 15 to 65
+#'        Default is 15 to 65.
 #' @param age.breaks Ages that define the upper age categories. Default is
-#'        c(25, 35, 45, 55, 65), which corresponds to (0, 25], (25, 35],
+#'        \code{c(25, 35, 45, 55, 65)}, which corresponds to (0, 25], (25, 35],
 #'        (35, 45], (45, 55], (55, 65], (65, 100].
 #' @param race Whether to stratify by racial status. Default is TRUE.
-#' @param browser Run function in interactive browser mode. Default is FALSE
+#' @param browser Run function in interactive browser mode. Default is FALSE.
 #'
 #' @details
 #' \code{build_epistats}, through input of geographic, age and racial
-#'parameters, builds the neccessary epidemic models governing sexual activity
-#'and condom use during sexual activity in main, casual and one-off partnerships
+#' parameters, builds the neccessary epidemic models governing sexual activity
+#' and condom use during sexual activity in main, casual and one-off partnerships
 #' among men-who-have-sex-with-men (MSM). Estimation of these linear models is
 #' done using data from the ARTnetData package, a package containing the
 #' results of the online ARTnet survey of HIV-related risk behaviors, testing
@@ -68,11 +68,11 @@
 #' }
 #'
 #' @examples
-#'
-#' #Age and geographic stratification; city
-#' epistats1 <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta",
-#'                             age.limits = c(20, 50),age.breaks =
-#'                             c(24, 34, 44))
+#' # Age and geographic stratification; city
+#' epistats1 <- build_epistats(geog.lvl = "city",
+#'                             geog.cat = "Atlanta",
+#'                             age.limits = c(20, 50),
+#'                             age.breaks = c(24, 34, 44))
 #'
 #' #Default age stratification
 #' epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA")
@@ -113,8 +113,6 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
     stop("Only one variable name may be chosen at a time.")
   }
 
-
-
   if (!is.null(geog.lvl)) {
     if (geog.lvl == "city") {
       if (!(geog.cat %in% unique(d$city))) {
@@ -125,8 +123,6 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
       l$geog <- l$city2
       d$geogYN <- ifelse(d[,"city2"] == geog.cat, 1, 0)
       d$geog <- d$city2
-
-
     }
 
     if (geog.lvl == "state") {
@@ -138,7 +134,6 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
       l$geog <- l$State
       d$geogYN <- ifelse(d[,"State"] == geog.cat, 1, 0)
       d$geog <- d$State
-
     }
 
     if (geog.lvl == "division") {
@@ -150,7 +145,6 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
       l$geog <- l$DIVCODE
       d$geogYN <- ifelse(d[,"DIVCODE"] == geog.cat, 1, 0)
       d$geog <- d$DIVCODE
-
     }
 
     if (geog.lvl == "region") {
@@ -162,16 +156,15 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
       l$geog <- l$REGCODE
       d$geogYN <- ifelse(d[,"REGCODE"] == geog.cat, 1, 0)
       d$geog <- d$REGCODE
-
     }
   }
 
   # Age Processing
 
-  #Subset data by selected age range
+  # Subset data by selected age range
 
 
-  #Warning if age range is out of allowed range
+  # Warning if age range is out of allowed range
   flag.ll <- age.limits[1] >= 15 & age.limits[1] <= 65
   flag.ul <- age.limits[2] >= 15 & age.limits[2] <= 65
   flag.lim <- flag.ll*flag.ul
@@ -298,7 +291,6 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
       la <- select(la, -c(RAI, IAI))
     }
   }
-
 
   # Poisson Model
   if (race == TRUE) {
