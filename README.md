@@ -1,4 +1,5 @@
-# ARTnet: Network and Epidemic Parameterization with the ARTnet Study Data
+## ARTnet: Model Parameterization with the ARTnet Study Data
+[![Build Status](https://travis-ci.org/EpiModel/ARTnet.svg?branch=master)](https://travis-ci.com/EpiModel/ARTnet)
 
 ARTnet is an anonymous cross-sectional web-based survey of HIV-related risk behaviors, testing, and use of 
 prevention services among men who have sex with men (MSM) in the United States. It recruited MSM who have 
@@ -10,13 +11,13 @@ Access to the data requires a Memorandum of Understanding (MOU) that outlines th
 and purposes of the data analyses. This dataset may not be shared without the consent of the ARTnet Study PI 
 (Samuel Jenness, Emory University) as outlined in an MOU. 
 
-## ARTnetData Dependency
+### ARTnetData Dependency
 
 The ARTnet package depends on the ARTnetData package, which contains the limited use public dataset. Because of the 
 restrictions of the dataset, the ARTnetData package must be installed separately, before installing the ARTnet package, 
 using the following directions.
 
-### Installation
+#### Installation
 The suggested method for accessing the dataset is to directly install the `ARTnetData` package in R, using 
 the `remotes` package as follows:
 ```r
@@ -28,7 +29,7 @@ Because this repository is private, installing this package may require setting 
 This package comes with two included datasets, a wide-form dataset (rows = study participants) and a 
 long-form dataset (rows = partnerships, with multiple rows per unique study participant).
 
-### Dataset Loading
+#### Dataset Loading
 The suggested method for accessing the dataset is to directly install the `ARTnetData` package in R, using 
 the `remotes` package as follows:
 ```r
@@ -46,20 +47,20 @@ str(d)
 str(l)
 ```
 
-## The ARTnet Package
+### The ARTnet Package
 The ARTnet package contains standardized scripts to analyze the ARTnet data for the purposes of parameterizing 
 the epidemic modeling with EpiModel and EpiModelHIV. There are three primary functions, detailed below, 
 that conduct statistical analysis of the data for a specific target population of MSM defined by geography, 
 age, and race/ethnicity. Users may also conduct analyses of the ARTnet dataset without the ARTnet package, but
 this package automates several standard analyses needed for many epidemic modeling projects.
 
-### Installation
+#### Installation
 The ARTnet package may be installed with the `remotes` package:
 ```r
 remotes::install_github("EpiModel/ARTnet")
 ```
 
-### Example Uses
+#### Example Uses
 Some of the example uses are then as follows, more details of which may be found in the package vignette:
 
 ```r
