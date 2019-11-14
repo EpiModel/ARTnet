@@ -60,35 +60,32 @@ build_netstats <- function(epistats, netparams,
   # race.dist.3cat
 
   if (geog.lvl == "city") {
-  props <- race.dist.city[which(race.dist.city$Geog == geog.cat), -c(1,2)]/100
-  num.B <- out$demog$num.B <- round(num * props$Black)
-  num.H <- out$demog$num.H <- round(num * props$Hispanic)
-  num.W <- out$demog$num.W <- num - num.B - num.H
-      }
-
+    props <- race.dist.city[which(race.dist.city$Geog == geog.cat), -c(1,2)]/100
+    num.B <- out$demog$num.B <- round(num * props$Black)
+    num.H <- out$demog$num.H <- round(num * props$Hispanic)
+    num.W <- out$demog$num.W <- num - num.B - num.H
+  }
   if (geog.lvl == "state") {
-      props <- race.dist.city[which(race.dist.state$Geog == geog.cat),
-                              -c(1,2)]/100
-      num.B <- out$demog$num.B <- round(num * props$Black)
-      num.H <- out$demog$num.H <- round(num * props$Hispanic)
-      num.W <- out$demog$num.W <- num - num.B - num.H
-      }
-
+    props <- race.dist.city[which(race.dist.state$Geog == geog.cat),
+                            -c(1,2)]/100
+    num.B <- out$demog$num.B <- round(num * props$Black)
+    num.H <- out$demog$num.H <- round(num * props$Hispanic)
+    num.W <- out$demog$num.W <- num - num.B - num.H
+  }
   if (geog.lvl == "region") {
-      props <- race.dist.city[which(race.dist.census.region$Geog == geog.cat),
-                              -c(1,2)]/100
-      num.B <- out$demog$num.B <- round(num * props$Black)
-      num.H <- out$demog$num.H <- round(num * props$Hispanic)
-      num.W <- out$demog$num.W <- num - num.B - num.H
-      }
-
+    props <- race.dist.city[which(race.dist.census.region$Geog == geog.cat),
+                            -c(1,2)]/100
+    num.B <- out$demog$num.B <- round(num * props$Black)
+    num.H <- out$demog$num.H <- round(num * props$Hispanic)
+    num.W <- out$demog$num.W <- num - num.B - num.H
+  }
   if (geog.lvl == "division") {
-      props <- race.dist.city[which(race.dist.census.division$Geog == geog.cat),
-                              -c(1,2)]/100
-      num.B <- out$demog$num.B <- round(num * props$Black)
-      num.H <- out$demog$num.H <- round(num * props$Hispanic)
-      num.W <- out$demog$num.W <- num - num.B - num.H
-      }
+    props <- race.dist.city[which(race.dist.census.division$Geog == geog.cat),
+                            -c(1,2)]/100
+    num.B <- out$demog$num.B <- round(num * props$Black)
+    num.H <- out$demog$num.H <- round(num * props$Hispanic)
+    num.W <- out$demog$num.W <- num - num.B - num.H
+  }
 
   ## Age-sex-specific mortality rates (B, H, W)
   #    in 5-year age decrments starting with age 15
@@ -101,30 +98,29 @@ build_netstats <- function(epistats, netparams,
               0.00272, 0.00382, 0.00591, 0.00889, 0.01266)
 
   if (race == TRUE) {
-  # transformed to weekly rates
-  trans.asmr.B <- 1 - (1 - asmr.B)^(1/52)
-  trans.asmr.H <- 1 - (1 - asmr.H)^(1/52)
-  trans.asmr.W <- 1 - (1 - asmr.W)^(1/52)
+    # transformed to weekly rates
+    trans.asmr.B <- 1 - (1 - asmr.B)^(1/52)
+    trans.asmr.H <- 1 - (1 - asmr.H)^(1/52)
+    trans.asmr.W <- 1 - (1 - asmr.W)^(1/52)
 
-  # Null rate for 0-14, transformed rates, total rate for 65
-  vec.asmr.B <- c(rep(0, 14), rep(trans.asmr.B, each = 5), 1)
-  vec.asmr.H <- c(rep(0, 14), rep(trans.asmr.H, each = 5), 1)
-  vec.asmr.W <- c(rep(0, 14), rep(trans.asmr.W, each = 5), 1)
-  asmr <- data.frame(age = 1:65, vec.asmr.B, vec.asmr.H, vec.asmr.W)
+    # Null rate for 0-14, transformed rates, total rate for 65
+    vec.asmr.B <- c(rep(0, 14), rep(trans.asmr.B, each = 5), 1)
+    vec.asmr.H <- c(rep(0, 14), rep(trans.asmr.H, each = 5), 1)
+    vec.asmr.W <- c(rep(0, 14), rep(trans.asmr.W, each = 5), 1)
+    asmr <- data.frame(age = 1:65, vec.asmr.B, vec.asmr.H, vec.asmr.W)
 
-  out$demog$asmr <- asmr
+    out$demog$asmr <- asmr
   } else {
-   asmr.O <-  rbind (asmr.B, asmr.H, asmr.W)
-   asmr.O <- colMeans(asmr.O)
+    asmr.O <-  rbind(asmr.B, asmr.H, asmr.W)
+    asmr.O <- colMeans(asmr.O)
 
-   # transformed to weekly rates
-   trans.asmr <- 1-(1-asmr.O)^(1/52)
+    # transformed to weekly rates
+    trans.asmr <- 1 - (1 - asmr.O)^(1/52)
 
-   # Null rate for 0-14, transformed rates, total rate for 65
-   vec.asmr <- c(rep(0,14), rep(trans.asmr, each = 5),1)
-   asmr <- data.frame(age = 1:65, vec.asmr, vec.asmr, vec.asmr)
-   out$demog$asmr <- asmr
-
+    # Null rate for 0-14, transformed rates, total rate for 65
+    vec.asmr <- c(rep(0,14), rep(trans.asmr, each = 5),1)
+    asmr <- data.frame(age = 1:65, vec.asmr, vec.asmr, vec.asmr)
+    out$demog$asmr <- asmr
   }
 
   # Nodal Attribute Initialization ------------------------------------------
@@ -173,10 +169,10 @@ build_netstats <- function(epistats, netparams,
 
   # diag status
   if (race == TRUE) {
-  xs <- data.frame(age = attr_age, race.cat3 = attr_race, geogYN = 1)
-  preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
-  attr_diag.status <- rbinom(num, 1, preds)
-  out$attr$diag.status <- attr_diag.status
+    xs <- data.frame(age = attr_age, race.cat3 = attr_race, geogYN = 1)
+    preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
+    attr_diag.status <- rbinom(num, 1, preds)
+    out$attr$diag.status <- attr_diag.status
   }  else {
     xs <- data.frame(age = attr_age, geogYN = 1)
     preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
@@ -191,11 +187,11 @@ build_netstats <- function(epistats, netparams,
 
   ## edges
   if (race == TRUE) {
-  if (edges.avg == FALSE) {
-    out$main$edges <- (netparams$main$md.main * num) / 2
-  } else {
-    out$main$edges <- sum(unname(table(out$attr$race)) * netparams$main$nf.race)/2
-  }
+    if (edges.avg == FALSE) {
+      out$main$edges <- (netparams$main$md.main * num) / 2
+    } else {
+      out$main$edges <- sum(unname(table(out$attr$race)) * netparams$main$nf.race)/2
+    }
     ## nodefactor("race")
     nodefactor_race <- table(out$attr$race) * netparams$main$nf.race
     out$main$nodefactor_race <- unname(nodefactor_race)
@@ -255,11 +251,11 @@ build_netstats <- function(epistats, netparams,
 
   ## edges
   if (race == TRUE) {
-  if (edges.avg == FALSE) {
-    out$casl$edges <- (netparams$casl$md.casl * num) / 2
-  } else {
-    out$casl$edges <- sum(unname(table(out$attr$race)) * netparams$casl$nf.race)/2
-  }
+    if (edges.avg == FALSE) {
+      out$casl$edges <- (netparams$casl$md.casl * num) / 2
+    } else {
+      out$casl$edges <- sum(unname(table(out$attr$race)) * netparams$casl$nf.race)/2
+    }
     ## nodefactor("race")
     nodefactor_race <- table(out$attr$race) * netparams$casl$nf.race
     out$casl$nodefactor_race <- unname(nodefactor_race)
@@ -316,11 +312,11 @@ build_netstats <- function(epistats, netparams,
 
   ## edges
   if (race == TRUE) {
-  if (edges.avg == FALSE) {
-    out$inst$edges <- (netparams$inst$md.inst * num) / 2
-  } else {
-    out$inst$edges <- sum(unname(table(out$attr$race)) * netparams$inst$nf.race)/2
-  }
+    if (edges.avg == FALSE) {
+      out$inst$edges <- (netparams$inst$md.inst * num) / 2
+    } else {
+      out$inst$edges <- sum(unname(table(out$attr$race)) * netparams$inst$nf.race)/2
+    }
     ## nodefactor("race")
     nodefactor_race <- table(out$attr$race) * netparams$inst$nf.race
     out$inst$nodefactor_race <- unname(nodefactor_race)
@@ -363,7 +359,6 @@ build_netstats <- function(epistats, netparams,
   ## nodefactor("diag.status")
   nodefactor_diag.status <- table(out$attr$diag.status) * netparams$inst$nf.diag.status
   out$inst$nodefactor_diag.status <- unname(nodefactor_diag.status)
-
 
   # Return Out
 
