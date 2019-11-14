@@ -1,4 +1,4 @@
-# ARTnet: Network and Epidemic Parameterization with the ARTnet Study Data
+# ARTnet: Model Parameterization with the ARTnet Study Data
 
 ARTnet is an anonymous cross-sectional web-based survey of HIV-related risk behaviors, testing, and use of 
 prevention services among men who have sex with men (MSM) in the United States. It recruited MSM who have 
