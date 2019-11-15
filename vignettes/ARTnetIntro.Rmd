@@ -12,7 +12,7 @@ editor_options:
 
 ## Load the Package
 
-```{r}
+```{r, message=FALSE}
 library("ARTnet")
 ```
 
