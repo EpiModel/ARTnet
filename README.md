@@ -57,11 +57,11 @@ this package automates several standard analyses needed for many epidemic modeli
 #### Installation
 The ARTnet package may be installed with the `remotes` package:
 ```r
-remotes::install_github("EpiModel/ARTnet")
+remotes::install_github("EpiModel/ARTnet", build_vignettes = TRUE)
 ```
 
 #### Example Uses
-Some of the example uses are then as follows, more details of which may be found in the package vignette:
+Some of the example uses are then as follows:
 
 ```r
 # 1. Epistats: Specify geographic features, as well as race stratification 
@@ -78,4 +78,9 @@ netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
 # 3. Netstats: Finalize network setup 
 netstats <- build_netstats(epistats, netparams, expect.mort = 0.0005, 
                            network.size = 1000, edges.avg = TRUE)
+```
+
+More details of which may be found in the package vignette:
+```r
+vignette(package = "ARTnet")
 ```
