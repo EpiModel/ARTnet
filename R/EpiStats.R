@@ -448,6 +448,8 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
                        data = d1, family = binomial())
       }
     }
+    # OUtput
+    out$hiv.mod <- hiv.mod
   }
 
   # Save Out File -----------------------------------------------------------
@@ -459,7 +461,6 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   out$acts.mod <- acts.mod
   out$cond.mc.mod <- cond.mc.mod
   out$cond.oo.mod <- cond.oo.mod
-  out$hiv.mod <- hiv.mod
   out$geogYN.l <- l$geogYN
   out$geogYN.d <- d$geogYN
   out$geog.l <- as.character(l$geog)
