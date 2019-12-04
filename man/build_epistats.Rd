@@ -6,7 +6,7 @@
 \usage{
 build_epistats(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   age.limits = c(15, 65), age.breaks = c(25, 35, 45, 55),
-  browser = FALSE)
+  init.hiv.prev = NULL, browser = FALSE)
 }
 \arguments{
 \item{geog.lvl}{Specifies geographic feature for ARTnet statistics.}
@@ -21,6 +21,10 @@ Default is 15 to 65.}
 \item{age.breaks}{Ages that define the upper age categories. Default is
 \code{c(25, 35, 45, 55, 65)}, which corresponds to (0, 25], (25, 35],
 (35, 45], (45, 55], (55, 65], (65, 100].}
+
+\item{init.hiv.prev}{Initial HIV prevalence of estimated model. If "NULL",
+ARTnet will handle calculation of prevalence through ARTnet data; if a number
+between 0 and 1, initial prevalence will be held as fixed.}
 
 \item{browser}{Run function in interactive browser mode. Default is FALSE.}
 }

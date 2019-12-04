@@ -13,6 +13,9 @@
 #'        (35, 45], (45, 55], (55, 65], (65, 100].
 #' @param race Whether to stratify by racial status. Default is TRUE.
 #' @param browser Run function in interactive browser mode. Default is FALSE.
+#' @param init.hiv.prev Initial HIV prevalence of estimated model. If "NULL",
+#' ARTnet will handle calculation of prevalence through ARTnet data; if a number
+#' between 0 and 1, initial prevalence will be held as fixed.
 #'
 #' @details
 #' \code{build_epistats}, through input of geographic, age and racial
@@ -84,7 +87,7 @@
 #' @export
 build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
                            age.limits = c(15, 65), age.breaks = c(25, 35, 45, 55),
-                           browser = FALSE) {
+                           init.hiv.prev = NULL, browser = FALSE) {
 
   if (browser == TRUE) {
     browser()
@@ -420,29 +423,30 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   }
 
   # Init HIV Status ---------------------------------------------------------
+  if (is.null(init.hiv.prev)) {
+    if (race == TRUE) {
+      if (is.null(geog.lvl)) {
+        d1 <- select(d, race.cat3, age, hiv2)
 
-  if (race == TRUE) {
-    if (is.null(geog.lvl)) {
-      d1 <- select(d, race.cat3, age, hiv2)
-
-      hiv.mod <- glm(hiv2 ~ age + as.factor(race.cat3),
-                     data = d1, family = binomial())
+        hiv.mod <- glm(hiv2 ~ age + as.factor(race.cat3),
+                       data = d1, family = binomial())
+      } else {
+        d1 <- select(d, race.cat3, geogYN, age, hiv2)
+        hiv.mod <- glm(hiv2 ~ age + geogYN + as.factor(race.cat3) + geogYN*as.factor(race.cat3),
+                       data = d1, family = binomial())
+      }
     } else {
-      d1 <- select(d, race.cat3, geogYN, age, hiv2)
-      hiv.mod <- glm(hiv2 ~ age + geogYN + as.factor(race.cat3) + geogYN*as.factor(race.cat3),
-                     data = d1, family = binomial())
-    }
-  } else {
-    if (is.null(geog.lvl)) {
-      d1 <- select(d, age, hiv2)
+      if (is.null(geog.lvl)) {
+        d1 <- select(d, age, hiv2)
 
-      hiv.mod <- glm(hiv2 ~ age ,
-                     data = d1, family = binomial())
-    } else {
-      d1 <- select(d, geogYN, age, hiv2)
+        hiv.mod <- glm(hiv2 ~ age ,
+                       data = d1, family = binomial())
+      } else {
+        d1 <- select(d, geogYN, age, hiv2)
 
-      hiv.mod <- glm(hiv2 ~ age + geogYN,
-                     data = d1, family = binomial())
+        hiv.mod <- glm(hiv2 ~ age + geogYN,
+                       data = d1, family = binomial())
+      }
     }
   }
 

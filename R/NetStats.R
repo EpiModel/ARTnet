@@ -168,16 +168,27 @@ build_netstats <- function(epistats, netparams,
   out$attr$role.class <- attr_role.class
 
   # diag status
-  if (race == TRUE) {
-    xs <- data.frame(age = attr_age, race.cat3 = attr_race, geogYN = 1)
-    preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
-    attr_diag.status <- rbinom(num, 1, preds)
-    out$attr$diag.status <- attr_diag.status
-  }  else {
-    xs <- data.frame(age = attr_age, geogYN = 1)
-    preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
-    attr_diag.status <- rbinom(num, 1, preds)
-    out$attr$diag.status <- attr_diag.status
+  if (is.null(init.hiv.prev)) {
+    if (race == TRUE) {
+      xs <- data.frame(age = attr_age, race.cat3 = attr_race, geogYN = 1)
+      preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
+      attr_diag.status <- rbinom(num, 1, preds)
+      out$attr$diag.status <- attr_diag.status
+    }  else {
+      xs <- data.frame(age = attr_age, geogYN = 1)
+      preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
+      attr_diag.status <- rbinom(num, 1, preds)
+      out$attr$diag.status <- attr_diag.status
+    }
+  } else {
+    if (init.hiv.prev > 1 || init.hiv.prev < 0) {
+      stop("init.hiv.prev must be between 0 and 1 non-inclusive")
+    } else {
+      samp.size <- ceiling(network.size*init.hiv.prev)
+      attr_diag.status <- sample(1:network.size, samp.size)
+      out$attr$diag.status <- rep(0, network.size)
+      out$attr$diag.status[attr_diag.status] <- 1
+    }
   }
 
 
