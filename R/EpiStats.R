@@ -467,5 +467,6 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   out$geog.d <- as.character(d$geog)
   out$age.limits <- age.limits
   out$age.breaks <- age.breaks
+  out$init.hiv.prev <- init.hiv.prev
   return(out)
 }

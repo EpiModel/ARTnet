@@ -181,6 +181,7 @@ build_netstats <- function(epistats, netparams,
       out$attr$diag.status <- attr_diag.status
     }
   } else {
+    init.hiv.prev <- epistats$init.hiv.prev
     if (init.hiv.prev > 1 || init.hiv.prev < 0) {
       stop("init.hiv.prev must be between 0 and 1 non-inclusive")
     } else {
