@@ -168,7 +168,7 @@ build_netstats <- function(epistats, netparams,
   out$attr$role.class <- attr_role.class
 
   # diag status
-  if (is.null(init.hiv.prev)) {
+  if (is.null(epistats$init.hiv.prev)) {
     if (race == TRUE) {
       xs <- data.frame(age = attr_age, race.cat3 = attr_race, geogYN = 1)
       preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
