@@ -448,7 +448,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
                        data = d1, family = binomial())
       }
     }
-    # OUtput
+    # Output
     out$hiv.mod <- hiv.mod
   }
 
