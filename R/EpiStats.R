@@ -13,9 +13,11 @@
 #'        (35, 45], (45, 55], (55, 65], (65, 100].
 #' @param race Whether to stratify by racial status. Default is TRUE.
 #' @param browser Run function in interactive browser mode. Default is FALSE.
-#' @param init.hiv.prev Initial HIV prevalence of estimated model. If "NULL",
-#' ARTnet will handle calculation of prevalence through ARTnet data; if a number
-#' between 0 and 1, initial prevalence will be held as fixed.
+#' @param init.hiv.prev Initial HIV prevalence of estimated model, vector of size
+#'.        pertaining to prevalence among three racial classes (black, hispanic and
+#'         white respectively). If "NULL", ARTnet will handle calculation of
+#'         prevalence through ARTnet data. if `race = FALSE`, will take first element
+#'         as of vector as overall HIV prevalence.
 #'
 #' @details
 #' \code{build_epistats}, through input of geographic, age and racial
@@ -85,7 +87,7 @@
 #'                             race = FALSE)
 #'
 #' @export
-build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
+build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
                            age.limits = c(15, 65), age.breaks = c(25, 35, 45, 55),
                            init.hiv.prev = NULL, browser = FALSE) {
 
@@ -97,6 +99,8 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   ## Data ##
   d <- ARTnet.wide
   l <- ARTnet.long
+
+  out <- list()
 
   geog_names <- c("city", "state", "region", "division", "all")
   if (!is.null(geog.lvl)){
@@ -279,7 +283,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
     }
   }  else {
     if (is.null(geog.lvl)) {
-      la <- select(l, ptype, duration, comb.age, geogYN = geogYN,
+      la <- select(l, ptype, duration, comb.age,
                    RAI, IAI, hiv.concord.pos, prep,
                    acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
         filter(ptype %in% 1:2) %>%
@@ -372,7 +376,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
     }
   } else {
     if (is.null(geog.lvl)) {
-      lb <- select(l, ptype, comb.age, geogYN = geogYN,
+      lb <- select(l, ptype, comb.age,
                    hiv.concord.pos, prep,
                    RAI, IAI, RECUAI, INSUAI) %>%
         filter(ptype == 3) %>%
@@ -450,19 +454,36 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
     }
     # Output
     out$hiv.mod <- hiv.mod
+  } else {
+    if (race == TRUE){
+      if(length(init.hiv.prev) != 3 ){
+        stop("Input parameter init.prev.hiv must be a vector of size three")
+      }
+      if (prod(init.hiv.prev < 1) == 0  || prod(init.hiv.prev > 0) == 0) {
+        stop("All elements of init.hiv.prev must be between 0 and 1 non-inclusive")
+      }
+    } else{
+      if (length(init.hiv.prev) > 1){
+        warning("init.hiv.prev: only first element used for population HIV prevalence")
+        init.hiv.prev <- init.hiv.prev[1]
+      }
+    }
   }
 
   # Save Out File -----------------------------------------------------------
 
-  out <- list()
+  if(is.null(geog.lvl)){
+    out$geogYN.l <- l$geogYN
+    out$geogYN.d <- d$geogYN
+  }
+
   out$geog.lvl <- geog.lvl
   out$geog.cat  <- geog.cat
   out$race <- race
   out$acts.mod <- acts.mod
   out$cond.mc.mod <- cond.mc.mod
   out$cond.oo.mod <- cond.oo.mod
-  out$geogYN.l <- l$geogYN
-  out$geogYN.d <- d$geogYN
+
   out$geog.l <- as.character(l$geog)
   out$geog.d <- as.character(d$geog)
   out$age.limits <- age.limits

@@ -2,36 +2,47 @@
 library("ARTnet")
 
 ## ------------------------------------------------------------------------
-epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "GA")
+epistats1 <- build_epistats(geog.lvl = "state", geog.cat = "GA")
 
 ## ------------------------------------------------------------------------
-epistats2 <- build_epistats(geog.lvl = "division", geog.cat = "5")
-epistats3 <- build_epistats(geog.lvl = "region", geog.cat = "3")
+epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
+                           init.hiv.prev = 0.17)
 
 ## ------------------------------------------------------------------------
-epistats4 <- build_epistats(geog.lvl = NULL)
+epistats3 <- build_epistats(geog.lvl = "state", geog.cat = "GA", init.hiv.prev = 0.17)
+
+## ------------------------------------------------------------------------
+epistats4 <- build_epistats(geog.lvl = "division", geog.cat = "5", init.hiv.prev = 0.17)
+epistats5 <- build_epistats(geog.lvl = "region", geog.cat = "3", init.hiv.prev = 0.17)
+
+## ------------------------------------------------------------------------
+epistats6 <- build_epistats(geog.lvl = NULL)
 
 ## ------------------------------------------------------------------------
 #Racial stratification
-epistats4 <- build_epistats(geog.lvl = "state", geog.cat = "WA", race = TRUE)
+epistats7 <- build_epistats(geog.lvl = "state", geog.cat = "WA", race = TRUE, 
+                            init.hiv.prev = c(0.17, 0.1, 0.13))
 
 #No racial stratification
-epistats5 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE)
+epistats5 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE, 
+                            init.hiv.prev = 0.17)
 
 ## ------------------------------------------------------------------------
 #Set age limits
-epistats6 <- build_epistats(geog.lvl = "state", geog.cat = "GA", 
+epistats8 <- build_epistats(geog.lvl = "state", geog.cat = "GA", 
                             race = TRUE, age.limits = c(15, 65),
-                            age.breaks = c(20, 30, 40, 50, 60))
+                            age.breaks = c(20, 30, 40, 50, 60),
+                            init.hiv.prev = c(0.17,0.1,0.13))
 
 #Specify age categories: (0-20], (20, 30], . . . (60, 100]
-netparams1 <- build_netparams(epistats = epistats6, smooth.main.dur = TRUE)
+netparams1 <- build_netparams(epistats = epistats8, smooth.main.dur = TRUE)
 
 ## ---- eval = FALSE-------------------------------------------------------
 #  #1. Epistats: Specify geographic features, as well as race stratification and total age range
 #  #under consideration
 #  epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", race = TRUE,
-#                             age.limits = c(30, 50), age.breaks = c(35, 45))
+#                             age.limits = c(30, 50), age.breaks = c(35, 45),
+#                             init.hiv.prev = c(0.17,0.1,0.13))
 #  
 #  #2. Netparams: Specify age categories if needed, or let ARTnet determine age categories by number of
 #  #categories desired

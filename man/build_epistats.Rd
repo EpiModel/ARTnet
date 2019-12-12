@@ -4,7 +4,7 @@
 \alias{build_epistats}
 \title{Epidemic Models for Act Rates and Probability of Condom Use}
 \usage{
-build_epistats(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
+build_epistats(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   age.limits = c(15, 65), age.breaks = c(25, 35, 45, 55),
   init.hiv.prev = NULL, browser = FALSE)
 }
@@ -22,9 +22,11 @@ Default is 15 to 65.}
 \code{c(25, 35, 45, 55, 65)}, which corresponds to (0, 25], (25, 35],
 (35, 45], (45, 55], (55, 65], (65, 100].}
 
-\item{init.hiv.prev}{Initial HIV prevalence of estimated model. If "NULL",
-ARTnet will handle calculation of prevalence through ARTnet data; if a number
-between 0 and 1, initial prevalence will be held as fixed.}
+\item{init.hiv.prev}{Initial HIV prevalence of estimated model, vector of size
+.        pertaining to prevalence among three racial classes (black, hispanic and
+        white respectively). If "NULL", ARTnet will handle calculation of
+        prevalence through ARTnet data. if `race = FALSE`, will take first element
+        as of vector as overall HIV prevalence.}
 
 \item{browser}{Run function in interactive browser mode. Default is FALSE.}
 }

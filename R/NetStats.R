@@ -181,14 +181,26 @@ build_netstats <- function(epistats, netparams,
       out$attr$diag.status <- attr_diag.status
     }
   } else {
-    init.hiv.prev <- epistats$init.hiv.prev
-    if (init.hiv.prev > 1 || init.hiv.prev < 0) {
-      stop("init.hiv.prev must be between 0 and 1 non-inclusive")
+    if (race == TRUE) {
+      init.hiv.prev <- epistats$init.hiv.prev
+      samp.B <- which(attr_race == 1)
+      samp.H <- which(attr_race == 2)
+      samp.W <- which(attr_race == 3)
+
+      attr_diag.status <- rep(0, network.size)
+
+      attr_diag.status[samp.B] <- rbinom(length(samp.B), 1, init.hiv.prev[1])
+      attr_diag.status[samp.H] <- rbinom(length(samp.H), 1, init.hiv.prev[2])
+      attr_diag.status[samp.W] <- rbinom(length(samp.W), 1, init.hiv.prev[3])
+
+      out$attr$diag.status <- attr_diag.status
+
     } else {
-      samp.size <- ceiling(network.size*init.hiv.prev)
-      attr_diag.status <- sample(1:network.size, samp.size)
-      out$attr$diag.status <- rep(0, network.size)
-      out$attr$diag.status[attr_diag.status] <- 1
+    init.hiv.prev <- epistats$init.hiv.prev
+    samp.size <- ceiling(network.size*init.hiv.prev)
+    attr_diag.status <- sample(1:network.size, samp.size)
+    out$attr$diag.status <- rep(0, network.size)
+    out$attr$diag.status[attr_diag.status] <- 1
     }
   }
 
