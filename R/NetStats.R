@@ -52,6 +52,7 @@ build_netstats <- function(epistats, netparams,
 
   out <- list()
   out$demog <- list()
+  out$geog <- geog.lvl
 
   # Overall network size
   num <- out$demog$num <- network.size
@@ -196,11 +197,11 @@ build_netstats <- function(epistats, netparams,
       out$attr$diag.status <- attr_diag.status
 
     } else {
-    init.hiv.prev <- epistats$init.hiv.prev
-    samp.size <- ceiling(network.size*init.hiv.prev)
-    attr_diag.status <- sample(1:network.size, samp.size)
-    out$attr$diag.status <- rep(0, network.size)
-    out$attr$diag.status[attr_diag.status] <- 1
+      init.hiv.prev <- epistats$init.hiv.prev
+      samp.size <- ceiling(network.size*init.hiv.prev)
+      attr_diag.status <- sample(1:network.size, samp.size)
+      out$attr$diag.status <- rep(0, network.size)
+      out$attr$diag.status[attr_diag.status] <- 1
     }
   }
 

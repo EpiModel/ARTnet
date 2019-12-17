@@ -14,10 +14,10 @@
 #' @param race Whether to stratify by racial status. Default is TRUE.
 #' @param browser Run function in interactive browser mode. Default is FALSE.
 #' @param init.hiv.prev Initial HIV prevalence of estimated model, vector of size
-#'.        pertaining to prevalence among three racial classes (black, hispanic and
-#'         white respectively). If "NULL", ARTnet will handle calculation of
-#'         prevalence through ARTnet data. if `race = FALSE`, will take first element
-#'         as of vector as overall HIV prevalence.
+#'.        three pertaining to prevalence among three racial classes (black,
+#'         hispanic and white respectively). If \code{init.hiv.prev = NULL},
+#'         ARTnet will handle calculation of prevalence through ARTnet data.
+#'         Note: if `\code{race = FALSE}, prevalence vector must still be supplied.
 #'
 #' @details
 #' \code{build_epistats}, through input of geographic, age and racial
@@ -455,24 +455,17 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
     # Output
     out$hiv.mod <- hiv.mod
   } else {
-    if (race == TRUE){
-      if(length(init.hiv.prev) != 3 ){
-        stop("Input parameter init.prev.hiv must be a vector of size three")
-      }
-      if (prod(init.hiv.prev < 1) == 0  || prod(init.hiv.prev > 0) == 0) {
-        stop("All elements of init.hiv.prev must be between 0 and 1 non-inclusive")
-      }
-    } else{
-      if (length(init.hiv.prev) > 1){
-        warning("init.hiv.prev: only first element used for population HIV prevalence")
-        init.hiv.prev <- init.hiv.prev[1]
-      }
+    if (length(init.hiv.prev) != 3 ) {
+      stop("Input parameter init.prev.hiv must be a vector of size three")
+    }
+    if (prod(init.hiv.prev < 1) == 0  || prod(init.hiv.prev > 0) == 0) {
+      stop("All elements of init.hiv.prev must be between 0 and 1 non-inclusive")
     }
   }
 
   # Save Out File -----------------------------------------------------------
 
-  if(is.null(geog.lvl)){
+  if (is.null(geog.lvl)) {
     out$geogYN.l <- l$geogYN
     out$geogYN.d <- d$geogYN
   }
@@ -483,7 +476,6 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   out$acts.mod <- acts.mod
   out$cond.mc.mod <- cond.mc.mod
   out$cond.oo.mod <- cond.oo.mod
-
   out$geog.l <- as.character(l$geog)
   out$geog.d <- as.character(d$geog)
   out$age.limits <- age.limits
