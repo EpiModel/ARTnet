@@ -23,10 +23,10 @@ Default is 15 to 65.}
 (35, 45], (45, 55], (55, 65], (65, 100].}
 
 \item{init.hiv.prev}{Initial HIV prevalence of estimated model, vector of size
-.        pertaining to prevalence among three racial classes (black, hispanic and
-        white respectively). If "NULL", ARTnet will handle calculation of
-        prevalence through ARTnet data. if `race = FALSE`, will take first element
-        as of vector as overall HIV prevalence.}
+.        three pertaining to prevalence among three racial classes (black,
+        hispanic and white respectively). If \code{init.hiv.prev = NULL},
+        ARTnet will handle calculation of prevalence through ARTnet data.
+        Note: if `\code{race = FALSE}, prevalence vector must still be supplied.}
 
 \item{browser}{Run function in interactive browser mode. Default is FALSE.}
 }

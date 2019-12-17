@@ -29,7 +29,7 @@ If, however, the user specifies a starting prevalence for HIV, then ARTnet will 
 
 ```{r }
 epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
-                           init.hiv.prev = 0.17)
+                           init.hiv.prev = c(0.17, 0.17, 0.17))
 ```
 
 ## Geographic Stratification
@@ -37,14 +37,14 @@ epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
 This new input tells `build_epistats` that the geographical level of interest is the city level and that the geographical region of interest is Atlanta. There are five levels of geographical subsetting available in ARTnet: city, state, census division and geographic region. These are called by `geog.lvl = ` city, state, div, and reg respectively in the `build_epistats` function call. An individual who would like to build a network structure based on, say, Georgia, would then use:
 
 ```{r }
-epistats3 <- build_epistats(geog.lvl = "state", geog.cat = "GA", init.hiv.prev = 0.17)
+epistats3 <- build_epistats(geog.lvl = "state", geog.cat = "GA", init.hiv.prev = c(0.17, 0.17, 0.17))
 ```
 
 Similarly, if one wishes to use the other levels of geographic stratification they can do so as above:
 
 ```{r }
-epistats4 <- build_epistats(geog.lvl = "division", geog.cat = "5", init.hiv.prev = 0.17)
-epistats5 <- build_epistats(geog.lvl = "region", geog.cat = "3", init.hiv.prev = 0.17)
+epistats4 <- build_epistats(geog.lvl = "division", geog.cat = "5", init.hiv.prev = c(0.17, 0.17, 0.17))
+epistats5 <- build_epistats(geog.lvl = "region", geog.cat = "3", init.hiv.prev = c(0.17, 0.17, 0.17))
 ```
 
 If no geographic stratification is specified, `geog.lvl = NULL`, and no geopgraphic stratification is done.
@@ -60,11 +60,11 @@ A further change made to ARTnet is the ability for users to choose whether or no
 ```{r }
 #Racial stratification
 epistats7 <- build_epistats(geog.lvl = "state", geog.cat = "WA", race = TRUE, 
-                            init.hiv.prev = c(0.17, 0.1, 0.13))
+                            init.hiv.prev = c(0.333, 0.127, 0.084))
 
 #No racial stratification
 epistats5 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE, 
-                            init.hiv.prev = 0.17)
+                            init.hiv.prev = c(0.17, 0.17, 0.17))
 ```
 
 Racial stratification is set to true by default.
@@ -81,7 +81,7 @@ A further addition to the ARTnet workflow is allowing for age group subsetting a
 epistats8 <- build_epistats(geog.lvl = "state", geog.cat = "GA", 
                             race = TRUE, age.limits = c(15, 65),
                             age.breaks = c(20, 30, 40, 50, 60),
-                            init.hiv.prev = c(0.17,0.1,0.13))
+                            init.hiv.prev = c(0.333, 0.127, 0.084))
 
 #Specify age categories: (0-20], (20, 30], . . . (60, 100]
 netparams1 <- build_netparams(epistats = epistats8, smooth.main.dur = TRUE)
@@ -96,7 +96,7 @@ Below is the updated workflow for generating network objects for use in construc
 #under consideration
 epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", race = TRUE, 
                            age.limits = c(30, 50), age.breaks = c(35, 45),
-                           init.hiv.prev = c(0.17,0.1,0.13))
+                           init.hiv.prev = c(0.333, 0.127, 0.084))
 
 #2. Netparams: Specify age categories if needed, or let ARTnet determine age categories by number of 
 #categories desired
