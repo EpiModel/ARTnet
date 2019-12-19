@@ -465,13 +465,13 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
 
   # Save Out File -----------------------------------------------------------
 
-  if (is.null(geog.lvl)) {
+  if (!is.null(geog.lvl)) {
     out$geogYN.l <- l$geogYN
     out$geogYN.d <- d$geogYN
+    out$geog.cat  <- geog.cat
   }
 
   out$geog.lvl <- geog.lvl
-  out$geog.cat  <- geog.cat
   out$race <- race
   out$acts.mod <- acts.mod
   out$cond.mc.mod <- cond.mc.mod
