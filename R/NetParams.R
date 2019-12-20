@@ -50,10 +50,12 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   l$diff.age <- abs(l$age - l$p_age_imp)
 
   #Append Data
-  d$geog <- epistats$geog.d
-  d$geogYN <- epistats$geogYN.d
-  l$geog <- epistats$geog.l
-  l$geogYN <- epistats$geogYN.l
+  if (!is.null(geog.lvl)) {
+    d$geog <- epistats$geog.d
+    d$geogYN <- epistats$geogYN.d
+    l$geog <- epistats$geog.l
+    l$geogYN <- epistats$geogYN.l
+  }
 
   ## Degree calculations ##
 
@@ -198,7 +200,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                data = d, family = poisson())
     # summary(mod)
 
-   pred <- exp(coef(mod)[[1]])
+    pred <- exp(coef(mod)[[1]])
 
     out$main$md.main <- as.numeric(pred)
   } else {
@@ -393,7 +395,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
     out$main$nf.deg.casl <- as.numeric(pred)
 
-    deg.casl.dist <- prop.table(table(d$deg.casl[d$geog == geog.cat]))
+    deg.casl.dist <- prop.table(table(d$deg.casl))
     out$main$deg.casl.dist <- as.numeric(deg.casl.dist)
   } else {
     mod <- glm(deg.main ~ geog + deg.casl,
@@ -466,15 +468,25 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
               median.dur = median(duration, na.rm = TRUE)) %>%
     as.data.frame()
 
-  # create city weights
-  durs.main.geo <- lmain %>%
-    filter(RAI == 1 | IAI == 1) %>%
-    filter(index.age.grp < 6) %>%
-    filter(ongoing2 == 1) %>%
-    filter(geog == geog.cat) %>%
-    summarise(mean.dur = mean(duration, na.rm = TRUE),
-              median.dur = median(duration, na.rm = TRUE)) %>%
-    as.data.frame()
+  # create geographic weights
+  if (!is.null(geog.lvl)) {
+    durs.main.geo <- lmain %>%
+      filter(RAI == 1 | IAI == 1) %>%
+      filter(index.age.grp < 6) %>%
+      filter(ongoing2 == 1) %>%
+      filter(geog == geog.cat) %>%
+      summarise(mean.dur = mean(duration, na.rm = TRUE),
+                median.dur = median(duration, na.rm = TRUE)) %>%
+      as.data.frame()
+  } else {
+    durs.main.geo <- lmain %>%
+      filter(RAI == 1 | IAI == 1) %>%
+      filter(index.age.grp < 6) %>%
+      filter(ongoing2 == 1) %>%
+      summarise(mean.dur = mean(duration, na.rm = TRUE),
+                median.dur = median(duration, na.rm = TRUE)) %>%
+      as.data.frame()
+  }
 
   # city-specific weight based on ratio of medians
   wt <- durs.main.geo$median.dur/durs.main$median.dur
@@ -739,7 +751,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
     out$casl$nf.deg.main <- as.numeric(pred)
 
-    deg.main.dist <- prop.table(table(d$deg.main[d$geog == geog.cat]))
+    deg.main.dist <- prop.table(table(d$deg.main))
     out$casl$deg.main.dist <- as.numeric(deg.main.dist)
   } else {
     mod <- glm(deg.casl ~ geog + deg.main,
@@ -813,14 +825,24 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     as.data.frame()
 
   # create city weights
-  durs.casl.geo <- lcasl %>%
-    filter(RAI == 1 | IAI == 1) %>%
-    filter(index.age.grp < 6) %>%
-    filter(ongoing2 == 1) %>%
-    filter(geog == geog.cat) %>%
-    summarise(mean.dur = mean(duration, na.rm = TRUE),
-              median.dur = median(duration, na.rm = TRUE)) %>%
-    as.data.frame()
+  if (!is.null(geog.lvl)) {
+    durs.casl.geo <- lcasl %>%
+      filter(RAI == 1 | IAI == 1) %>%
+      filter(index.age.grp < 6) %>%
+      filter(ongoing2 == 1) %>%
+      filter(geog == geog.cat) %>%
+      summarise(mean.dur = mean(duration, na.rm = TRUE),
+                median.dur = median(duration, na.rm = TRUE)) %>%
+      as.data.frame()
+  } else {
+    durs.casl.geo <- lcasl %>%
+      filter(RAI == 1 | IAI == 1) %>%
+      filter(index.age.grp < 6) %>%
+      filter(ongoing2 == 1) %>%
+      summarise(mean.dur = mean(duration, na.rm = TRUE),
+                median.dur = median(duration, na.rm = TRUE)) %>%
+      as.data.frame()
+  }
 
   # city-specific weight based on ratio of medians
   wt <- durs.casl.geo$median.dur/durs.casl$median.dur
@@ -1077,8 +1099,13 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   ## nodefactor("risk.grp") ----
 
   # geography-specific wts
-  wt <- mean(d$rate.oo.part[d$geog == geog.cat],
-             na.rm = TRUE)/mean(d$rate.oo.part, na.rm = TRUE)
+  if (is.null(geog.lvl)) {
+    wt <- mean(d$rate.oo.part,
+               na.rm = TRUE)/mean(d$rate.oo.part, na.rm = TRUE)
+  } else {
+    wt <- mean(d$rate.oo.part[d$geog == geog.cat],
+               na.rm = TRUE)/mean(d$rate.oo.part, na.rm = TRUE)
+  }
   wt.rate <- d$rate.oo.part * wt
 
   nquants <- 5
@@ -1115,7 +1142,11 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   d$deg.tot3 <- ifelse(d$deg.tot >= 3, 3, d$deg.tot)
 
-  deg.tot.dist <- prop.table(table(d$deg.tot3[d$geog == geog.cat]))
+  if (is.null(geog.lvl)) {
+    deg.tot.dist <- prop.table(table(d$deg.tot3))
+  } else {
+    deg.tot.dist <- prop.table(table(d$deg.tot3[d$geog == geog.cat]))
+  }
   out$inst$deg.tot.dist <- as.numeric(deg.tot.dist)
 
   if (is.null(geog.lvl)) {
