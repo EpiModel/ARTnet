@@ -198,7 +198,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                data = d, family = poisson())
     # summary(mod)
 
-   pred <- exp(coef(mod)[[1]])
+    pred <- exp(coef(mod)[[1]])
 
     out$main$md.main <- as.numeric(pred)
   } else {
@@ -359,10 +359,37 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
 
     ## nodefactor("race") ----
+    if (geog.lvl == "city") {
+      props <- race.dist.city[which(race.dist.city$Geog == geog.cat), -c(1,2)]/100
+    } else if (geog.lvl == "state") {
+      props <- race.dist.state[which(race.dist.state$Geog == geog.cat),
+                               -c(1,2)]/100
+    } else if (geog.lvl == "region") {
+      props <- race.dist.census[which(race.dist.census.region$Geog == geog.cat),
+                                -c(1,2)]/100
+    } else if (geog.lvl == "division") {
+      props <- race.dist.[which(race.dist.census.division$Geog == geog.cat),
+                          -c(1,2)]/100
+    } else if (is.null(geog.lvl)) {
+      props <- race.dist.national[,-c(1,2)]/100
+    }
+
+
+    d$pw <- ifelse(d$race.cat3 == 1, 1/props[2],
+                   ifelse(d$race.cat3 == 2, 1/props[3], 1/props[1]))
+    d$pw <- as.numeric(d$pw)
+
+    d.design <- svydesign(id      = ~AMIS_ID,
+                          strata  = ~race.cat3,
+                          weights = ~pw,
+                          nest    = TRUE,
+                          data    = d)
 
     if (is.null(geog.lvl)) {
-      mod <- glm(deg.main ~ as.factor(race.cat3),
-                 data = d, family = poisson())
+      mod <- svyglm(deg.main ~ race.cat3,
+                    design = d.design,
+                    family = poisson())
+
       # summary(mod)
 
       dat <- data.frame(race.cat3 = 1:3)
@@ -370,8 +397,9 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
       out$main$nf.race <- as.numeric(pred)
     } else {
-      mod <- glm(deg.main ~ geog + as.factor(race.cat3),
-                 data = d, family = poisson())
+      mod <- svyglm(deg.main ~ geog + race.cat3,
+                    design = d.design,
+                    family = poisson())
       # summary(mod)
 
       dat <- data.frame(geog = geog.cat, race.cat3 = 1:3)
