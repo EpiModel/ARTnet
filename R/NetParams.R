@@ -23,7 +23,6 @@
 #' netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
 #'
 #' @export
-#' @import survey
 
 build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
@@ -380,16 +379,16 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                    ifelse(d$race.cat3 == 2, 1/props[3], 1/props[1]))
     d$pw <- as.numeric(d$pw)
 
-    d.design <- svydesign(id      = ~AMIS_ID,
-                          strata  = ~race.cat3,
-                          weights = ~pw,
-                          nest    = TRUE,
-                          data    = d)
+    d.design <- survey::svydesign(id      = ~AMIS_ID,
+                                  strata  = ~race.cat3,
+                                  weights = ~pw,
+                                  nest    = TRUE,
+                                  data    = d)
 
     if (is.null(geog.lvl)) {
-      mod <- svyglm(deg.main ~ race.cat3,
-                    design = d.design,
-                    family = poisson())
+      mod <- survey::svyglm(deg.main ~ race.cat3,
+                            design = d.design,
+                            family = poisson())
 
       # summary(mod)
 
@@ -398,9 +397,9 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
       out$main$nf.race <- as.numeric(pred)
     } else {
-      mod <- svyglm(deg.main ~ geog + race.cat3,
-                    design = d.design,
-                    family = poisson())
+      mod <- survey::svyglm(deg.main ~ geog + race.cat3,
+                            design = d.design,
+                            family = poisson())
       # summary(mod)
 
       dat <- data.frame(geog = geog.cat, race.cat3 = 1:3)
@@ -733,11 +732,13 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
       out$casl$nm.race_diffF <- as.numeric(pred)
     }
 
-    ## nodefactor("race", diff = TRUE) ----
+    ## nodefactor("race") ----
 
     if (is.null(geog.lvl)) {
-      mod <- glm(deg.casl ~ as.factor(race.cat3),
-                 data = d, family = poisson())
+      mod <- survey::svyglm(deg.casl ~ race.cat3,
+                            design = d.design,
+                            family = poisson())
+
       # summary(mod)
 
       dat <- data.frame(race.cat3 = 1:3)
@@ -745,8 +746,9 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
       out$casl$nf.race <- as.numeric(pred)
     } else {
-      mod <- glm(deg.casl ~ geog + as.factor(race.cat3),
-                 data = d, family = poisson())
+      mod <- survey::svyglm(deg.casl ~ geog + race.cat3,
+                            design = d.design,
+                            family = poisson())
       # summary(mod)
 
       dat <- data.frame(geog = geog.cat, race.cat3 = 1:3)
@@ -1083,21 +1085,24 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     ## nodefactor("race") ----
 
     if (is.null(geog.lvl)) {
-      mod <- glm(count.oo.part ~ as.factor(race.cat3),
-                 data = d, family = poisson())
+      mod <- survey::svyglm(count.oo.part ~ race.cat3,
+                            design = d.design,
+                            family = poisson())
+
       # summary(mod)
 
       dat <- data.frame(race.cat3 = 1:3)
-      pred <- predict(mod, newdata = dat, type = "response")/52
+      pred <- predict(mod, newdata = dat, type = "response")
 
       out$inst$nf.race <- as.numeric(pred)
     } else {
-      mod <- glm(count.oo.part ~ geog + as.factor(race.cat3),
-                 data = d, family = poisson())
+      mod <- survey::svyglm(count.oo.part ~ geog + race.cat3,
+                            design = d.design,
+                            family = poisson())
       # summary(mod)
 
       dat <- data.frame(geog = geog.cat, race.cat3 = 1:3)
-      pred <- predict(mod, newdata = dat, type = "response")/52
+      pred <- predict(mod, newdata = dat, type = "response")
 
       out$inst$nf.race <- as.numeric(pred)
     }
@@ -1230,3 +1235,4 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   return(out)
 }
+

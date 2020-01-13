@@ -28,6 +28,8 @@
 #' netstats <- build_netstats(epistats, netparams)
 #'
 #' @export
+#'
+
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,
                            expect.mort = 0.000478213,

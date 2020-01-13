@@ -15,7 +15,8 @@ Depends:
     EpiModel
 Imports:
     dplyr,
-    utils
+    utils,
+    survey
 Suggests:
     knitr,
     rmarkdown
