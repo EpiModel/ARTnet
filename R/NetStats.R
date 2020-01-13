@@ -54,7 +54,7 @@ build_netstats <- function(epistats, netparams,
 
   out <- list()
   out$demog <- list()
-  out$param$geog <- geog.lvl
+  out$geog.lvl <- geog.lvl
 
   # Overall network size
   num <- out$demog$num <- network.size
