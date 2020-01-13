@@ -23,6 +23,7 @@
 #' netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
 #'
 #' @export
+#' @import survey
 
 build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
