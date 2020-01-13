@@ -735,9 +735,12 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     ## nodefactor("race") ----
 
     if (is.null(geog.lvl)) {
-      mod <- survey::svyglm(deg.casl ~ race.cat3,
-                            design = d.design,
-                            family = poisson())
+      #mod <- survey::svyglm(deg.casl ~ race.cat3,
+      #                      design = d.design,
+      #                      family = poisson())
+
+      mod <- glm(deg.casl ~ as.factor(race.cat3),
+                 data = d, family = poisson())
 
       # summary(mod)
 
@@ -746,9 +749,12 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
       out$casl$nf.race <- as.numeric(pred)
     } else {
-      mod <- survey::svyglm(deg.casl ~ geog + race.cat3,
-                            design = d.design,
-                            family = poisson())
+      #mod <- survey::svyglm(deg.casl ~ geog + race.cat3,
+      #                      design = d.design,
+      #                      family = poisson())
+
+      mod <- glm(deg.casl ~ geog + as.factor(race.cat3),
+                 data = d, family = poisson())
       # summary(mod)
 
       dat <- data.frame(geog = geog.cat, race.cat3 = 1:3)
@@ -1085,24 +1091,22 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     ## nodefactor("race") ----
 
     if (is.null(geog.lvl)) {
-      mod <- survey::svyglm(count.oo.part ~ race.cat3,
-                            design = d.design,
-                            family = poisson())
+      mod <- glm(count.oo.part ~ as.factor(race.cat3),
+                 data = d, family = poisson())
 
       # summary(mod)
 
       dat <- data.frame(race.cat3 = 1:3)
-      pred <- predict(mod, newdata = dat, type = "response")
+      pred <- predict(mod, newdata = dat, type = "response")/52
 
       out$inst$nf.race <- as.numeric(pred)
     } else {
-      mod <- survey::svyglm(count.oo.part ~ geog + race.cat3,
-                            design = d.design,
-                            family = poisson())
+      mod <- glm(count.oo.part ~ geog + as.factor(race.cat3),
+                 data = d, family = poisson())
       # summary(mod)
 
       dat <- data.frame(geog = geog.cat, race.cat3 = 1:3)
-      pred <- predict(mod, newdata = dat, type = "response")
+      pred <- predict(mod, newdata = dat, type = "response")/52
 
       out$inst$nf.race <- as.numeric(pred)
     }
