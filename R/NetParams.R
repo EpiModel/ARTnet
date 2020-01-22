@@ -359,26 +359,10 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
 
     ## nodefactor("race") ----
-    if (geog.lvl == "city") {
-      props <- race.dist.city[which(race.dist.city$Geog == geog.cat), -c(1,2)]/100
-    } else if (geog.lvl == "state") {
-      props <- race.dist.state[which(race.dist.state$Geog == geog.cat),
-                               -c(1,2)]/100
-    } else if (geog.lvl == "region") {
-      props <- race.dist.census[which(race.dist.census.region$Geog == geog.cat),
-                                -c(1,2)]/100
-    } else if (geog.lvl == "division") {
-      props <- race.dist.[which(race.dist.census.division$Geog == geog.cat),
-                          -c(1,2)]/100
-    } else if (is.null(geog.lvl)) {
-      props <- race.dist.national[,-c(1,2)]/100
-    }
-
-
+    props <- race.dist[[geog.lvl]][which(race.dist[[geog.lvl]]$Geog == geog.cat), -c(1,2)]/100
     d$pw <- ifelse(d$race.cat3 == 1, 1/props[2],
                    ifelse(d$race.cat3 == 2, 1/props[3], 1/props[1]))
     d$pw <- as.numeric(d$pw)
-
     d.design <- survey::svydesign(id      = ~AMIS_ID,
                                   strata  = ~race.cat3,
                                   weights = ~pw,
