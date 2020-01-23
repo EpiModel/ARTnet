@@ -43,6 +43,7 @@ build_netstats <- function(epistats, netparams,
   #NOTE: Not actually used
   d <- epistats$wide
   l <- epistats$long
+  race.dist <- ARTnetData::race.dist
 
   ## Inputs ##
   geog.cat <- epistats$geog.cat
@@ -70,7 +71,7 @@ build_netstats <- function(epistats, netparams,
 
   ## Age-sex-specific mortality rates (B, H, W)
   #    in 5-year age decrments starting with age 15
-  ages <- out$demog$ages <- 15:64
+  ages <- out$demog$ages <- 15:65
   asmr.B <- c(0.00124, 0.00213, 0.00252, 0.00286, 0.00349,
               0.00422, 0.00578, 0.00870, 0.01366, 0.02052)
   asmr.H <- c(0.00062, 0.00114, 0.00127, 0.00132, 0.00154,
@@ -116,7 +117,8 @@ build_netstats <- function(epistats, netparams,
   out$attr$sqrt.age <- attr_sqrt.age
 
   age.breaks <- out$demog$age.breaks <- epistats$age.breaks
-  attr_age.grp <- cut(attr_age, age.breaks, labels = FALSE)
+  attr_age.grp <- cut(attr_age, age.breaks, labels = FALSE,
+                      right = FALSE, include.lowest = FALSE)
   out$attr$age.grp <- attr_age.grp
 
   # race attribute

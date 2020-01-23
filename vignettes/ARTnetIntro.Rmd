@@ -2,12 +2,12 @@
 title: 'ARTnet: Parameterization for HIV/STI Models'
 author: "Shawnee Anderson and Samuel M. Jenness"
 date: "`r Sys.Date()`"
-vignette: >
-  %\VignetteIndexEntry{EpiModel Introduction}
-  \usepackage[utf8]{inputenc}
-  %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
+editor_options:
   chunk_output_type: console
+vignette: |
+  %\VignetteIndexEntry{ARTnet: Parameterization for HIV/STI Models} 
+  %\usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::knitr}
 ---
 
 ## Load the Package
@@ -83,7 +83,7 @@ epistats8 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
                             age.breaks = c(20, 30, 40, 50, 60),
                             init.hiv.prev = c(0.333, 0.127, 0.084))
 
-#Specify age categories: (0-20], (20, 30], . . . (60, 100]
+#Specify age categories: (0-20), [20, 30), . . . [60, 100)
 netparams1 <- build_netparams(epistats = epistats8, smooth.main.dur = TRUE)
 ```
 

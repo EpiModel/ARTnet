@@ -215,8 +215,10 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   ## nodematch("age.grp") ----
 
-  lmain$index.age.grp <- cut(lmain$age, age.breaks, labels = FALSE)
-  lmain$part.age.grp <- cut(as.numeric(lmain$p_age_imp), age.breaks, labels = FALSE)
+  lmain$index.age.grp <- cut(lmain$age, age.breaks, labels = FALSE,
+                             right = FALSE, include.lowest = FALSE)
+  lmain$part.age.grp <- cut(as.numeric(lmain$p_age_imp), age.breaks, labels = FALSE,
+                            right = FALSE, include.lowest = FALSE)
   # data.frame(lmain$age, lmain$index.age.grp, lmain$p_age_imp, lmain$part.age.grp)
 
   lmain$same.age.grp <- ifelse(lmain$index.age.grp == lmain$part.age.grp, 1, 0)
@@ -287,7 +289,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   ## nodefactor("age.grp") ----
 
-  d$age.grp <- cut(d$age, age.breaks, labels = FALSE)
+  d$age.grp <- cut(d$age, age.breaks, labels = FALSE,
+                   right  = FALSE, include.lower = FALSE)
 
   if (is.null(geog.lvl)) {
     mod <- glm(deg.main ~ + age.grp + sqrt(age.grp),
@@ -359,20 +362,23 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
 
     ## nodefactor("race") ----
-    props <- race.dist[[geog.lvl]][which(race.dist[[geog.lvl]]$Geog == geog.cat), -c(1,2)]/100
-    d$pw <- ifelse(d$race.cat3 == 1, 1/props[2],
-                   ifelse(d$race.cat3 == 2, 1/props[3], 1/props[1]))
-    d$pw <- as.numeric(d$pw)
-    d.design <- survey::svydesign(id      = ~AMIS_ID,
-                                  strata  = ~race.cat3,
-                                  weights = ~pw,
-                                  nest    = TRUE,
-                                  data    = d)
+    # props <- race.dist[[geog.lvl]][which(race.dist[[geog.lvl]]$Geog == geog.cat), -c(1,2)]/100
+    # d$pw <- ifelse(d$race.cat3 == 1, 1/props[2],
+    #                ifelse(d$race.cat3 == 2, 1/props[3], 1/props[1]))
+    # d$pw <- as.numeric(d$pw)
+    # d.design <- survey::svydesign(id      = ~AMIS_ID,
+    #                               strata  = ~race.cat3,
+    #                               weights = ~pw,
+    #                               nest    = TRUE,
+    #                               data    = d)
 
     if (is.null(geog.lvl)) {
-      mod <- survey::svyglm(deg.main ~ race.cat3,
-                            design = d.design,
-                            family = poisson())
+      # mod <- survey::svyglm(deg.main ~ race.cat3,
+      #                       design = d.design,
+      #                       family = poisson())
+
+      mod <- glm(deg.main ~ as.factor(race.cat3),
+                 data = d, family = poisson())
 
       # summary(mod)
 
@@ -381,9 +387,12 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
       out$main$nf.race <- as.numeric(pred)
     } else {
-      mod <- survey::svyglm(deg.main ~ geog + race.cat3,
-                            design = d.design,
-                            family = poisson())
+      # mod <- survey::svyglm(deg.main ~ geog + race.cat3,
+      #                       design = d.design,
+      #                       family = poisson())
+
+      mod <- glm(deg.main ~ geog + as.factor(race.cat3),
+                 data = d, family = poisson())
       # summary(mod)
 
       dat <- data.frame(geog = geog.cat, race.cat3 = 1:3)
@@ -571,8 +580,10 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   ## nodematch("age.grp") ----
 
-  lcasl$index.age.grp <- cut(lcasl$age, age.breaks, labels = FALSE)
-  lcasl$part.age.grp <- cut(as.numeric(lcasl$p_age_imp), age.breaks, labels = FALSE)
+  lcasl$index.age.grp <- cut(lcasl$age, age.breaks, labels = FALSE, right = FALSE,
+                             include.lowest = FALSE)
+  lcasl$part.age.grp <- cut(as.numeric(lcasl$p_age_imp), age.breaks,
+                            right = FALSE, labels = FALSE, include.lowest = FALSE)
   # data.frame(lcasl$age, lcasl$index.age.grp, lcasl$p_age_imp, lcasl$part.age.grp)
 
   lcasl$same.age.grp <- ifelse(lcasl$index.age.grp == lcasl$part.age.grp, 1, 0)
@@ -643,7 +654,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   ## nodefactor("age.grp") ----
 
-  d$age.grp <- cut(d$age, age.breaks, labels = FALSE)
+  d$age.grp <- cut(d$age, age.breaks, labels = FALSE,
+                   right = FALSE, include.lowest = FALSE)
 
   if (is.null(geog.lvl)) {
     mod <- glm(deg.casl ~ age.grp + sqrt(age.grp),
@@ -926,8 +938,10 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   ## nodematch("age.grp") ----
 
-  linst$index.age.grp <- cut(linst$age, age.breaks, labels = FALSE)
-  linst$part.age.grp <- cut(as.numeric(linst$p_age_imp), age.breaks, labels = FALSE)
+  linst$index.age.grp <- cut(linst$age, age.breaks, labels = FALSE,
+                             right = FALSE, include.lowest = FALSE)
+  linst$part.age.grp <- cut(as.numeric(linst$p_age_imp), age.breaks, labels = FALSE,
+                            right = FALSE, include.lowest = FALSE)
   # data.frame(linst$age, linst$index.age.grp, linst$p_age_imp, linst$part.age.grp)
 
   linst$same.age.grp <- ifelse(linst$index.age.grp == linst$part.age.grp, 1, 0)
@@ -998,7 +1012,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   ## nodefactor("age.grp") ----
 
-  d$age.grp <- cut(d$age, age.breaks, labels = FALSE)
+  d$age.grp <- cut(d$age, age.breaks, labels = FALSE,
+                   right = FALSE, include.lowest = FALSE)
 
   if (is.null(geog.lvl)) {
     mod <- glm(count.oo.part ~ age.grp + sqrt(age.grp),
@@ -1025,7 +1040,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
     ## nodematch("race", diff = TRUE) ----
 
-    prop.table(table(linst$race.cat3, linst$p_race.cat3), 1)
+    #prop.table(table(linst$race.cat3, linst$p_race.cat3), 1)
 
     linst$same.race <- ifelse(linst$race.cat3 == linst$p_race.cat3, 1, 0)
 

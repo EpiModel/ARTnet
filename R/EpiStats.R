@@ -188,7 +188,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
     stop("Age breaks must be between specified age limits")
   }
 
-  age.breaks <- unique(sort(c(age.limits[1], age.breaks, age.limits[2])))
+  age.breaks <- unique(sort(c(age.limits[1], age.breaks, age.limits[2], 100)))
 
   l <- subset(l, age >= age.limits[1] & age <= age.limits[2])
   d <- subset(d, age >= age.limits[1] & age <= age.limits[2])
