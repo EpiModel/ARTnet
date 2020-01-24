@@ -49,6 +49,7 @@ build_netstats <- function(epistats, netparams,
   geog.cat <- epistats$geog.cat
   geog.lvl <- epistats$geog.lvl
   race <- epistats$race
+  age.grps <- epistats$age.grps
 
 
   # Demographic Initialization ----------------------------------------------

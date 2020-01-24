@@ -32,7 +32,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   race <- epistats$race
   age.limits <- epistats$age.limits
   age.breaks <- epistats$age.breaks
-  age.grps <- length(age.breaks) - 2
+  age.grps <- epistats$age.grps
 
 
   # 0. Data Processing ------------------------------------------------------

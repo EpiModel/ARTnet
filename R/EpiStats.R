@@ -182,13 +182,13 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
 
   age.limits <- c(min(age.limits), max(age.limits))
 
-  flag.bks <- prod(age.breaks <= age.limits[2] & age.breaks >= age.limits[1])
+  flag.bks <- prod(age.breaks < age.limits[2] & age.breaks >= age.limits[1])
 
   if (flag.bks == 0) {
     stop("Age breaks must be between specified age limits")
   }
 
-  age.breaks <- unique(sort(c(age.limits[1], age.breaks, age.limits[2], 100)))
+  age.breaks <- unique(sort(c(age.limits[1], age.breaks, 100)))
 
   l <- subset(l, age >= age.limits[1] & age <= age.limits[2])
   d <- subset(d, age >= age.limits[1] & age <= age.limits[2])
@@ -480,6 +480,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   out$geog.d <- as.character(d$geog)
   out$age.limits <- age.limits
   out$age.breaks <- age.breaks
+  out$age.grps <- length(age.breaks) - 1
   out$init.hiv.prev <- init.hiv.prev
   return(out)
 }
