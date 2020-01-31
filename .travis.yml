@@ -1,0 +1,16 @@
+language: r
+sudo: false
+cache: packages
+latex: false
+
+r:
+  - release
+
+r_github_packages:
+  - EpiModel/ARTnetData
+
+warnings_are_errors: true
+
+notifications:
+  email: false
+slack: epimodel:iY6F3MeHlZ2LCM4MwuVRJj7D
