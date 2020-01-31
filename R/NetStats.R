@@ -50,6 +50,7 @@ build_netstats <- function(epistats, netparams,
   geog.lvl <- epistats$geog.lvl
   race <- epistats$race
   age.grps <- epistats$age.grps
+  age.limits <- epistats$age.limits
 
 
   # Demographic Initialization ----------------------------------------------
@@ -72,7 +73,7 @@ build_netstats <- function(epistats, netparams,
 
   ## Age-sex-specific mortality rates (B, H, W)
   #    in 5-year age decrments starting with age 15
-  ages <- out$demog$ages <- age.limit[1]:age.limit[2]
+  ages <- out$demog$ages <- age.limits[1]:age.limits[2]
   asmr.B <- c(0.00124, 0.00213, 0.00252, 0.00286, 0.00349,
               0.00422, 0.00578, 0.00870, 0.01366, 0.02052)
   asmr.H <- c(0.00062, 0.00114, 0.00127, 0.00132, 0.00154,
@@ -92,7 +93,10 @@ build_netstats <- function(epistats, netparams,
     vec.asmr.W <- c(rep(0, 14), rep(trans.asmr.W, each = 5), 1)
     asmr <- data.frame(age = 1:65, vec.asmr.B, vec.asmr.H, vec.asmr.W)
 
-    out$demog$asmr <- asmr
+    min.asmr <- max(which(asmr$age<=age.limits[1]))
+    max.asmr <- min(which(asmr$age>=age.limits[2]))
+
+    out$demog$asmr <- asmr[min.asmr:max.asmr, ]
   } else {
     asmr.O <-  rbind(asmr.B, asmr.H, asmr.W)
     asmr.O <- colMeans(asmr.O)
@@ -168,14 +172,17 @@ build_netstats <- function(epistats, netparams,
     if (race == TRUE) {
       init.hiv.prev <- epistats$init.hiv.prev
       samp.B <- which(attr_race == 1)
+      exp.B <- ceiling(length(samp.B)*init.hiv.prev[1])
       samp.H <- which(attr_race == 2)
+      exp.H <- ceiling(length(samp.H)*init.hiv.prev[2])
       samp.W <- which(attr_race == 3)
+      exp.W <- ceiling(length(samp.W)*init.hiv.prev[3])
 
       attr_diag.status <- rep(0, network.size)
 
-      attr_diag.status[samp.B] <- rbinom(length(samp.B), 1, init.hiv.prev[1])
-      attr_diag.status[samp.H] <- rbinom(length(samp.H), 1, init.hiv.prev[2])
-      attr_diag.status[samp.W] <- rbinom(length(samp.W), 1, init.hiv.prev[3])
+      attr_diag.status[sample(samp.B, exp.B)] <- 1
+      attr_diag.status[sample(samp.H, exp.H)] <- 1
+      attr_diag.status[sample(samp.W, exp.W)] <- 1
 
       out$attr$diag.status <- attr_diag.status
 
