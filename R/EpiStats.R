@@ -458,8 +458,8 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = TRUE,
   out$hiv.mod <- hiv.mod
   out$geogYN.l <- l$geogYN
   out$geogYN.d <- d$geogYN
-  out$geog.l <- as.character(l$geog)
-  out$geog.d <- as.character(d$geog)
+  if(!is.null(l$geog)){ out$geog.l <- as.character(l$geog) }
+  if(!is.null(d$geog)){ out$geog.d <- as.character(d$geog) }
   out$age.limits <- age.limits
   out$age.breaks <- age.breaks
   return(out)
