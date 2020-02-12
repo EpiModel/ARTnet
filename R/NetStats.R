@@ -66,7 +66,11 @@ build_netstats <- function(epistats, netparams,
   # Population size by race group
   # race.dist.3cat
 
+  if (!is.null(geog.lvl)) {
   props <- race.dist[[geog.lvl]][which(race.dist[[geog.lvl]]$Geog == geog.cat), -c(1,2)]/100
+  } else {
+    props <- race.dist[["national"]][, -c(1,2)]/100
+  }
   num.B <- out$demog$num.B <- round(num * props$Black)
   num.H <- out$demog$num.H <- round(num * props$Hispanic)
   num.W <- out$demog$num.W <- num - num.B - num.H
@@ -93,10 +97,7 @@ build_netstats <- function(epistats, netparams,
     vec.asmr.W <- c(rep(0, 14), rep(trans.asmr.W, each = 5), 1)
     asmr <- data.frame(age = 1:65, vec.asmr.B, vec.asmr.H, vec.asmr.W)
 
-    min.asmr <- max(which(asmr$age<=age.limits[1]))
-    max.asmr <- min(which(asmr$age>=age.limits[2]))
-
-    out$demog$asmr <- asmr[min.asmr:max.asmr, ]
+    out$demog$asmr <- asmr
   } else {
     asmr.O <-  rbind(asmr.B, asmr.H, asmr.W)
     asmr.O <- colMeans(asmr.O)
@@ -187,7 +188,7 @@ build_netstats <- function(epistats, netparams,
       out$attr$diag.status <- attr_diag.status
 
     } else {
-      init.hiv.prev <- epistats$init.hiv.prev
+      init.hiv.prev <- epistats$init.hiv.prev[1]
       samp.size <- ceiling(network.size*init.hiv.prev)
       attr_diag.status <- sample(1:network.size, samp.size)
       out$attr$diag.status <- rep(0, network.size)

@@ -5,8 +5,8 @@ date: "`r Sys.Date()`"
 editor_options:
   chunk_output_type: console
 vignette: |
-  %\VignetteIndexEntry{ARTnet: Parameterization for HIV/STI Models} 
   %\usepackage[utf8]{inputenc}
+  %\VignetteIndexEntry{ARTnet: Parameterization for HIV/STI Models} 
   %\VignetteEngine{knitr::knitr}
 ---
 
