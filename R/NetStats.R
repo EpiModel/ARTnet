@@ -32,7 +32,7 @@
 
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,
-                           expect.mort = 0.000478213,
+                           expect.mort = 0.0001,
                            browser = FALSE,
                            edges.avg = FALSE) {
   if (browser == TRUE){
