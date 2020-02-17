@@ -32,7 +32,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   race <- epistats$race
   age.limits <- epistats$age.limits
   age.breaks <- epistats$age.breaks
-  age.grps <- length(age.breaks) - 1
+  age.grps <- epistats$age.grps
 
 
   # 0. Data Processing ------------------------------------------------------
@@ -49,11 +49,13 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
 
-  #Append Data
-  d$geog <- epistats$geog.d
-  d$geogYN <- epistats$geogYN.d
-  l$geog <- epistats$geog.l
-  l$geogYN <- epistats$geogYN.l
+  #Append Data when geog.lvl is defined
+  if (!is.null(geog.lvl)) {
+    d$geog <- epistats$geog.d
+    d$geogYN <- epistats$geogYN.d
+    l$geog <- epistats$geog.l
+    l$geogYN <- epistats$geogYN.l
+  }
 
   ## Degree calculations ##
 
@@ -198,7 +200,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                data = d, family = poisson())
     # summary(mod)
 
-   pred <- exp(coef(mod)[[1]])
+    pred <- exp(coef(mod)[[1]])
 
     out$main$md.main <- as.numeric(pred)
   } else {
@@ -215,8 +217,10 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   ## nodematch("age.grp") ----
 
-  lmain$index.age.grp <- cut(lmain$age, age.breaks, labels = FALSE)
-  lmain$part.age.grp <- cut(as.numeric(lmain$p_age_imp), age.breaks, labels = FALSE)
+  lmain$index.age.grp <- cut(lmain$age, age.breaks, labels = FALSE,
+                             right = FALSE, include.lowest = FALSE)
+  lmain$part.age.grp <- cut(as.numeric(lmain$p_age_imp), age.breaks, labels = FALSE,
+                            right = FALSE, include.lowest = FALSE)
   # data.frame(lmain$age, lmain$index.age.grp, lmain$p_age_imp, lmain$part.age.grp)
 
   lmain$same.age.grp <- ifelse(lmain$index.age.grp == lmain$part.age.grp, 1, 0)
@@ -287,7 +291,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   ## nodefactor("age.grp") ----
 
-  d$age.grp <- cut(d$age, age.breaks, labels = FALSE)
+  d$age.grp <- cut(d$age, age.breaks, labels = FALSE,
+                   right  = FALSE, include.lower = FALSE)
 
   if (is.null(geog.lvl)) {
     mod <- glm(deg.main ~ + age.grp + sqrt(age.grp),
@@ -359,10 +364,24 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
 
     ## nodefactor("race") ----
+    # props <- race.dist[[geog.lvl]][which(race.dist[[geog.lvl]]$Geog == geog.cat), -c(1,2)]/100
+    # d$pw <- ifelse(d$race.cat3 == 1, 1/props[2],
+    #                ifelse(d$race.cat3 == 2, 1/props[3], 1/props[1]))
+    # d$pw <- as.numeric(d$pw)
+    # d.design <- survey::svydesign(id      = ~AMIS_ID,
+    #                               strata  = ~race.cat3,
+    #                               weights = ~pw,
+    #                               nest    = TRUE,
+    #                               data    = d)
 
     if (is.null(geog.lvl)) {
+      # mod <- survey::svyglm(deg.main ~ race.cat3,
+      #                       design = d.design,
+      #                       family = poisson())
+
       mod <- glm(deg.main ~ as.factor(race.cat3),
                  data = d, family = poisson())
+
       # summary(mod)
 
       dat <- data.frame(race.cat3 = 1:3)
@@ -370,6 +389,10 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
       out$main$nf.race <- as.numeric(pred)
     } else {
+      # mod <- survey::svyglm(deg.main ~ geog + race.cat3,
+      #                       design = d.design,
+      #                       family = poisson())
+
       mod <- glm(deg.main ~ geog + as.factor(race.cat3),
                  data = d, family = poisson())
       # summary(mod)
@@ -393,7 +416,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
     out$main$nf.deg.casl <- as.numeric(pred)
 
-    deg.casl.dist <- prop.table(table(d$deg.casl[d$geog == geog.cat]))
+    deg.casl.dist <- prop.table(table(d$deg.casl))
     out$main$deg.casl.dist <- as.numeric(deg.casl.dist)
   } else {
     mod <- glm(deg.main ~ geog + deg.casl,
@@ -467,17 +490,21 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     as.data.frame()
 
   # create city weights
-  durs.main.geo <- lmain %>%
-    filter(RAI == 1 | IAI == 1) %>%
-    filter(index.age.grp < 6) %>%
-    filter(ongoing2 == 1) %>%
-    filter(geog == geog.cat) %>%
-    summarise(mean.dur = mean(duration, na.rm = TRUE),
-              median.dur = median(duration, na.rm = TRUE)) %>%
-    as.data.frame()
+  if (!is.null(geog.lvl)) {
+    durs.main.geo <- lmain %>%
+      filter(RAI == 1 | IAI == 1) %>%
+      filter(index.age.grp < 6) %>%
+      filter(ongoing2 == 1) %>%
+      filter(geog == geog.cat) %>%
+      summarise(mean.dur = mean(duration, na.rm = TRUE),
+                median.dur = median(duration, na.rm = TRUE)) %>%
+      as.data.frame()
 
-  # city-specific weight based on ratio of medians
-  wt <- durs.main.geo$median.dur/durs.main$median.dur
+    # city-specific weight based on ratio of medians
+    wt <- durs.main.geo$median.dur/durs.main$median.dur
+  } else {
+    wt <- 1
+  }
 
   # The weekly dissolution rate is function of the mean of the geometric distribution
   # which relates to the median as:
@@ -559,8 +586,10 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   ## nodematch("age.grp") ----
 
-  lcasl$index.age.grp <- cut(lcasl$age, age.breaks, labels = FALSE)
-  lcasl$part.age.grp <- cut(as.numeric(lcasl$p_age_imp), age.breaks, labels = FALSE)
+  lcasl$index.age.grp <- cut(lcasl$age, age.breaks, labels = FALSE, right = FALSE,
+                             include.lowest = FALSE)
+  lcasl$part.age.grp <- cut(as.numeric(lcasl$p_age_imp), age.breaks,
+                            right = FALSE, labels = FALSE, include.lowest = FALSE)
   # data.frame(lcasl$age, lcasl$index.age.grp, lcasl$p_age_imp, lcasl$part.age.grp)
 
   lcasl$same.age.grp <- ifelse(lcasl$index.age.grp == lcasl$part.age.grp, 1, 0)
@@ -631,7 +660,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   ## nodefactor("age.grp") ----
 
-  d$age.grp <- cut(d$age, age.breaks, labels = FALSE)
+  d$age.grp <- cut(d$age, age.breaks, labels = FALSE,
+                   right = FALSE, include.lowest = FALSE)
 
   if (is.null(geog.lvl)) {
     mod <- glm(deg.casl ~ age.grp + sqrt(age.grp),
@@ -704,11 +734,16 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
       out$casl$nm.race_diffF <- as.numeric(pred)
     }
 
-    ## nodefactor("race", diff = TRUE) ----
+    ## nodefactor("race") ----
 
     if (is.null(geog.lvl)) {
+      #mod <- survey::svyglm(deg.casl ~ race.cat3,
+      #                      design = d.design,
+      #                      family = poisson())
+
       mod <- glm(deg.casl ~ as.factor(race.cat3),
                  data = d, family = poisson())
+
       # summary(mod)
 
       dat <- data.frame(race.cat3 = 1:3)
@@ -716,6 +751,10 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
       out$casl$nf.race <- as.numeric(pred)
     } else {
+      #mod <- survey::svyglm(deg.casl ~ geog + race.cat3,
+      #                      design = d.design,
+      #                      family = poisson())
+
       mod <- glm(deg.casl ~ geog + as.factor(race.cat3),
                  data = d, family = poisson())
       # summary(mod)
@@ -739,7 +778,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
     out$casl$nf.deg.main <- as.numeric(pred)
 
-    deg.main.dist <- prop.table(table(d$deg.main[d$geog == geog.cat]))
+    deg.main.dist <- prop.table(table(d$deg.main))
     out$casl$deg.main.dist <- as.numeric(deg.main.dist)
   } else {
     mod <- glm(deg.casl ~ geog + deg.main,
@@ -813,17 +852,21 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     as.data.frame()
 
   # create city weights
-  durs.casl.geo <- lcasl %>%
-    filter(RAI == 1 | IAI == 1) %>%
-    filter(index.age.grp < 6) %>%
-    filter(ongoing2 == 1) %>%
-    filter(geog == geog.cat) %>%
-    summarise(mean.dur = mean(duration, na.rm = TRUE),
-              median.dur = median(duration, na.rm = TRUE)) %>%
-    as.data.frame()
+  if (!is.null(geog.lvl)) {
+    durs.casl.geo <- lmain %>%
+      filter(RAI == 1 | IAI == 1) %>%
+      filter(index.age.grp < 6) %>%
+      filter(ongoing2 == 1) %>%
+      filter(geog == geog.cat) %>%
+      summarise(mean.dur = mean(duration, na.rm = TRUE),
+                median.dur = median(duration, na.rm = TRUE)) %>%
+      as.data.frame()
 
-  # city-specific weight based on ratio of medians
-  wt <- durs.casl.geo$median.dur/durs.casl$median.dur
+    # city-specific weight based on ratio of medians
+    wt <- durs.casl.geo$median.dur/durs.casl$median.dur
+  } else {
+    wt <- 1
+  }
 
   # The weekly dissolution rate is function of the mean of the geometric distribution
   # which relates to the median as:
@@ -905,8 +948,10 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   ## nodematch("age.grp") ----
 
-  linst$index.age.grp <- cut(linst$age, age.breaks, labels = FALSE)
-  linst$part.age.grp <- cut(as.numeric(linst$p_age_imp), age.breaks, labels = FALSE)
+  linst$index.age.grp <- cut(linst$age, age.breaks, labels = FALSE,
+                             right = FALSE, include.lowest = FALSE)
+  linst$part.age.grp <- cut(as.numeric(linst$p_age_imp), age.breaks, labels = FALSE,
+                            right = FALSE, include.lowest = FALSE)
   # data.frame(linst$age, linst$index.age.grp, linst$p_age_imp, linst$part.age.grp)
 
   linst$same.age.grp <- ifelse(linst$index.age.grp == linst$part.age.grp, 1, 0)
@@ -916,7 +961,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                data = linst, family = binomial())
     # summary(mod)
 
-    dat <- data.frame(geog = geog.cat, index.age.grp = 1:age.grps)
+    dat <- data.frame(index.age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
 
     out$inst$nm.age.grp <- as.numeric(pred)
@@ -977,7 +1022,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   ## nodefactor("age.grp") ----
 
-  d$age.grp <- cut(d$age, age.breaks, labels = FALSE)
+  d$age.grp <- cut(d$age, age.breaks, labels = FALSE,
+                   right = FALSE, include.lowest = FALSE)
 
   if (is.null(geog.lvl)) {
     mod <- glm(count.oo.part ~ age.grp + sqrt(age.grp),
@@ -1004,7 +1050,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
     ## nodematch("race", diff = TRUE) ----
 
-    prop.table(table(linst$race.cat3, linst$p_race.cat3), 1)
+    #prop.table(table(linst$race.cat3, linst$p_race.cat3), 1)
 
     linst$same.race <- ifelse(linst$race.cat3 == linst$p_race.cat3, 1, 0)
 
@@ -1056,6 +1102,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     if (is.null(geog.lvl)) {
       mod <- glm(count.oo.part ~ as.factor(race.cat3),
                  data = d, family = poisson())
+
       # summary(mod)
 
       dat <- data.frame(race.cat3 = 1:3)
@@ -1077,8 +1124,13 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   ## nodefactor("risk.grp") ----
 
   # geography-specific wts
-  wt <- mean(d$rate.oo.part[d$geog == geog.cat],
-             na.rm = TRUE)/mean(d$rate.oo.part, na.rm = TRUE)
+
+  if (!is.null(geog.lvl)) {
+    wt <- mean(d$rate.oo.part[d$geog == geog.cat],
+               na.rm = TRUE)/mean(d$rate.oo.part, na.rm = TRUE)
+  } else {
+    wt <- 1
+  }
   wt.rate <- d$rate.oo.part * wt
 
   nquants <- 5
@@ -1115,8 +1167,13 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   d$deg.tot3 <- ifelse(d$deg.tot >= 3, 3, d$deg.tot)
 
-  deg.tot.dist <- prop.table(table(d$deg.tot3[d$geog == geog.cat]))
-  out$inst$deg.tot.dist <- as.numeric(deg.tot.dist)
+  if (!is.null(geog.lvl)) {
+    deg.tot.dist <- prop.table(table(d$deg.tot3[d$geog == geog.cat]))
+    out$inst$deg.tot.dist <- as.numeric(deg.tot.dist)
+  } else {
+    deg.tot.dist <- prop.table(table(d$deg.tot3))
+    out$inst$deg.tot.dist <- as.numeric(deg.tot.dist)
+  }
 
   if (is.null(geog.lvl)) {
     mod <- glm(count.oo.part ~ deg.tot3 + sqrt(deg.tot3),
@@ -1201,3 +1258,4 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   return(out)
 }
+

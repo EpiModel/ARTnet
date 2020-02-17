@@ -5,7 +5,7 @@
 \title{Build Network Statistics for Network Estimation}
 \usage{
 build_netstats(epistats, netparams, network.size = 10000,
-  expect.mort = 0.000478213, browser = FALSE, edges.avg = FALSE)
+  expect.mort = 1e-04, browser = FALSE, edges.avg = FALSE)
 }
 \arguments{
 \item{epistats}{Output from \code{\link{build_epistats}}.}
