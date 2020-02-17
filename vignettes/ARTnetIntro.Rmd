@@ -4,10 +4,8 @@ author: "Shawnee Anderson and Samuel M. Jenness"
 date: "`r Sys.Date()`"
 editor_options:
   chunk_output_type: console
-vignette: |
-  %\usepackage[utf8]{inputenc}
-  %\VignetteIndexEntry{ARTnet: Parameterization for HIV/STI Models} 
-  %\VignetteEngine{knitr::knitr}
+vignette: "%\\usepackage[utf8]{inputenc}\n%\\VignetteIndexEntry{ARTnet: Parameterization
+  for HIV/STI Models} \n%\\VignetteEngine{knitr::knitr}\n"
 ---
 
 ## Load the Package
@@ -100,8 +98,7 @@ epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", race = TRUE,
                            age.limits = c(30, 50), age.breaks = c(35, 45),
                            init.hiv.prev = c(0.333, 0.127, 0.084))
 
-#2. Netparams: Specify age categories if needed, or let ARTnet determine age categories by number of 
-#categories desired
+#2. Netparams: Specify whether upper age group duration is averaged over second to last age group.
 netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
 
 #3. Netstats: Finalize network setup 
@@ -123,7 +120,7 @@ nw_main <- nw_casl <- nw_inst <- nw
 model_main <- ~edges +
   nodematch("age.grp", diff = TRUE) +
   nodefactor("age.grp", levels = -1) +
-  nodematch("race", diff = FALSE) + #race = TRUE; omit if FALSE
+  nodematch("race", diff = FALSE) + 
   nodefactor("race", levels = -1) +
   nodefactor("deg.casl", levels = -1) +
   concurrent +
@@ -135,7 +132,7 @@ netstats_main <- c(
   edges = netstats$main$edges,
   nodematch_age.grp = netstats$main$nodematch_age.grp,
   nodefactor_age.grp = netstats$main$nodefactor_age.grp[-1],
-  nodematch_race = netstats$main$nodematch_race_diffF, #If race = FALSE, value will be NULL
+  nodematch_race = netstats$main$nodematch_race_diffF,
   nodefactor_race = netstats$main$nodefactor_race[-1],
   nodefactor_deg.casl = netstats$main$nodefactor_deg.casl[-1],
   concurrent = netstats$main$concurrent,
