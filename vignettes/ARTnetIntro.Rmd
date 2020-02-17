@@ -50,7 +50,9 @@ epistats5 <- build_epistats(geog.lvl = "region", geog.cat = "3", init.hiv.prev =
 If no geographic stratification is specified, `geog.lvl = NULL`, and no geopgraphic stratification is done.
 
 ```{r }
-epistats6 <- build_epistats(geog.lvl = NULL)
+epistats6 <- build_epistats()
+netparams <- build_netparams(epistats6)
+netstats <- build_netstats(epistats6, netparams)
 ```
 
 ## Race Stratification
