@@ -1258,4 +1258,3 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   return(out)
 }
-
