@@ -28,9 +28,11 @@
 #' netstats <- build_netstats(epistats, netparams)
 #'
 #' @export
+#'
+
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,
-                           expect.mort = 0.000478213,
+                           expect.mort = 0.0001,
                            browser = FALSE,
                            edges.avg = FALSE) {
   if (browser == TRUE){
@@ -41,17 +43,22 @@ build_netstats <- function(epistats, netparams,
   #NOTE: Not actually used
   d <- epistats$wide
   l <- epistats$long
+  race.dist <- ARTnetData::race.dist
 
   ## Inputs ##
   geog.cat <- epistats$geog.cat
   geog.lvl <- epistats$geog.lvl
   race <- epistats$race
+  age.grps <- epistats$age.grps
+  age.limits <- epistats$age.limits
 
 
   # Demographic Initialization ----------------------------------------------
 
   out <- list()
   out$demog <- list()
+  out$geog.lvl <- geog.lvl
+  out$race <- race
 
   # Overall network size
   num <- out$demog$num <- network.size
@@ -59,43 +66,18 @@ build_netstats <- function(epistats, netparams,
   # Population size by race group
   # race.dist.3cat
 
-  if (is.null(geog.lvl)) {
-    props <- race.dist.national[,-c(1,2)]/100
-    num.B <- out$demog$num.B <- round(num * props$Black)
-    num.H <- out$demog$num.H <- round(num * props$Hispanic)
-    num.W <- out$demog$num.W <- num - num.B - num.H
+  if (!is.null(geog.lvl)) {
+  props <- race.dist[[geog.lvl]][which(race.dist[[geog.lvl]]$Geog == geog.cat), -c(1,2)]/100
   } else {
-    if (geog.lvl == "city") {
-      props <- race.dist.city[which(race.dist.city$Geog == geog.cat), -c(1,2)]/100
-      num.B <- out$demog$num.B <- round(num * props$Black)
-      num.H <- out$demog$num.H <- round(num * props$Hispanic)
-      num.W <- out$demog$num.W <- num - num.B - num.H
-    }
-    if (geog.lvl == "state") {
-      props <- race.dist.city[which(race.dist.state$Geog == geog.cat),
-                              -c(1,2)]/100
-      num.B <- out$demog$num.B <- round(num * props$Black)
-      num.H <- out$demog$num.H <- round(num * props$Hispanic)
-      num.W <- out$demog$num.W <- num - num.B - num.H
-    }
-    if (geog.lvl == "region") {
-      props <- race.dist.city[which(race.dist.census.region$Geog == geog.cat),
-                              -c(1,2)]/100
-      num.B <- out$demog$num.B <- round(num * props$Black)
-      num.H <- out$demog$num.H <- round(num * props$Hispanic)
-      num.W <- out$demog$num.W <- num - num.B - num.H
-    }
-    if (geog.lvl == "division") {
-      props <- race.dist.city[which(race.dist.census.division$Geog == geog.cat),
-                              -c(1,2)]/100
-      num.B <- out$demog$num.B <- round(num * props$Black)
-      num.H <- out$demog$num.H <- round(num * props$Hispanic)
-      num.W <- out$demog$num.W <- num - num.B - num.H
-    }
+    props <- race.dist[["national"]][, -c(1,2)]/100
   }
+  num.B <- out$demog$num.B <- round(num * props$Black)
+  num.H <- out$demog$num.H <- round(num * props$Hispanic)
+  num.W <- out$demog$num.W <- num - num.B - num.H
+
   ## Age-sex-specific mortality rates (B, H, W)
   #    in 5-year age decrments starting with age 15
-  ages <- out$demog$ages <- 15:64
+  ages <- out$demog$ages <- age.limits[1]:age.limits[2]
   asmr.B <- c(0.00124, 0.00213, 0.00252, 0.00286, 0.00349,
               0.00422, 0.00578, 0.00870, 0.01366, 0.02052)
   asmr.H <- c(0.00062, 0.00114, 0.00127, 0.00132, 0.00154,
@@ -141,7 +123,8 @@ build_netstats <- function(epistats, netparams,
   out$attr$sqrt.age <- attr_sqrt.age
 
   age.breaks <- out$demog$age.breaks <- epistats$age.breaks
-  attr_age.grp <- cut(attr_age, age.breaks, labels = FALSE)
+  attr_age.grp <- cut(attr_age, age.breaks, labels = FALSE,
+                      right = FALSE, include.lowest = FALSE)
   out$attr$age.grp <- attr_age.grp
 
   # race attribute
@@ -174,16 +157,43 @@ build_netstats <- function(epistats, netparams,
   out$attr$role.class <- attr_role.class
 
   # diag status
-  if (race == TRUE) {
-    xs <- data.frame(age = attr_age, race.cat3 = attr_race, geogYN = 1)
-    preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
-    attr_diag.status <- rbinom(num, 1, preds)
-    out$attr$diag.status <- attr_diag.status
-  }  else {
-    xs <- data.frame(age = attr_age, geogYN = 1)
-    preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
-    attr_diag.status <- rbinom(num, 1, preds)
-    out$attr$diag.status <- attr_diag.status
+  if (is.null(epistats$init.hiv.prev)) {
+    if (race == TRUE) {
+      xs <- data.frame(age = attr_age, race.cat3 = attr_race, geogYN = 1)
+      preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
+      attr_diag.status <- rbinom(num, 1, preds)
+      out$attr$diag.status <- attr_diag.status
+    }  else {
+      xs <- data.frame(age = attr_age, geogYN = 1)
+      preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
+      attr_diag.status <- rbinom(num, 1, preds)
+      out$attr$diag.status <- attr_diag.status
+    }
+  } else {
+    if (race == TRUE) {
+      init.hiv.prev <- epistats$init.hiv.prev
+      samp.B <- which(attr_race == 1)
+      exp.B <- ceiling(length(samp.B)*init.hiv.prev[1])
+      samp.H <- which(attr_race == 2)
+      exp.H <- ceiling(length(samp.H)*init.hiv.prev[2])
+      samp.W <- which(attr_race == 3)
+      exp.W <- ceiling(length(samp.W)*init.hiv.prev[3])
+
+      attr_diag.status <- rep(0, network.size)
+
+      attr_diag.status[sample(samp.B, exp.B)] <- 1
+      attr_diag.status[sample(samp.H, exp.H)] <- 1
+      attr_diag.status[sample(samp.W, exp.W)] <- 1
+
+      out$attr$diag.status <- attr_diag.status
+
+    } else {
+      init.hiv.prev <- epistats$init.hiv.prev[1]
+      samp.size <- ceiling(network.size*init.hiv.prev)
+      attr_diag.status <- sample(1:network.size, samp.size)
+      out$attr$diag.status <- rep(0, network.size)
+      out$attr$diag.status[attr_diag.status] <- 1
+    }
   }
 
 

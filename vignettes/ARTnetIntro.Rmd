@@ -2,12 +2,10 @@
 title: 'ARTnet: Parameterization for HIV/STI Models'
 author: "Shawnee Anderson and Samuel M. Jenness"
 date: "`r Sys.Date()`"
-vignette: >
-  %\VignetteIndexEntry{EpiModel Introduction}
-  \usepackage[utf8]{inputenc}
-  %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
+editor_options:
   chunk_output_type: console
+vignette: "%\\usepackage[utf8]{inputenc}\n%\\VignetteIndexEntry{ARTnet: Parameterization
+  for HIV/STI Models} \n%\\VignetteEngine{knitr::knitr}\n"
 ---
 
 ## Load the Package
@@ -17,25 +15,42 @@ library("ARTnet")
 ```
 
 
+## HIV Prevalence
+
+In the new ARTnet workflow, the user is able to specify how initial HIV prevalence is calculated through the `init.hiv.prev` input parameter with `build_epistats`. If this parameter is set to `NULL` (the default behavior), then HIV prevalence will be calculated using ARTnet data.
+
+```{r }
+epistats1 <- build_epistats(geog.lvl = "state", geog.cat = "GA")
+```
+
+If, however, the user specifies a starting prevalence for HIV, then ARTnet will fix prevalence at this value and no estimation through ARTnet data will be done.
+
+```{r }
+epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
+                           init.hiv.prev = c(0.17, 0.17, 0.17))
+```
+
 ## Geographic Stratification
 
 This new input tells `build_epistats` that the geographical level of interest is the city level and that the geographical region of interest is Atlanta. There are five levels of geographical subsetting available in ARTnet: city, state, census division and geographic region. These are called by `geog.lvl = ` city, state, div, and reg respectively in the `build_epistats` function call. An individual who would like to build a network structure based on, say, Georgia, would then use:
 
 ```{r }
-epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "GA")
+epistats3 <- build_epistats(geog.lvl = "state", geog.cat = "GA", init.hiv.prev = c(0.17, 0.17, 0.17))
 ```
 
 Similarly, if one wishes to use the other levels of geographic stratification they can do so as above:
 
 ```{r }
-epistats2 <- build_epistats(geog.lvl = "division", geog.cat = "5")
-epistats3 <- build_epistats(geog.lvl = "region", geog.cat = "3")
+epistats4 <- build_epistats(geog.lvl = "division", geog.cat = "5", init.hiv.prev = c(0.17, 0.17, 0.17))
+epistats5 <- build_epistats(geog.lvl = "region", geog.cat = "3", init.hiv.prev = c(0.17, 0.17, 0.17))
 ```
 
 If no geographic stratification is specified, `geog.lvl = NULL`, and no geopgraphic stratification is done.
 
 ```{r }
-epistats4 <- build_epistats(geog.lvl = NULL)
+epistats6 <- build_epistats()
+netparams <- build_netparams(epistats6)
+netstats <- build_netstats(epistats6, netparams)
 ```
 
 ## Race Stratification
@@ -44,10 +59,12 @@ A further change made to ARTnet is the ability for users to choose whether or no
 
 ```{r }
 #Racial stratification
-epistats4 <- build_epistats(geog.lvl = "state", geog.cat = "WA", race = TRUE)
+epistats7 <- build_epistats(geog.lvl = "state", geog.cat = "WA", race = TRUE, 
+                            init.hiv.prev = c(0.333, 0.127, 0.084))
 
 #No racial stratification
-epistats5 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE)
+epistats5 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE, 
+                            init.hiv.prev = c(0.17, 0.17, 0.17))
 ```
 
 Racial stratification is set to true by default.
@@ -61,26 +78,27 @@ A further addition to the ARTnet workflow is allowing for age group subsetting a
 
 ```{r }
 #Set age limits
-epistats6 <- build_epistats(geog.lvl = "state", geog.cat = "GA", 
+epistats8 <- build_epistats(geog.lvl = "state", geog.cat = "GA", 
                             race = TRUE, age.limits = c(15, 65),
-                            age.breaks = c(20, 30, 40, 50, 60))
+                            age.breaks = c(20, 30, 40, 50, 60),
+                            init.hiv.prev = c(0.333, 0.127, 0.084))
 
-#Specify age categories: (0-20], (20, 30], . . . (60, 100]
-netparams1 <- build_netparams(epistats = epistats6, smooth.main.dur = TRUE)
+#Specify age categories: (0-20), [20, 30), . . . [60, 100)
+netparams1 <- build_netparams(epistats = epistats8, smooth.main.dur = TRUE)
 ```
 
 ## Full EpiModel Workflow
 
-Below is the updated workflow for generating network objects for use in constructing full network parameters/statistics for use in EpiModel:
+Below is the updated workflow for generating network objects for use in constructing full network parameters/statistics to be used in EpiModel:
 
 ```{r, eval = FALSE}
 #1. Epistats: Specify geographic features, as well as race stratification and total age range
 #under consideration
 epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", race = TRUE, 
-                           age.limits = c(30, 50), age.breaks = c(35, 45))
+                           age.limits = c(30, 50), age.breaks = c(35, 45),
+                           init.hiv.prev = c(0.333, 0.127, 0.084))
 
-#2. Netparams: Specify age categories if needed, or let ARTnet determine age categories by number of 
-#categories desired
+#2. Netparams: Specify whether upper age group duration is averaged over second to last age group.
 netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
 
 #3. Netstats: Finalize network setup 
@@ -101,20 +119,20 @@ nw_main <- nw_casl <- nw_inst <- nw
 #Formula: 
 model_main <- ~edges +
   nodematch("age.grp", diff = TRUE) +
-  nodefactor("age.grp", base = 1) +
-  nodematch("race", diff = FALSE) + #race = TRUE; omit if FALSE
-  nodefactor("race", base = 1) +
-  nodefactor("deg.casl", base = 1) +
+  nodefactor("age.grp", levels = -1) +
+  nodematch("race", diff = FALSE) + 
+  nodefactor("race", levels = -1) +
+  nodefactor("deg.casl", levels = -1) +
   concurrent +
   degrange(from = 3) +
-  nodematch("role.class", diff = TRUE, keep = 1:2)
+  nodematch("role.class", diff = TRUE, levels = 1:2)
 
 # Target Stats
 netstats_main <- c(
   edges = netstats$main$edges,
   nodematch_age.grp = netstats$main$nodematch_age.grp,
   nodefactor_age.grp = netstats$main$nodefactor_age.grp[-1],
-  nodematch_race = netstats$main$nodematch_race_diffF, #If race = FALSE, value will be NULL
+  nodematch_race = netstats$main$nodematch_race_diffF,
   nodefactor_race = netstats$main$nodefactor_race[-1],
   nodefactor_deg.casl = netstats$main$nodefactor_deg.casl[-1],
   concurrent = netstats$main$concurrent,
@@ -139,14 +157,14 @@ fit_main <- netest(nw_main,
 # Formula
 model_casl <- ~edges +
   nodematch("age.grp", diff = TRUE) +
-  nodefactor("age.grp", base = c(1,5)) +
-  nodefactor("deg.main", base = 3) +
+  nodefactor("age.grp", levels = c(-1,-5)) +
+  nodefactor("deg.main", levels = -3) +
   concurrent +
   degrange(from = 4) +
-  nodematch("role.class", diff = TRUE, keep = 1:2) +
+  nodematch("role.class", diff = TRUE, levels = 1:2) +
   #If race = TRUE:
   nodematch("race", diff = FALSE) +
-  nodefactor("race", base = 1)
+  nodefactor("race", levels = -1)
 
 # Target Stats
 netstats_casl <- c(
@@ -179,13 +197,13 @@ fit_casl <- netest(nw_casl,
 # Formula
 model_inst <- ~edges +
   nodematch("age.grp", diff = FALSE) +
-  nodefactor("age.grp", base = 1) +
-  nodefactor("risk.grp", base = 5) +
-  nodefactor("deg.tot", base = 1) +
-  nodematch("role.class", diff = TRUE, keep = 1:2) +
+  nodefactor("age.grp", levels = -1) +
+  nodefactor("risk.grp", levels = -5) +
+  nodefactor("deg.tot", levels = -1) +
+  nodematch("role.class", diff = TRUE, levels = 1:2) +
   #If race = TRUE
   nodematch("race", diff = FALSE) +
-  nodefactor("race", base = 1) 
+  nodefactor("race", levels = -1) 
 
 # Target Stats
 netstats_inst <- c(
