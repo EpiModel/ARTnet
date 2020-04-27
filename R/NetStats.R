@@ -1,12 +1,15 @@
 
-#' Build Network Statistics for Network Estimation
+#' Calculate Network Target Statistics
+#'
+#' @description Calculates the final target statistics for the network models by
+#'              applying individual-level network statistics against the population
+#'              size and structure, for use in the EpiModelHIV workflow.
 #'
 #' @param epistats Output from \code{\link{build_epistats}}.
 #' @param netparams Output from \code{\link{build_netparams}}.
 #' @param network.size Size of the starting network.
 #' @param expect.mort Expected average mortality level to pass into
 #'        \code{\link{dissolution_coefs}} function.
-#' @param browser Run function in interactive browser mode.
 #' @param edges.avg Whether degree differences exist along race. TRUE
 #'        or FALSE; default of FALSE.
 #'
@@ -15,29 +18,23 @@
 #' \code{\link{build_netparams}} to build the relevant network statistics
 #' that will be used in network estimation using package \link{EpiModel}.
 #'
-#' The param \code{edge.avg} allows a user set the network stated edges
+#' The parameter \code{edge.avg} allows a user set the network stated edges
 #' to that estimated in \code{\link{build_netparams}} (divided by 2),
-#' with "edges.avg = FALSE", or, if sample proportions do not match
+#' with \code{edges.avg = FALSE}, or, if sample proportions do not match
 #' ARTnet population proportions, set to a weighted racial average
-#' with "edges.avg = TRUE."
+#' with \code{edges.avg = TRUE}.
 #'
+#' @export
 #'
 #' @examples
 #' epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta")
 #' netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
 #' netstats <- build_netstats(epistats, netparams)
 #'
-#' @export
-#'
-
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,
                            expect.mort = 0.0001,
-                           browser = FALSE,
                            edges.avg = FALSE) {
-  if (browser == TRUE){
-    browser()
-  }
 
   ## Data ##
   #NOTE: Not actually used

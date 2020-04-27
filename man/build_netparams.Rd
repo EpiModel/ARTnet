@@ -2,7 +2,7 @@
 % Please edit documentation in R/NetParams.R
 \name{build_netparams}
 \alias{build_netparams}
-\title{Build Network Parameters for Network Models}
+\title{Calculate Individual-Level Network Parameters}
 \usage{
 build_netparams(epistats, smooth.main.dur = FALSE)
 }
@@ -10,17 +10,19 @@ build_netparams(epistats, smooth.main.dur = FALSE)
 \item{epistats}{Output from \code{\link{build_epistats}}.}
 
 \item{smooth.main.dur}{If \code{TRUE}, average main durations for oldest
-and second oldest age groups. FALSE by default.}
+and second oldest age groups.}
 }
 \description{
-Build Network Parameters for Network Models
+Builds statistical models predicting mean degree, mixing, and
+             duration of sexual partnerships, for use in the EpiModelHIV
+             workflow.
 }
 \details{
-\code{build_netparams} is a helper function that constructs the neccessary
+\code{build_netparams} is a helper function that constructs the necessary
 network parameters for use in building network models with \code{\link{build_netstats}},
 building on models estimated using \code{\link{build_epistats}}.
 
-The paramter \code{smooth.main.dur} is used when partnership duration and
+The parameter \code{smooth.main.dur} is used when partnership duration and
 mortality compete in the eldest age group; in such a case mean duration is
 averaged over the oldest and second oldest age groups (as specified by \code{age.breaks}
 in \code{\link{build_epistats}}). Subsequently, this smoothing is only done
