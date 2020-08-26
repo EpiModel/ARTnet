@@ -1,7 +1,7 @@
 ## ARTnet: Model Parameterization with the ARTnet Study Data
 [![Build Status](https://travis-ci.com/EpiModel/ARTnet.svg?branch=master)](https://travis-ci.com/EpiModel/ARTnet)
 
-ARTnet is an anonymous cross-sectional web-based survey conducted from 2017-2019 of HIV-related risk behaviors, testing, and use of 
+ARTnet is an anonymous cross-sectional web-based survey conducted from 2017 to 2019 of HIV-related risk behaviors, testing, and use of 
 prevention services among men who have sex with men (MSM) in the United States. It recruited MSM who have 
 completed the American Men’s Internet Survey (AMIS) study, and therefore, the dataset contains variables 
 merged from that study as well. Full access to the dataset from ARTnet will allow the researchers to conduct 
