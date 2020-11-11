@@ -74,22 +74,22 @@ vignette(package = "ARTnet")
 
 #### Empirical Analyses
 
-1. Jenness SM, Weiss KM, Prasad P, Zlotorzynska M, Sanchez T. Bacterial STI Screening Rates by Symptomatic Status among Men Who Have Sex with Men in the United States: A Hierarchical Bayesian Analysis. _Sexually Transmitted Diseases._ 2019; 46(1): 25–30.
+1. Jenness SM, Weiss KM, Prasad P, Zlotorzynska M, Sanchez T. Bacterial STI Screening Rates by Symptomatic Status among Men Who Have Sex with Men in the United States: A Hierarchical Bayesian Analysis. _Sexually Transmitted Diseases._ 2019; 46(1): 25–30. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/30044334/)
 
-2. Weiss KM, Goodreau SM, Morris M, Prasad P, Ramaraju R, Sanchez T, Jenness SM. Egocentric Sexual Networks of Men Who Have Sex with Men in the United States: Results from the ARTnet Study. _Epidemics._ 2020; 30: 100386. 
+2. Weiss KM, Goodreau SM, Morris M, Prasad P, Ramaraju R, Sanchez T, Jenness SM. Egocentric Sexual Networks of Men Who Have Sex with Men in the United States: Results from the ARTnet Study. _Epidemics._ 2020; 30: 100386. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/32004795/)
 
-3. Weiss KM, Prasad P, Ramaraju R, Zlotorzynska M, Jenness SM. Estimated Number of Men who have Sex with Men with Indications for HIV Pre-Exposure Prophylaxis in a National Sexual Network Study. _Journal of Acquired Immune Deficiency Syndrome._ 2020; 84(1): 10-17.
+3. Weiss KM, Prasad P, Ramaraju R, Zlotorzynska M, Jenness SM. Estimated Number of Men who have Sex with Men with Indications for HIV Pre-Exposure Prophylaxis in a National Sexual Network Study. _Journal of Acquired Immune Deficiency Syndrome._ 2020; 84(1): 10-17. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/31939869/)
 
-4. Chandra CL, Weiss KM, Kelley CF, Marcus JL, Jenness SM. Gaps in Screening of Sexually Transmitted Infections among Men Who Have Sex with Men during PrEP Care in the United States. _Clinical Infectious Diseases._ 2020. Online ahead of print. DOI: 10.1093/cid/ciaa1033.
+4. Chandra CL, Weiss KM, Kelley CF, Marcus JL, Jenness SM. Gaps in Screening of Sexually Transmitted Infections among Men Who Have Sex with Men during PrEP Care in the United States. _Clinical Infectious Diseases._ 2020. Online ahead of print. DOI: 10.1093/cid/ciaa1033. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/32702116/)
 
-5. Anderson EJ, Weiss KM, Morris M, Jenness SM. The HIV/STI Epidemic Potential for Dynamic Sexual Networks of Men Who Have Sex with Men in Atlanta and San Francisco. _Pre-Print:_ https://doi.org/10.1101/2020.10.12.20211540. 
+5. Anderson EJ, Weiss KM, Morris M, Jenness SM. The HIV/STI Epidemic Potential for Dynamic Sexual Networks of Men Who Have Sex with Men in Atlanta and San Francisco. _Pre-Print:_ DOI: 10.1101/2020.10.12.20211540. [[medRxiv]](https://doi.org/10.1101/2020.10.12.20211540) 
 
 
 #### ARTnet Used in HIV/STI Transmission Models
 
-1.	Maloney KM, Driggers R, Sarkar S, Anderson EA, Malik AA, Jenness SM. Projected Impact of Concurrently Available Long-Acting Injectable and Daily-Oral HIV Pre-Exposure Prophylaxis. Journal of Infectious Diseases. 2020. Online ahead of print. DOI: 10.1093/infdis/jiaa552.
+1.	Maloney KM, Driggers R, Sarkar S, Anderson EA, Malik AA, Jenness SM. Projected Impact of Concurrently Available Long-Acting Injectable and Daily-Oral HIV Pre-Exposure Prophylaxis. Journal of Infectious Diseases. 2020. Online ahead of print. DOI: 10.1093/infdis/jiaa552. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/32882043/)
 
-2.	Jenness SM, Johnson JA, Hoover KW, Smith DK, Delaney K. Modeling an Integrated HIV Prevention and Care Continuum to Achieve the Ending the HIV Epidemic Goals. AIDS. 2020. 34(14): 2103–2113. 
+2.	Jenness SM, Johnson JA, Hoover KW, Smith DK, Delaney K. Modeling an Integrated HIV Prevention and Care Continuum to Achieve the Ending the HIV Epidemic Goals. AIDS. 2020. 34(14): 2103–2113. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/32910062/)
 
-3. Jenness SM, Le Guillou A, Chandra C, Mann L, Sanchez T, Westreich D, Marcus JL. Projected HIV and Bacterial STI Incidence Following COVID-Related Sexual Distancing and Clinical Service Interruption. _Pre-Print:_ https://doi.org/10.1101/2020.09.30.20204529.
+3. Jenness SM, Le Guillou A, Chandra C, Mann L, Sanchez T, Westreich D, Marcus JL. Projected HIV and Bacterial STI Incidence Following COVID-Related Sexual Distancing and Clinical Service Interruption. _Pre-Print:_ DOI: 10.1101/2020.09.30.20204529. [[medRxiv]](https://doi.org/10.1101/2020.09.30.20204529)
 
