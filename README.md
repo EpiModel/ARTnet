@@ -2,7 +2,7 @@
 
 ARTnet is an anonymous cross-sectional web-based survey conducted from 2017 to 2019 of HIV-related risk behaviors, testing, and use of prevention services among men who have sex with men (MSM) in the United States. It recruited MSM who have completed the American Men’s Internet Survey (AMIS) study, and therefore, the dataset contains variables merged from that study as well. Full access to the dataset from ARTnet will allow the researchers to conduct analyses and disseminate results using the data. 
 
-For further details on the ARTnet Study, you can read the descriptive paper ["Egocentric Sexual Networks of Men Who Have Sex with Men in the United States: Results from the ARTnet Study"](https://www.sciencedirect.com/science/article/pii/S1755436519301409?via%3Dihub) by Weiss et al. in _Epidemics._
+For further details on the ARTnet Study, you can read the descriptive paper ["Egocentric Sexual Networks of Men Who Have Sex with Men in the United States: Results from the ARTnet Study"](https://www.sciencedirect.com/science/article/pii/S1755436519301409?via%3Dihub) by Weiss et al. in _Epidemics._ See the **ARTnet Scientific Publications** section below for further details.
 
 Access to the data requires a Memorandum of Understanding (MOU) that outlines the personnel analyzing the data and purposes of the data analyses. This dataset may not be shared without the consent of the ARTnet Study PI (Samuel Jenness, Emory University) as outlined in an MOU. 
 
@@ -69,3 +69,27 @@ More details of which may be found in the package vignette:
 ```r
 vignette(package = "ARTnet")
 ```
+
+### ARTnet Scientific Publications
+
+#### Empirical Analyses
+
+1. Jenness SM, Weiss KM, Prasad P, Zlotorzynska M, Sanchez T. Bacterial STI Screening Rates by Symptomatic Status among Men Who Have Sex with Men in the United States: A Hierarchical Bayesian Analysis. _Sexually Transmitted Diseases._ 2019; 46(1): 25–30.
+
+2. Weiss KM, Goodreau SM, Morris M, Prasad P, Ramaraju R, Sanchez T, Jenness SM. Egocentric Sexual Networks of Men Who Have Sex with Men in the United States: Results from the ARTnet Study. _Epidemics._ 2020; 30: 100386. 
+
+3. Weiss KM, Prasad P, Ramaraju R, Zlotorzynska M, Jenness SM. Estimated Number of Men who have Sex with Men with Indications for HIV Pre-Exposure Prophylaxis in a National Sexual Network Study. _Journal of Acquired Immune Deficiency Syndrome._ 2020; 84(1): 10-17.
+
+4. Chandra CL, Weiss KM, Kelley CF, Marcus JL, Jenness SM. Gaps in Screening of Sexually Transmitted Infections among Men Who Have Sex with Men during PrEP Care in the United States. _Clinical Infectious Diseases._ 2020. Online ahead of print. DOI: 10.1093/cid/ciaa1033.
+
+5. Anderson EJ, Weiss KM, Morris M, Jenness SM. The HIV/STI Epidemic Potential for Dynamic Sexual Networks of Men Who Have Sex with Men in Atlanta and San Francisco. _Pre-Print:_ https://doi.org/10.1101/2020.10.12.20211540. 
+
+
+#### ARTnet Used in HIV/STI Transmission Models
+
+1.	Maloney KM, Driggers R, Sarkar S, Anderson EA, Malik AA, Jenness SM. Projected Impact of Concurrently Available Long-Acting Injectable and Daily-Oral HIV Pre-Exposure Prophylaxis. Journal of Infectious Diseases. 2020. Online ahead of print. DOI: 10.1093/infdis/jiaa552.
+
+2.	Jenness SM, Johnson JA, Hoover KW, Smith DK, Delaney K. Modeling an Integrated HIV Prevention and Care Continuum to Achieve the Ending the HIV Epidemic Goals. AIDS. 2020. 34(14): 2103–2113. 
+
+3. Jenness SM, Le Guillou A, Chandra C, Mann L, Sanchez T, Westreich D, Marcus JL. Projected HIV and Bacterial STI Incidence Following COVID-Related Sexual Distancing and Clinical Service Interruption. _Pre-Print:_ https://doi.org/10.1101/2020.09.30.20204529.
+
