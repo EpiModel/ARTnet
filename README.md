@@ -91,11 +91,11 @@ vignette(package = "ARTnet")
 
 #### ARTnet Used in HIV/STI Transmission Models
 
-1.	Jenness SM, Johnson JA, Hoover KW, Smith DK, Delaney K. Modeling an Integrated HIV Prevention and Care Continuum to Achieve the Ending the HIV Epidemic Goals. AIDS. 2020. 34(14): 2103–2113. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/32910062/)
+1.	Jenness SM, Johnson JA, Hoover KW, Smith DK, Delaney K. Modeling an Integrated HIV Prevention and Care Continuum to Achieve the Ending the HIV Epidemic Goals. _AIDS._ 2020. 34(14): 2103–2113. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/32910062/)
 
-2.	Maloney KM, Driggers R, Sarkar S, Anderson EA, Malik AA, Jenness SM. Projected Impact of Concurrently Available Long-Acting Injectable and Daily-Oral HIV Pre-Exposure Prophylaxis. Journal of Infectious Diseases. 2021; 223(1): 72–82. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/32882043/)
+2.	Maloney KM, Driggers R, Sarkar S, Anderson EA, Malik AA, Jenness SM. Projected Impact of Concurrently Available Long-Acting Injectable and Daily-Oral HIV Pre-Exposure Prophylaxis. _Journal of Infectious Diseases._ 2021; 223(1): 72–82. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/32882043/)
 
-3. Jenness SM, Le Guillou A, Chandra C, Mann L, Sanchez T, Westreich D, Marcus JL. Projected HIV and Bacterial STI Incidence Following COVID-Related Sexual Distancing and Clinical Service Interruption. Journal of Infectious Diseases. 2021; 223(6): 1019–28. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/33507308/)
+3. Jenness SM, Le Guillou A, Chandra C, Mann L, Sanchez T, Westreich D, Marcus JL. Projected HIV and Bacterial STI Incidence Following COVID-Related Sexual Distancing and Clinical Service Interruption. _Journal of Infectious Diseases._ 2021; 223(6): 1019–28. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/33507308/)
 
 4. Jenness SM, Knowlton G, Smith DK, Marcus JL, Anderson EJ, Siegler AJ, Jones J, Sullivan PS, Enns E. A Decision Analytics Model to Optimize Investment in Interventions Targeting the HIV PrEP Cascade of Care. _AIDS._ 2021. Online ahead of print. DOI: 10.1097/QAD.0000000000002909. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/33831910/)
 
