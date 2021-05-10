@@ -82,9 +82,9 @@ vignette(package = "ARTnet")
 
 4. Chandra CL, Weiss KM, Kelley CF, Marcus JL, Jenness SM. Gaps in Screening of Sexually Transmitted Infections among Men Who Have Sex with Men during PrEP Care in the United States. _Clinical Infectious Diseases._ 2020. Online ahead of print. DOI: 10.1093/cid/ciaa1033. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/32702116/)
 
-5. Anderson EJ, Weiss KM, Morris M, Jenness SM. The HIV/STI Epidemic Potential for Dynamic Sexual Networks of Men Who Have Sex with Men in Atlanta and San Francisco. 2021. _In Press: Epidemiology._ _Pre-Print:_ DOI: 10.1101/2020.10.12.20211540. [[medRxiv]](https://doi.org/10.1101/2020.10.12.20211540) 
+5. Goodreau SM, Maloney KM, Sanchez TH, Morris M, Janulis P, Jenness SM. A Behavioral Cascade of HIV Seroadapation among US Men Who Have Sex with Men in the Era of PrEP and U=U. _AIDS & Behavior._ 2021. Online ahead of print. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/33884510/) 
 
-6. Goodreau SM, Maloney KM, Sanchez TH, Morris M, Janulis P, Jenness SM. A Behavioral Cascade of HIV Seroadapation among US Men Who Have Sex with Men in the Era of PrEP and U=U. 2021. _In Press: AIDS & Behavior._ _Pre-Print:_ DOI: 10.1101/2020.11.25.20238758. [[medRxiv]](https://doi.org/10.1101/2020.11.25.20238758) 
+6. Anderson EJ, Weiss KM, Morris M, Jenness SM. The HIV/STI Epidemic Potential for Dynamic Sexual Networks of Men Who Have Sex with Men in Atlanta and San Francisco. 2021. _In Press: Epidemiology._ _Pre-Print:_ DOI: 10.1101/2020.10.12.20211540. [[medRxiv]](https://doi.org/10.1101/2020.10.12.20211540) 
 
 7. Weiss KM, Prasad P, Sanchez T, Goodreau SM, Jenness SM. Association Between HIV PrEP Indications and Use in a National Sexual Network Study of Men Who Have Sex with Men. 2021. _Pre-Print:_ DOI: 10.1101/2021.03.03.21252823. [[medRxiv]](https://doi.org/10.1101/2021.03.03.21252823)
 
