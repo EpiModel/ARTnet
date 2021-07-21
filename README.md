@@ -84,20 +84,20 @@ vignette(package = "ARTnet")
 
 5. Goodreau SM, Maloney KM, Sanchez TH, Morris M, Janulis P, Jenness SM. A Behavioral Cascade of HIV Seroadapation among US Men Who Have Sex with Men in the Era of PrEP and U=U. _AIDS & Behavior._ 2021. Online ahead of print. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/33884510/) 
 
-6. Anderson EJ, Weiss KM, Morris M, Jenness SM. The HIV/STI Epidemic Potential for Dynamic Sexual Networks of Men Who Have Sex with Men in Atlanta and San Francisco. 2021. _In Press: Epidemiology._ _Pre-Print:_ DOI: 10.1101/2020.10.12.20211540. [[medRxiv]](https://doi.org/10.1101/2020.10.12.20211540) 
+6. Anderson EJ, Weiss KM, Morris M, Sanchez TH, Prasad P, Jenness SM. HIV and Sexually Transmitted Infection Epidemic Potential of Networks of Men Who Have Sex with Men in Two Cities. _Epidemiology._ 2021. Online ahead of print. DOI: 10.1097/EDE.0000000000001390. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/34172692/) 
 
 7. Weiss KM, Prasad P, Sanchez T, Goodreau SM, Jenness SM. Association Between HIV PrEP Indications and Use in a National Sexual Network Study of Men Who Have Sex with Men. 2021. _Pre-Print:_ DOI: 10.1101/2021.03.03.21252823. [[medRxiv]](https://doi.org/10.1101/2021.03.03.21252823)
 
 
 #### ARTnet Used in HIV/STI Transmission Models
 
-1.	Jenness SM, Johnson JA, Hoover KW, Smith DK, Delaney K. Modeling an Integrated HIV Prevention and Care Continuum to Achieve the Ending the HIV Epidemic Goals. _AIDS._ 2020. 34(14): 2103–2113. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/32910062/)
+1. Jenness SM, Johnson JA, Hoover KW, Smith DK, Delaney K. Modeling an Integrated HIV Prevention and Care Continuum to Achieve the Ending the HIV Epidemic Goals. _AIDS._ 2020. 34(14): 2103–2113. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/32910062/)
 
-2.	Maloney KM, Driggers R, Sarkar S, Anderson EA, Malik AA, Jenness SM. Projected Impact of Concurrently Available Long-Acting Injectable and Daily-Oral HIV Pre-Exposure Prophylaxis. _Journal of Infectious Diseases._ 2021; 223(1): 72–82. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/32882043/)
+2. Maloney KM, Driggers R, Sarkar S, Anderson EA, Malik AA, Jenness SM. Projected Impact of Concurrently Available Long-Acting Injectable and Daily-Oral HIV Pre-Exposure Prophylaxis. _Journal of Infectious Diseases._ 2021; 223(1): 72–82. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/32882043/)
 
 3. Jenness SM, Le Guillou A, Chandra C, Mann L, Sanchez T, Westreich D, Marcus JL. Projected HIV and Bacterial STI Incidence Following COVID-Related Sexual Distancing and Clinical Service Interruption. _Journal of Infectious Diseases._ 2021; 223(6): 1019–28. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/33507308/)
 
-4. Jenness SM, Knowlton G, Smith DK, Marcus JL, Anderson EJ, Siegler AJ, Jones J, Sullivan PS, Enns E. A Decision Analytics Model to Optimize Investment in Interventions Targeting the HIV PrEP Cascade of Care. _AIDS._ 2021. Online ahead of print. DOI: 10.1097/QAD.0000000000002909. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/33831910/)
+4. Jenness SM, Knowlton G, Smith DK, Marcus JL, Anderson EJ, Siegler AJ, Jones J, Sullivan PS, Enns E. A Decision Analytics Model to Optimize Investment in Interventions Targeting the HIV PrEP Cascade of Care. _AIDS._ 2021; 35(9): 1479–89. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/33831910/)
 
 5. Le Guillou A, Buchbinder S, Scott H, Liu A, Havlir D, Scheer S, Jenness SM. Population Impact and Efficiency of Improvements to HIV PrEP Under Conditions of High ART Coverage among San Francisco Men Who Have Sex with Men. 2021. _Pre-Print:_ DOI: 10.1101/2021.03.11.21253406. [[medRxiv]](https://doi.org/10.1101/2021.03.11.21253406)
 
