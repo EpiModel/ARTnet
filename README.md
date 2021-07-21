@@ -88,6 +88,8 @@ vignette(package = "ARTnet")
 
 7. Weiss KM, Prasad P, Sanchez T, Goodreau SM, Jenness SM. Association Between HIV PrEP Indications and Use in a National Sexual Network Study of Men Who Have Sex with Men. 2021. _Pre-Print:_ DOI: 10.1101/2021.03.03.21252823. [[medRxiv]](https://doi.org/10.1101/2021.03.03.21252823)
 
+8. Mann LM, Le Guillou A, Goodreau SM, Marcus JL, Sanchez T, Weiss KM, Jenness SM. Correlations Between Community-Level HIV Preexposure Prophylaxis Coverage and Individual-Level Sexual Behaviors among US Men Who Have Sex with Men. _Pre-Print:_ DOI: 10.1101/2021.07.16.21260658. [[medRxiv]](https://doi.org/10.1101/2021.07.16.21260658)
+
 
 #### ARTnet Used in HIV/STI Transmission Models
 
