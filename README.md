@@ -103,3 +103,4 @@ vignette(package = "ARTnet")
 
 5. Le Guillou A, Buchbinder S, Scott H, Liu A, Havlir D, Scheer S, Jenness SM. Population Impact and Efficiency of Improvements to HIV PrEP Under Conditions of High ART Coverage among San Francisco Men Who Have Sex with Men. 2021. _Pre-Print:_ DOI: 10.1101/2021.03.11.21253406. [[medRxiv]](https://doi.org/10.1101/2021.03.11.21253406)
 
+6. Wheatley MM, Knowlton G, Kao SY, Jenness SM, Enns E. Cost-Effectiveness of Interventions to Improve HIV Pre-Exposure Prophylaxis Initiation, Adherence, and Persistence among Men Who Have Sex with Men. _Pre-Print:_ DOI: 10.1101/2021.07.22.21260930. [[medRxiv]](https://doi.org/10.1101/2021.07.22.21260930)
