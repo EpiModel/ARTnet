@@ -80,13 +80,13 @@ vignette(package = "ARTnet")
 
 3. Weiss KM, Prasad P, Ramaraju R, Zlotorzynska M, Jenness SM. Estimated Number of Men who have Sex with Men with Indications for HIV Pre-Exposure Prophylaxis in a National Sexual Network Study. _Journal of Acquired Immune Deficiency Syndrome._ 2020; 84(1): 10-17. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/31939869/)
 
-4. Chandra CL, Weiss KM, Kelley CF, Marcus JL, Jenness SM. Gaps in Screening of Sexually Transmitted Infections among Men Who Have Sex with Men during PrEP Care in the United States. _Clinical Infectious Diseases._ 2020. Online ahead of print. DOI: 10.1093/cid/ciaa1033. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/32702116/)
+4. Chandra CL, Weiss KM, Kelley CF, Marcus JL, Jenness SM. Gaps in Screening of Sexually Transmitted Infections among Men Who Have Sex with Men during PrEP Care in the United States. _Clinical Infectious Diseases._ 2021; 73(7): e2261–69. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/32702116/)
 
 5. Goodreau SM, Maloney KM, Sanchez TH, Morris M, Janulis P, Jenness SM. A Behavioral Cascade of HIV Seroadapation among US Men Who Have Sex with Men in the Era of PrEP and U=U. _AIDS & Behavior._ 2021. Online ahead of print. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/33884510/) 
 
 6. Anderson EJ, Weiss KM, Morris M, Sanchez TH, Prasad P, Jenness SM. HIV and Sexually Transmitted Infection Epidemic Potential of Networks of Men Who Have Sex with Men in Two Cities. _Epidemiology._ 2021. Online ahead of print. DOI: 10.1097/EDE.0000000000001390. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/34172692/) 
 
-7. Weiss KM, Prasad P, Sanchez T, Goodreau SM, Jenness SM. Association Between HIV PrEP Indications and Use in a National Sexual Network Study of Men Who Have Sex with Men. Journal of the International AIDS Society. 2021; 24(10): e25826. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/34605174/)
+7. Weiss KM, Prasad P, Sanchez T, Goodreau SM, Jenness SM. Association Between HIV PrEP Indications and Use in a National Sexual Network Study of Men Who Have Sex with Men. _Journal of the International AIDS Society._ 2021; 24(10): e25826. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/34605174/)
 
 8. Mann LM, Le Guillou A, Goodreau SM, Marcus JL, Sanchez T, Weiss KM, Jenness SM. Correlations Between Community-Level HIV Preexposure Prophylaxis Coverage and Individual-Level Sexual Behaviors among US Men Who Have Sex with Men. _Pre-Print:_ DOI: 10.1101/2021.07.16.21260658. [[medRxiv]](https://doi.org/10.1101/2021.07.16.21260658)
 
@@ -101,6 +101,6 @@ vignette(package = "ARTnet")
 
 4. Jenness SM, Knowlton G, Smith DK, Marcus JL, Anderson EJ, Siegler AJ, Jones J, Sullivan PS, Enns E. A Decision Analytics Model to Optimize Investment in Interventions Targeting the HIV PrEP Cascade of Care. _AIDS._ 2021; 35(9): 1479–89. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/33831910/)
 
-5. Le Guillou A, Buchbinder S, Scott H, Liu A, Havlir D, Scheer S, Jenness SM. Population Impact and Efficiency of Improvements to HIV PrEP Under Conditions of High ART Coverage among San Francisco Men Who Have Sex with Men. Journal of Acquired Immune Deficiency Syndrome. 2021. Online ahead of print. DOI: 10.1097/QAI.0000000000002781. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/34354011/)
+5. Le Guillou A, Buchbinder S, Scott H, Liu A, Havlir D, Scheer S, Jenness SM. Population Impact and Efficiency of Improvements to HIV PrEP Under Conditions of High ART Coverage among San Francisco Men Who Have Sex with Men. _Journal of Acquired Immune Deficiency Syndrome._ 2021. Online ahead of print. DOI: 10.1097/QAI.0000000000002781. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/34354011/)
 
 6. Wheatley MM, Knowlton G, Kao SY, Jenness SM, Enns E. Cost-Effectiveness of Interventions to Improve HIV Pre-Exposure Prophylaxis Initiation, Adherence, and Persistence among Men Who Have Sex with Men. _Pre-Print:_ DOI: 10.1101/2021.07.22.21260930. [[medRxiv]](https://doi.org/10.1101/2021.07.22.21260930)
