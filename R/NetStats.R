@@ -48,6 +48,7 @@ build_netstats <- function(epistats, netparams,
   race <- epistats$race
   age.grps <- epistats$age.grps
   age.limits <- epistats$age.limits
+  time.unit <- epistats$time.unit
 
 
   # Demographic Initialization ----------------------------------------------
@@ -83,10 +84,10 @@ build_netstats <- function(epistats, netparams,
               0.00272, 0.00382, 0.00591, 0.00889, 0.01266)
 
   if (race == TRUE) {
-    # transformed to weekly rates
-    trans.asmr.B <- 1 - (1 - asmr.B)^(1/52)
-    trans.asmr.H <- 1 - (1 - asmr.H)^(1/52)
-    trans.asmr.W <- 1 - (1 - asmr.W)^(1/52)
+    # transformed to rates by time unit
+    trans.asmr.B <- 1 - (1 - asmr.B)^(1/365/time.unit)
+    trans.asmr.H <- 1 - (1 - asmr.H)^(1/365/time.unit)
+    trans.asmr.W <- 1 - (1 - asmr.W)^(1/365/time.unit)
 
     # Null rate for 0-14, transformed rates, total rate for 65
     vec.asmr.B <- c(rep(0, 14), rep(trans.asmr.B, each = 5), 1)
@@ -99,8 +100,8 @@ build_netstats <- function(epistats, netparams,
     asmr.O <-  rbind(asmr.B, asmr.H, asmr.W)
     asmr.O <- colMeans(asmr.O)
 
-    # transformed to weekly rates
-    trans.asmr <- 1 - (1 - asmr.O)^(1/52)
+    # transformed to rates by time unit
+    trans.asmr <- 1 - (1 - asmr.O)^(1/365/time.unit)
 
     # Null rate for 0-14, transformed rates, total rate for 65
     vec.asmr <- c(rep(0,14), rep(trans.asmr, each = 5),1)
@@ -113,7 +114,7 @@ build_netstats <- function(epistats, netparams,
   out$attr <- list()
 
   # age attributes
-  attr_age <- runif(num, min = min(ages), max = max(ages) + (51/52))
+  attr_age <- runif(num, min = min(ages), max = max(ages) + (365/time.unit-1)/(365/time.unit))
   out$attr$age <- attr_age
 
   attr_sqrt.age <- sqrt(attr_age)

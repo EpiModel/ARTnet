@@ -21,8 +21,8 @@
 #'         ARTnet will handle calculation of prevalence through ARTnet data.
 #'         Note: if `\code{race = FALSE}, prevalence vector must still be supplied.
 #' @param time.unit Specifies time unit for ARTnet statistics. Default is 7 for
-#'         weekly time units. Inputs are by days. Use 1 for daily time units,
-#'         30 for monthly time units, and 365 for yearly time units.
+#'         weekly time units. Inputs are by days with a maximum of 30 days.
+#'         Use 1 for daily time units and 30 for monthly time units.
 #'
 #' @details
 #' \code{build_epistats}, through input of geographic, age and racial
@@ -75,6 +75,8 @@
 #'          the age of interest. Set to \code{c(15, 65)} by default.
 #'    \item \code{age.breaks}: a vector giving the upper age breaks to categorize
 #'          data by age. Must be within the bounds specified by \code{age.limits}.
+#'    \item \code{time.unit}: a number between 1 and 30 that specifies time units
+#'          for ARTnet statistics. Set to \code{7} by default.
 #' }
 #'
 #' @examples
@@ -105,10 +107,6 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   d <- ARTnet.wide
   l <- ARTnet.long
 
-  l$duration.time <- l$duration*7/time.unit
-  l$anal.acts.time <- l$anal.acts.week*time.unit/7
-  l$anal.acts.time.cp <- l$anal.acts.week.cp*time.unit/7
-
   out <- list()
 
   geog_names <- c("city", "state", "region", "division", "all")
@@ -120,7 +118,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
 
   # Data Processing ---------------------------------------------------------
 
-  # Geograph
+  # Geography
   if(length(geog.lvl) > 1) {
     stop("Only one geographical factor may be chosen at a time.")
   }
@@ -268,6 +266,24 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   dlim <- select(d, c(AMIS_ID, survey.year, prep))
   l <- left_join(l, dlim, by = "AMIS_ID")
 
+  # Time unit processing
+
+  ## Set time.unit limits from 1 to 30
+
+  if(time.unit < 1) {
+    stop("Time unit must be between 1 and 30")
+  }
+
+  if(time.unit > 30) {
+    stop("Time unit must be between 1 and 30")
+  }
+
+  ## Create time-based ARTnet statistics using time.unit
+
+  l$duration.time <- l$duration*7/time.unit
+  l$anal.acts.time <- l$anal.acts.week*time.unit/7
+  l$anal.acts.time.cp <- l$anal.acts.week.cp*time.unit/7
+
 
   # Act Rates ---------------------------------------------------------------
 
@@ -311,24 +327,24 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   # Poisson Model
   if (race == TRUE) {
     if (is.null(geog.lvl)) {
-      acts.mod <- glm(floor(acts*52) ~ duration.time + I(duration.time^2) + as.factor(race.combo) +
+      acts.mod <- glm(floor(acts*365/time.unit) ~ duration.time + I(duration.time^2) + as.factor(race.combo) +
                         as.factor(ptype) + duration.time*as.factor(ptype) + comb.age + I(comb.age^2) +
                         hiv.concord.pos,
                       family = poisson(), data = la)
     } else {
-      acts.mod <- glm(floor(acts*52) ~ duration.time + I(duration.time^2) + as.factor(race.combo) +
+      acts.mod <- glm(floor(acts*365/time.unit) ~ duration.time + I(duration.time^2) + as.factor(race.combo) +
                         as.factor(ptype) + duration.time*as.factor(ptype) + comb.age + I(comb.age^2) +
                         hiv.concord.pos + geogYN,
                       family = poisson(), data = la)
     }
   }  else {
     if (is.null(geog.lvl)) {
-      acts.mod <- glm(floor(acts*52) ~ duration.time + I(duration.time^2) +
+      acts.mod <- glm(floor(acts*365/time.unit) ~ duration.time + I(duration.time^2) +
                         as.factor(ptype) + duration.time*as.factor(ptype) + comb.age + I(comb.age^2) +
                         hiv.concord.pos,
                       family = poisson(), data = la)
     } else {
-      acts.mod <- glm(floor(acts*52) ~ duration.time + I(duration.time^2) +
+      acts.mod <- glm(floor(acts*365/time.unit) ~ duration.time + I(duration.time^2) +
                         as.factor(ptype) + duration.time*as.factor(ptype) + comb.age + I(comb.age^2) +
                         hiv.concord.pos + geogYN,
                       family = poisson(), data = la)
@@ -494,3 +510,5 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   out$time.unit <- time.unit
   return(out)
 }
+
+
