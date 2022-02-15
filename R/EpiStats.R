@@ -106,8 +106,8 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   l <- ARTnet.long
 
   l$duration.time <- l$duration*7/time.unit
-  l$anal.acts.time <- l$anal.acts.week*7/time.unit
-  l$anal.acts.time.cp <- l$anal.acts.week.cp*7/time.unit
+  l$anal.acts.time <- l$anal.acts.week*time.unit/7
+  l$anal.acts.time.cp <- l$anal.acts.week.cp*time.unit/7
 
   out <- list()
 
