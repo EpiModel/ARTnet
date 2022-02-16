@@ -74,7 +74,7 @@ build_netstats <- function(epistats, netparams,
   num.W <- out$demog$num.W <- num - num.B - num.H
 
   ## Age-sex-specific mortality rates (B, H, W)
-  #    in 5-year age decrments starting with age 15
+  #    in 5-year age decrements starting with age 15
   ages <- out$demog$ages <- age.limits[1]:age.limits[2]
   asmr.B <- c(0.00124, 0.00213, 0.00252, 0.00286, 0.00349,
               0.00422, 0.00578, 0.00870, 0.01366, 0.02052)

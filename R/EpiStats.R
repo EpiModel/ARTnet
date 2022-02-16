@@ -135,10 +135,10 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
       if (!(geog.cat %in% unique(d$city))) {
         stop("City name not found")
       }
-      l <- suppressMessages(left_join(l, d[,c("AMIS_ID", "city2")]))
-      l$geogYN <- ifelse(l[,"city2"] == geog.cat, 1, 0)
+      l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "city2")]))
+      l$geogYN <- ifelse(l[, "city2"] == geog.cat, 1, 0)
       l$geog <- l$city2
-      d$geogYN <- ifelse(d[,"city2"] == geog.cat, 1, 0)
+      d$geogYN <- ifelse(d[, "city2"] == geog.cat, 1, 0)
       d$geog <- d$city2
     }
 
@@ -146,10 +146,10 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
       if (!(geog.cat %in% unique(d$State))) {
         stop("State name not found")
       }
-      l <- suppressMessages(left_join(l, d[,c("AMIS_ID", "State")]))
-      l$geogYN <- ifelse(l[,"State"] == geog.cat, 1, 0)
+      l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "State")]))
+      l$geogYN <- ifelse(l[, "State"] == geog.cat, 1, 0)
       l$geog <- l$State
-      d$geogYN <- ifelse(d[,"State"] == geog.cat, 1, 0)
+      d$geogYN <- ifelse(d[, "State"] == geog.cat, 1, 0)
       d$geog <- d$State
     }
 
@@ -157,10 +157,10 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
       if (!(geog.cat %in% unique(d$DIVCODE))) {
         stop("Division number not found")
       }
-      l <- suppressMessages(left_join(l, d[,c("AMIS_ID", "DIVCODE")]))
-      l$geogYN <- ifelse(l[,"DIVCODE"] == geog.cat, 1, 0)
+      l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "DIVCODE")]))
+      l$geogYN <- ifelse(l[, "DIVCODE"] == geog.cat, 1, 0)
       l$geog <- l$DIVCODE
-      d$geogYN <- ifelse(d[,"DIVCODE"] == geog.cat, 1, 0)
+      d$geogYN <- ifelse(d[, "DIVCODE"] == geog.cat, 1, 0)
       d$geog <- d$DIVCODE
     }
 
@@ -168,10 +168,10 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
       if (!(geog.cat %in% unique(d$REGCODE))) {
         stop("Regional code not found")
       }
-      l <- suppressMessages(left_join(l, d[,c("AMIS_ID", "REGCODE")]))
-      l$geogYN <- ifelse(l[,"REGCODE"] == geog.cat, 1, 0)
+      l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "REGCODE")]))
+      l$geogYN <- ifelse(l[, "REGCODE"] == geog.cat, 1, 0)
       l$geog <- l$REGCODE
-      d$geogYN <- ifelse(d[,"REGCODE"] == geog.cat, 1, 0)
+      d$geogYN <- ifelse(d[, "REGCODE"] == geog.cat, 1, 0)
       d$geog <- d$REGCODE
     }
   }
