@@ -36,7 +36,10 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   age.limits <- epistats$age.limits
   age.breaks <- epistats$age.breaks
   age.grps <- epistats$age.grps
+  time.unit <- epistats$time.unit
 
+  # Fix global binding check error
+  duration.time <- NULL
 
   # 0. Data Processing ------------------------------------------------------
 
@@ -51,6 +54,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
+
+  l$duration.time <- l$duration*7/time.unit
 
   #Append Data when geog.lvl is defined
   if (!is.null(geog.lvl)) {
@@ -488,8 +493,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     filter(RAI == 1 | IAI == 1) %>%
     filter(index.age.grp < 6) %>%
     filter(ongoing2 == 1) %>%
-    summarise(mean.dur = mean(duration, na.rm = TRUE),
-              median.dur = median(duration, na.rm = TRUE)) %>%
+    summarise(mean.dur = mean(duration.time, na.rm = TRUE),
+              median.dur = median(duration.time, na.rm = TRUE)) %>%
     as.data.frame()
 
   # create city weights
@@ -499,8 +504,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
       filter(index.age.grp < 6) %>%
       filter(ongoing2 == 1) %>%
       filter(geog == geog.cat) %>%
-      summarise(mean.dur = mean(duration, na.rm = TRUE),
-                median.dur = median(duration, na.rm = TRUE)) %>%
+      summarise(mean.dur = mean(duration.time, na.rm = TRUE),
+                median.dur = median(duration.time, na.rm = TRUE)) %>%
       as.data.frame()
 
     # city-specific weight based on ratio of medians
@@ -509,7 +514,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     wt <- 1
   }
 
-  # The weekly dissolution rate is function of the mean of the geometric distribution
+  # The dissolution rate is function of the mean of the geometric distribution
   # which relates to the median as:
   durs.main$rates.main.adj <- 1 - (2^(-1/(wt*durs.main$median.dur)))
 
@@ -526,8 +531,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     filter(ongoing2 == 1) %>%
     filter(same.age.grp == 0) %>%
     # group_by(index.age.grp) %>%
-    summarise(mean.dur = mean(duration, na.rm = TRUE),
-              median.dur = median(duration, na.rm = TRUE)) %>%
+    summarise(mean.dur = mean(duration.time, na.rm = TRUE),
+              median.dur = median(duration.time, na.rm = TRUE)) %>%
     as.data.frame()
   durs.main.nonmatch$index.age.grp <- 0
 
@@ -538,8 +543,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     filter(ongoing2 == 1) %>%
     filter(same.age.grp == 1) %>%
     group_by(index.age.grp) %>%
-    summarise(mean.dur = mean(duration, na.rm = TRUE),
-              median.dur = median(duration, na.rm = TRUE)) %>%
+    summarise(mean.dur = mean(duration.time, na.rm = TRUE),
+              median.dur = median(duration.time, na.rm = TRUE)) %>%
     as.data.frame()
   durs.main.matched
 
@@ -850,8 +855,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     filter(RAI == 1 | IAI == 1) %>%
     filter(index.age.grp < 6) %>%
     filter(ongoing2 == 1) %>%
-    summarise(mean.dur = mean(duration, na.rm = TRUE),
-              median.dur = median(duration, na.rm = TRUE)) %>%
+    summarise(mean.dur = mean(duration.time, na.rm = TRUE),
+              median.dur = median(duration.time, na.rm = TRUE)) %>%
     as.data.frame()
 
   # create city weights
@@ -861,8 +866,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
       filter(index.age.grp < 6) %>%
       filter(ongoing2 == 1) %>%
       filter(geog == geog.cat) %>%
-      summarise(mean.dur = mean(duration, na.rm = TRUE),
-                median.dur = median(duration, na.rm = TRUE)) %>%
+      summarise(mean.dur = mean(duration.time, na.rm = TRUE),
+                median.dur = median(duration.time, na.rm = TRUE)) %>%
       as.data.frame()
 
     # city-specific weight based on ratio of medians
@@ -871,7 +876,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     wt <- 1
   }
 
-  # The weekly dissolution rate is function of the mean of the geometric distribution
+  # The dissolution rate is function of the mean of the geometric distribution
   # which relates to the median as:
   durs.casl$rates.casl.adj <- 1 - (2^(-1/(wt*durs.casl$median.dur)))
 
@@ -888,8 +893,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     filter(ongoing2 == 1) %>%
     filter(same.age.grp == 0) %>%
     # group_by(index.age.grp) %>%
-    summarise(mean.dur = mean(duration, na.rm = TRUE),
-              median.dur = median(duration, na.rm = TRUE)) %>%
+    summarise(mean.dur = mean(duration.time, na.rm = TRUE),
+              median.dur = median(duration.time, na.rm = TRUE)) %>%
     as.data.frame()
   durs.casl.nonmatch$index.age.grp <- 0
 
@@ -900,8 +905,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     filter(same.age.grp == 1) %>%
     filter(ongoing2 == 1) %>%
     group_by(index.age.grp) %>%
-    summarise(mean.dur = mean(duration, na.rm = TRUE),
-              median.dur = median(duration, na.rm = TRUE)) %>%
+    summarise(mean.dur = mean(duration.time, na.rm = TRUE),
+              median.dur = median(duration.time, na.rm = TRUE)) %>%
     as.data.frame()
   # durs.casl.matched
 
@@ -925,8 +930,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   head(d$count.oo.part, 25)
   # summary(d$count.oo.part)
 
-  # weekly rate
-  d$rate.oo.part <- d$count.oo.part/52
+  # rate by time unit
+  d$rate.oo.part <- d$count.oo.part/365/time.unit
   # summary(d$rate.oo.part)
 
   if (is.null(geog.lvl)) {
@@ -934,7 +939,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                data = d, family = poisson())
     # summary(mod)
 
-    pred <- exp(coef(mod)[[1]])/52
+    pred <- exp(coef(mod)[[1]])/365/time.unit
 
     out$inst$md.inst <- as.numeric(pred)
   } else {
@@ -943,7 +948,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     # summary(mod)
 
     dat <- data.frame(geog = geog.cat)
-    pred <- predict(mod, newdata = dat, type = "response")/52
+    pred <- predict(mod, newdata = dat, type = "response")/365/time.unit
 
     out$inst$md.inst <- as.numeric(pred)
   }
@@ -1034,7 +1039,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     # summary(mod)
 
     dat <- data.frame(age.grp = 1:age.grps)
-    pred <- predict(mod, newdata = dat, type = "response")/52
+    pred <- predict(mod, newdata = dat, type = "response")/365/time.unit
 
     out$inst$nf.age.grp <- as.numeric(pred)
   } else {
@@ -1043,7 +1048,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     # summary(mod)
 
     dat <- data.frame(geog = geog.cat, age.grp = 1:age.grps)
-    pred <- predict(mod, newdata = dat, type = "response")/52
+    pred <- predict(mod, newdata = dat, type = "response")/365/time.unit
 
     out$inst$nf.age.grp <- as.numeric(pred)
   }
@@ -1109,7 +1114,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
       # summary(mod)
 
       dat <- data.frame(race.cat3 = 1:3)
-      pred <- predict(mod, newdata = dat, type = "response")/52
+      pred <- predict(mod, newdata = dat, type = "response")/365/time.unit
 
       out$inst$nf.race <- as.numeric(pred)
     } else {
@@ -1118,7 +1123,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
       # summary(mod)
 
       dat <- data.frame(geog = geog.cat, race.cat3 = 1:3)
-      pred <- predict(mod, newdata = dat, type = "response")/52
+      pred <- predict(mod, newdata = dat, type = "response")/365/time.unit
 
       out$inst$nf.race <- as.numeric(pred)
     }
@@ -1150,16 +1155,16 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     }
   }
 
-  # Weekly acquisition rate
+  # acquisition rate
   # oo.quants
 
   # Yearly OO partner count
-  # oo.quants * 52
+  # oo.quants * 365/time.unit
 
   # New OO partner every X years
-  # 1/(oo.quants * 52)
+  # 1/(oo.quants * 365/time.unit)
 
-  # New OO partner every weeks
+  # New OO partner every time.unit
   # 1/oo.quants
 
   # Save it
@@ -1184,7 +1189,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     # summary(mod)
 
     dat <- data.frame(deg.tot3 = 0:3)
-    pred <- predict(mod, newdata = dat, type = "response")/52
+    pred <- predict(mod, newdata = dat, type = "response")/365/time.unit
 
     out$inst$nf.deg.tot <- as.numeric(pred)
   } else {
@@ -1193,7 +1198,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     # summary(mod)
 
     dat <- data.frame(geog = geog.cat, deg.tot3 = 0:3)
-    pred <- predict(mod, newdata = dat, type = "response")/52
+    pred <- predict(mod, newdata = dat, type = "response")/365/time.unit
 
     out$inst$nf.deg.tot <- as.numeric(pred)
   }
@@ -1207,7 +1212,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     # summary(mod)
 
     dat <- data.frame(hiv2 = 0:1)
-    pred <- predict(mod, newdata = dat, type = "response")/52
+    pred <- predict(mod, newdata = dat, type = "response")/365/time.unit
 
     out$inst$nf.diag.status <- as.numeric(pred)
   } else {
@@ -1216,7 +1221,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     # summary(mod)
 
     dat <- data.frame(geog = geog.cat, hiv2 = 0:1)
-    pred <- predict(mod, newdata = dat, type = "response")/52
+    pred <- predict(mod, newdata = dat, type = "response")/365/time.unit
 
     out$inst$nf.diag.status <- as.numeric(pred)
   }

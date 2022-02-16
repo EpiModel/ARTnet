@@ -11,6 +11,7 @@ build_epistats(
   age.limits = c(15, 65),
   age.breaks = c(25, 35, 45, 55),
   init.hiv.prev = NULL,
+  time.unit = 7,
   browser = FALSE
 )
 }
@@ -33,6 +34,10 @@ Default is 15 to 65.}
         Hispanic and white respectively). If \code{init.hiv.prev = NULL},
         ARTnet will handle calculation of prevalence through ARTnet data.
         Note: if `\code{race = FALSE}, prevalence vector must still be supplied.}
+
+\item{time.unit}{Specifies time unit for ARTnet statistics. Default is 7 for
+weekly time units. Inputs are by days with a maximum of 30 days.
+Use 1 for daily time units and 30 for monthly time units.}
 
 \item{browser}{Run function in interactive browser mode. Default is FALSE.}
 }
@@ -94,6 +99,8 @@ values for each input parameter are provided below.
          the age of interest. Set to \code{c(15, 65)} by default.
    \item \code{age.breaks}: a vector giving the upper age breaks to categorize
          data by age. Must be within the bounds specified by \code{age.limits}.
+   \item \code{time.unit}: a number between 1 and 30 that specifies time units
+         for ARTnet statistics. Set to \code{7} by default.
 }
 }
 

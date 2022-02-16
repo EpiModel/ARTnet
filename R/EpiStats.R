@@ -20,6 +20,9 @@
 #'         Hispanic and white respectively). If \code{init.hiv.prev = NULL},
 #'         ARTnet will handle calculation of prevalence through ARTnet data.
 #'         Note: if `\code{race = FALSE}, prevalence vector must still be supplied.
+#' @param time.unit Specifies time unit for ARTnet statistics. Default is 7 for
+#'         weekly time units. Inputs are by days with a maximum of 30 days.
+#'         Use 1 for daily time units and 30 for monthly time units.
 #'
 #' @details
 #' \code{build_epistats}, through input of geographic, age and racial
@@ -72,6 +75,8 @@
 #'          the age of interest. Set to \code{c(15, 65)} by default.
 #'    \item \code{age.breaks}: a vector giving the upper age breaks to categorize
 #'          data by age. Must be within the bounds specified by \code{age.limits}.
+#'    \item \code{time.unit}: a number between 1 and 30 that specifies time units
+#'          for ARTnet statistics. Set to \code{7} by default.
 #' }
 #'
 #' @examples
@@ -91,7 +96,10 @@
 #' @export
 build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
                            age.limits = c(15, 65), age.breaks = c(25, 35, 45, 55),
-                           init.hiv.prev = NULL, browser = FALSE) {
+                           init.hiv.prev = NULL, time.unit = 7, browser = FALSE) {
+
+  # Fix global binding check errors
+  duration.time <- anal.acts.time <- anal.acts.time.cp <- NULL
 
   if (browser == TRUE) {
     browser()
@@ -105,7 +113,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   out <- list()
 
   geog_names <- c("city", "state", "region", "division", "all")
-  if (!is.null(geog.lvl)){
+  if (!is.null(geog.lvl)) {
     if (!(geog.lvl %in% geog_names)) {
       stop("Selected geographic feature must be one of: city, state, region or division")
     }
@@ -113,12 +121,12 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
 
   # Data Processing ---------------------------------------------------------
 
-  # Geograph
-  if(length(geog.lvl) > 1) {
+  # Geography
+  if (length(geog.lvl) > 1) {
     stop("Only one geographical factor may be chosen at a time.")
   }
 
-  if(length(geog.cat) > 1) {
+  if (length(geog.cat) > 1) {
     stop("Only one variable name may be chosen at a time.")
   }
 
@@ -127,10 +135,10 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
       if (!(geog.cat %in% unique(d$city))) {
         stop("City name not found")
       }
-      l <- suppressMessages(left_join(l, d[,c("AMIS_ID", "city2")]))
-      l$geogYN <- ifelse(l[,"city2"] == geog.cat, 1, 0)
+      l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "city2")]))
+      l$geogYN <- ifelse(l[, "city2"] == geog.cat, 1, 0)
       l$geog <- l$city2
-      d$geogYN <- ifelse(d[,"city2"] == geog.cat, 1, 0)
+      d$geogYN <- ifelse(d[, "city2"] == geog.cat, 1, 0)
       d$geog <- d$city2
     }
 
@@ -138,10 +146,10 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
       if (!(geog.cat %in% unique(d$State))) {
         stop("State name not found")
       }
-      l <- suppressMessages(left_join(l, d[,c("AMIS_ID", "State")]))
-      l$geogYN <- ifelse(l[,"State"] == geog.cat, 1, 0)
+      l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "State")]))
+      l$geogYN <- ifelse(l[, "State"] == geog.cat, 1, 0)
       l$geog <- l$State
-      d$geogYN <- ifelse(d[,"State"] == geog.cat, 1, 0)
+      d$geogYN <- ifelse(d[, "State"] == geog.cat, 1, 0)
       d$geog <- d$State
     }
 
@@ -149,10 +157,10 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
       if (!(geog.cat %in% unique(d$DIVCODE))) {
         stop("Division number not found")
       }
-      l <- suppressMessages(left_join(l, d[,c("AMIS_ID", "DIVCODE")]))
-      l$geogYN <- ifelse(l[,"DIVCODE"] == geog.cat, 1, 0)
+      l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "DIVCODE")]))
+      l$geogYN <- ifelse(l[, "DIVCODE"] == geog.cat, 1, 0)
       l$geog <- l$DIVCODE
-      d$geogYN <- ifelse(d[,"DIVCODE"] == geog.cat, 1, 0)
+      d$geogYN <- ifelse(d[, "DIVCODE"] == geog.cat, 1, 0)
       d$geog <- d$DIVCODE
     }
 
@@ -160,10 +168,10 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
       if (!(geog.cat %in% unique(d$REGCODE))) {
         stop("Regional code not found")
       }
-      l <- suppressMessages(left_join(l, d[,c("AMIS_ID", "REGCODE")]))
-      l$geogYN <- ifelse(l[,"REGCODE"] == geog.cat, 1, 0)
+      l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "REGCODE")]))
+      l$geogYN <- ifelse(l[, "REGCODE"] == geog.cat, 1, 0)
       l$geog <- l$REGCODE
-      d$geogYN <- ifelse(d[,"REGCODE"] == geog.cat, 1, 0)
+      d$geogYN <- ifelse(d[, "REGCODE"] == geog.cat, 1, 0)
       d$geog <- d$REGCODE
     }
   }
@@ -198,7 +206,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
 
-  if (race == TRUE){
+  if (race == TRUE) {
     # Race
     # table(d$race.cat)
     d$race.cat3 <- rep(NA, nrow(d))
@@ -261,40 +269,54 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   dlim <- select(d, c(AMIS_ID, survey.year, prep))
   l <- left_join(l, dlim, by = "AMIS_ID")
 
+  # Time unit processing
+
+  ## Set time.unit limits from 1 to 30
+
+  if (time.unit < 1 | time.unit > 30) {
+    stop("Time unit must be between 1 and 30")
+  }
+
+  ## Create time-based ARTnet statistics using time.unit
+
+  l$duration.time <- l$duration*7/time.unit
+  l$anal.acts.time <- l$anal.acts.week*time.unit/7
+  l$anal.acts.time.cp <- l$anal.acts.week.cp*time.unit/7
+
 
   # Act Rates ---------------------------------------------------------------
 
   # acts/per week/per partnership for main and casual partnerships
 
   # Pull Data
-  if (race == TRUE){
+  if (race == TRUE) {
     if (is.null(geog.lvl)) {
-      la <- select(l, ptype, duration, comb.age,
+      la <- select(l, ptype, duration.time, comb.age,
                    race.combo, RAI, IAI, hiv.concord.pos, prep,
-                   acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
+                   acts = anal.acts.time, cp.acts = anal.acts.time.cp) %>%
         filter(ptype %in% 1:2) %>%
         filter(RAI == 1 | IAI == 1)
       la <- select(la, -c(RAI, IAI))
     } else {
-      la <- select(l, ptype, duration, comb.age, geogYN = geogYN,
+      la <- select(l, ptype, duration.time, comb.age, geogYN = geogYN,
                    race.combo, RAI, IAI, hiv.concord.pos, prep,
-                   acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
+                   acts = anal.acts.time, cp.acts = anal.acts.time.cp) %>%
         filter(ptype %in% 1:2) %>%
         filter(RAI == 1 | IAI == 1)
       la <- select(la, -c(RAI, IAI))
     }
   }  else {
     if (is.null(geog.lvl)) {
-      la <- select(l, ptype, duration, comb.age,
+      la <- select(l, ptype, duration.time, comb.age,
                    RAI, IAI, hiv.concord.pos, prep,
-                   acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
+                   acts = anal.acts.time, cp.acts = anal.acts.time.cp) %>%
         filter(ptype %in% 1:2) %>%
         filter(RAI == 1 | IAI == 1)
       la <- select(la, -c(RAI, IAI))
     } else {
-      la <- select(l, ptype, duration, comb.age, geogYN = geogYN,
+      la <- select(l, ptype, duration.time, comb.age, geogYN = geogYN,
                    RAI, IAI, hiv.concord.pos, prep,
-                   acts = anal.acts.week, cp.acts = anal.acts.week.cp) %>%
+                   acts = anal.acts.time, cp.acts = anal.acts.time.cp) %>%
         filter(ptype %in% 1:2) %>%
         filter(RAI == 1 | IAI == 1)
       la <- select(la, -c(RAI, IAI))
@@ -304,25 +326,25 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   # Poisson Model
   if (race == TRUE) {
     if (is.null(geog.lvl)) {
-      acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) + as.factor(race.combo) +
-                        as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
+      acts.mod <- glm(floor(acts*365/time.unit) ~ duration.time + I(duration.time^2) + as.factor(race.combo) +
+                        as.factor(ptype) + duration.time*as.factor(ptype) + comb.age + I(comb.age^2) +
                         hiv.concord.pos,
                       family = poisson(), data = la)
     } else {
-      acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) + as.factor(race.combo) +
-                        as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
+      acts.mod <- glm(floor(acts*365/time.unit) ~ duration.time + I(duration.time^2) + as.factor(race.combo) +
+                        as.factor(ptype) + duration.time*as.factor(ptype) + comb.age + I(comb.age^2) +
                         hiv.concord.pos + geogYN,
                       family = poisson(), data = la)
     }
   }  else {
     if (is.null(geog.lvl)) {
-      acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) +
-                        as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
+      acts.mod <- glm(floor(acts*365/time.unit) ~ duration.time + I(duration.time^2) +
+                        as.factor(ptype) + duration.time*as.factor(ptype) + comb.age + I(comb.age^2) +
                         hiv.concord.pos,
                       family = poisson(), data = la)
     } else {
-      acts.mod <- glm(floor(acts*52) ~ duration + I(duration^2) +
-                        as.factor(ptype) + duration*as.factor(ptype) + comb.age + I(comb.age^2) +
+      acts.mod <- glm(floor(acts*365/time.unit) ~ duration.time + I(duration.time^2) +
+                        as.factor(ptype) + duration.time*as.factor(ptype) + comb.age + I(comb.age^2) +
                         hiv.concord.pos + geogYN,
                       family = poisson(), data = la)
     }
@@ -337,25 +359,25 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
 
   if (race == TRUE) {
     if (is.null(geog.lvl)) {
-      cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) + as.factor(race.combo) +
-                           as.factor(ptype) + duration*as.factor(ptype) + comb.age
+      cond.mc.mod <- glm(any.cond ~ duration.time + I(duration.time^2) + as.factor(race.combo) +
+                           as.factor(ptype) + duration.time*as.factor(ptype) + comb.age
                          + I(comb.age^2) + hiv.concord.pos + prep,
                          family = binomial(), data = la)
     } else {
-      cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) + as.factor(race.combo) +
-                           as.factor(ptype) + duration*as.factor(ptype) + comb.age
+      cond.mc.mod <- glm(any.cond ~ duration.time + I(duration.time^2) + as.factor(race.combo) +
+                           as.factor(ptype) + duration.time*as.factor(ptype) + comb.age
                          + I(comb.age^2) + hiv.concord.pos + prep + geogYN,
                          family = binomial(), data = la)
     }
   }  else {
     if (is.null(geog.lvl)) {
-      cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) +
-                           as.factor(ptype) + duration*as.factor(ptype) + comb.age
+      cond.mc.mod <- glm(any.cond ~ duration.time + I(duration.time^2) +
+                           as.factor(ptype) + duration.time*as.factor(ptype) + comb.age
                          + I(comb.age^2) + hiv.concord.pos + prep,
                          family = binomial(), data = la)
     } else {
-      cond.mc.mod <- glm(any.cond ~ duration + I(duration^2) +
-                           as.factor(ptype) + duration*as.factor(ptype) + comb.age
+      cond.mc.mod <- glm(any.cond ~ duration.time + I(duration.time^2) +
+                           as.factor(ptype) + duration.time*as.factor(ptype) + comb.age
                          + I(comb.age^2) + hiv.concord.pos + prep + geogYN,
                          family = binomial(), data = la)
     }
@@ -484,5 +506,8 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   out$age.breaks <- age.breaks
   out$age.grps <- length(age.breaks) - 1
   out$init.hiv.prev <- init.hiv.prev
+  out$time.unit <- time.unit
   return(out)
 }
+
+

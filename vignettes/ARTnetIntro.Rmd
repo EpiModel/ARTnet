@@ -1,11 +1,13 @@
 ---
-title: 'ARTnet: Parameterization for HIV/STI Models'
+title: 'The ARTnet Package for Analysis of the ARTnet Study Data'
 author: "Shawnee Anderson and Samuel M. Jenness"
 date: "`r Sys.Date()`"
-editor_options:
+vignette: >
+  %\VignetteIndexEntry{ARTnet Introduction}
+  \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
   chunk_output_type: console
-vignette: "%\\usepackage[utf8]{inputenc}\n%\\VignetteIndexEntry{ARTnet: Parameterization
-  for HIV/STI Models} \n%\\VignetteEngine{knitr::knitr}\n"
 ---
 
 ## Load the Package
