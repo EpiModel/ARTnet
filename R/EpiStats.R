@@ -98,6 +98,9 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
                            age.limits = c(15, 65), age.breaks = c(25, 35, 45, 55),
                            init.hiv.prev = NULL, time.unit = 7, browser = FALSE) {
 
+  # Fix global binding check errors
+  duration.time <- anal.acts.time <- anal.acts.time.cp <- NULL
+
   if (browser == TRUE) {
     browser()
   }
@@ -110,7 +113,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   out <- list()
 
   geog_names <- c("city", "state", "region", "division", "all")
-  if (!is.null(geog.lvl)){
+  if (!is.null(geog.lvl)) {
     if (!(geog.lvl %in% geog_names)) {
       stop("Selected geographic feature must be one of: city, state, region or division")
     }
@@ -119,11 +122,11 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   # Data Processing ---------------------------------------------------------
 
   # Geography
-  if(length(geog.lvl) > 1) {
+  if (length(geog.lvl) > 1) {
     stop("Only one geographical factor may be chosen at a time.")
   }
 
-  if(length(geog.cat) > 1) {
+  if (length(geog.cat) > 1) {
     stop("Only one variable name may be chosen at a time.")
   }
 
@@ -203,7 +206,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
 
-  if (race == TRUE){
+  if (race == TRUE) {
     # Race
     # table(d$race.cat)
     d$race.cat3 <- rep(NA, nrow(d))
@@ -270,11 +273,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
 
   ## Set time.unit limits from 1 to 30
 
-  if(time.unit < 1) {
-    stop("Time unit must be between 1 and 30")
-  }
-
-  if(time.unit > 30) {
+  if (time.unit < 1 | time.unit > 30) {
     stop("Time unit must be between 1 and 30")
   }
 
@@ -290,7 +289,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   # acts/per week/per partnership for main and casual partnerships
 
   # Pull Data
-  if (race == TRUE){
+  if (race == TRUE) {
     if (is.null(geog.lvl)) {
       la <- select(l, ptype, duration.time, comb.age,
                    race.combo, RAI, IAI, hiv.concord.pos, prep,

@@ -38,6 +38,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   age.grps <- epistats$age.grps
   time.unit <- epistats$time.unit
 
+  # Fix global binding check error
+  duration.time <- NULL
 
   # 0. Data Processing ------------------------------------------------------
 
