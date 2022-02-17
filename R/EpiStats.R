@@ -327,24 +327,24 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   # Poisson Model
   if (race == TRUE) {
     if (is.null(geog.lvl)) {
-      acts.mod <- glm(floor(acts*365/time.unit) ~ duration.time + I(duration.time^2) + as.factor(race.combo) +
+      acts.mod <- glm(floor(acts*364/time.unit) ~ duration.time + I(duration.time^2) + as.factor(race.combo) +
                         as.factor(ptype) + duration.time*as.factor(ptype) + comb.age + I(comb.age^2) +
                         hiv.concord.pos,
                       family = poisson(), data = la)
     } else {
-      acts.mod <- glm(floor(acts*365/time.unit) ~ duration.time + I(duration.time^2) + as.factor(race.combo) +
+      acts.mod <- glm(floor(acts*364/time.unit) ~ duration.time + I(duration.time^2) + as.factor(race.combo) +
                         as.factor(ptype) + duration.time*as.factor(ptype) + comb.age + I(comb.age^2) +
                         hiv.concord.pos + geogYN,
                       family = poisson(), data = la)
     }
   }  else {
     if (is.null(geog.lvl)) {
-      acts.mod <- glm(floor(acts*365/time.unit) ~ duration.time + I(duration.time^2) +
+      acts.mod <- glm(floor(acts*364/time.unit) ~ duration.time + I(duration.time^2) +
                         as.factor(ptype) + duration.time*as.factor(ptype) + comb.age + I(comb.age^2) +
                         hiv.concord.pos,
                       family = poisson(), data = la)
     } else {
-      acts.mod <- glm(floor(acts*365/time.unit) ~ duration.time + I(duration.time^2) +
+      acts.mod <- glm(floor(acts*364/time.unit) ~ duration.time + I(duration.time^2) +
                         as.factor(ptype) + duration.time*as.factor(ptype) + comb.age + I(comb.age^2) +
                         hiv.concord.pos + geogYN,
                       family = poisson(), data = la)
