@@ -11,14 +11,15 @@
 #'
 #' @details
 #' \code{build_netparams} is a helper function that constructs the necessary
-#' network parameters for use in building network models with \code{\link{build_netstats}},
-#' building on models estimated using \code{\link{build_epistats}}.
+#' network parameters for use in building network models with
+#' \code{\link{build_netstats}}, building on models estimated using
+#' \code{\link{build_epistats}}.
 #'
 #' The parameter \code{smooth.main.dur} is used when partnership duration and
 #' mortality compete in the eldest age group; in such a case mean duration is
-#' averaged over the oldest and second oldest age groups (as specified by \code{age.breaks}
-#' in \code{\link{build_epistats}}). Subsequently, this smoothing is only done
-#' if there are three or more age categories specified.
+#' averaged over the oldest and second oldest age groups (as specified by
+#' \code{age.breaks} in \code{\link{build_epistats}}). Subsequently, this
+#' smoothing is only done if there are three or more age categories specified.
 #'
 #' @export
 #' @examples
@@ -861,7 +862,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   # create city weights
   if (!is.null(geog.lvl)) {
-    durs.casl.geo <- lmain %>%
+    durs.casl.geo <- lcasl %>%
       filter(RAI == 1 | IAI == 1) %>%
       filter(index.age.grp < 6) %>%
       filter(ongoing2 == 1) %>%
