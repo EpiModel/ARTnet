@@ -931,7 +931,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   # summary(d$count.oo.part)
 
   # rate by time unit
-  d$rate.oo.part <- d$count.oo.part/365/time.unit
+  d$rate.oo.part <- d$count.oo.part/(364/time.unit)
   # summary(d$rate.oo.part)
 
   if (is.null(geog.lvl)) {
@@ -939,7 +939,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                data = d, family = poisson())
     # summary(mod)
 
-    pred <- exp(coef(mod)[[1]])/365/time.unit
+    pred <- exp(coef(mod)[[1]])/(364/time.unit)
 
     out$inst$md.inst <- as.numeric(pred)
   } else {
@@ -948,7 +948,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     # summary(mod)
 
     dat <- data.frame(geog = geog.cat)
-    pred <- predict(mod, newdata = dat, type = "response")/365/time.unit
+    pred <- predict(mod, newdata = dat, type = "response")/(364/time.unit)
 
     out$inst$md.inst <- as.numeric(pred)
   }
@@ -1039,7 +1039,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     # summary(mod)
 
     dat <- data.frame(age.grp = 1:age.grps)
-    pred <- predict(mod, newdata = dat, type = "response")/365/time.unit
+    pred <- predict(mod, newdata = dat, type = "response")/(364/time.unit)
 
     out$inst$nf.age.grp <- as.numeric(pred)
   } else {
@@ -1048,7 +1048,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     # summary(mod)
 
     dat <- data.frame(geog = geog.cat, age.grp = 1:age.grps)
-    pred <- predict(mod, newdata = dat, type = "response")/365/time.unit
+    pred <- predict(mod, newdata = dat, type = "response")/(364/time.unit)
 
     out$inst$nf.age.grp <- as.numeric(pred)
   }
@@ -1114,7 +1114,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
       # summary(mod)
 
       dat <- data.frame(race.cat3 = 1:3)
-      pred <- predict(mod, newdata = dat, type = "response")/365/time.unit
+      pred <- predict(mod, newdata = dat, type = "response")/(364/time.unit)
 
       out$inst$nf.race <- as.numeric(pred)
     } else {
@@ -1123,7 +1123,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
       # summary(mod)
 
       dat <- data.frame(geog = geog.cat, race.cat3 = 1:3)
-      pred <- predict(mod, newdata = dat, type = "response")/365/time.unit
+      pred <- predict(mod, newdata = dat, type = "response")/(364/time.unit)
 
       out$inst$nf.race <- as.numeric(pred)
     }
@@ -1189,7 +1189,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     # summary(mod)
 
     dat <- data.frame(deg.tot3 = 0:3)
-    pred <- predict(mod, newdata = dat, type = "response")/365/time.unit
+    pred <- predict(mod, newdata = dat, type = "response")/(364/time.unit)
 
     out$inst$nf.deg.tot <- as.numeric(pred)
   } else {
@@ -1198,7 +1198,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     # summary(mod)
 
     dat <- data.frame(geog = geog.cat, deg.tot3 = 0:3)
-    pred <- predict(mod, newdata = dat, type = "response")/365/time.unit
+    pred <- predict(mod, newdata = dat, type = "response")/(364/time.unit)
 
     out$inst$nf.deg.tot <- as.numeric(pred)
   }
@@ -1212,7 +1212,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     # summary(mod)
 
     dat <- data.frame(hiv2 = 0:1)
-    pred <- predict(mod, newdata = dat, type = "response")/365/time.unit
+    pred <- predict(mod, newdata = dat, type = "response")/(364/time.unit)
 
     out$inst$nf.diag.status <- as.numeric(pred)
   } else {
@@ -1221,7 +1221,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     # summary(mod)
 
     dat <- data.frame(geog = geog.cat, hiv2 = 0:1)
-    pred <- predict(mod, newdata = dat, type = "response")/365/time.unit
+    pred <- predict(mod, newdata = dat, type = "response")/(364/time.unit)
 
     out$inst$nf.diag.status <- as.numeric(pred)
   }
