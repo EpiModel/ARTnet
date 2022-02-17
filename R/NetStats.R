@@ -85,9 +85,9 @@ build_netstats <- function(epistats, netparams,
 
   if (race == TRUE) {
     # transformed to rates by time unit
-    trans.asmr.B <- 1 - (1 - asmr.B)^(1/365/time.unit)
-    trans.asmr.H <- 1 - (1 - asmr.H)^(1/365/time.unit)
-    trans.asmr.W <- 1 - (1 - asmr.W)^(1/365/time.unit)
+    trans.asmr.B <- 1 - (1 - asmr.B)^(1/(364/time.unit))
+    trans.asmr.H <- 1 - (1 - asmr.H)^(1/(364/time.unit))
+    trans.asmr.W <- 1 - (1 - asmr.W)^(1/(364/time.unit))
 
     # Null rate for 0-14, transformed rates, total rate for 65
     vec.asmr.B <- c(rep(0, 14), rep(trans.asmr.B, each = 5), 1)
@@ -101,7 +101,7 @@ build_netstats <- function(epistats, netparams,
     asmr.O <- colMeans(asmr.O)
 
     # transformed to rates by time unit
-    trans.asmr <- 1 - (1 - asmr.O)^(1/365/time.unit)
+    trans.asmr <- 1 - (1 - asmr.O)^(1/(364/time.unit))
 
     # Null rate for 0-14, transformed rates, total rate for 65
     vec.asmr <- c(rep(0,14), rep(trans.asmr, each = 5),1)
@@ -114,7 +114,7 @@ build_netstats <- function(epistats, netparams,
   out$attr <- list()
 
   # age attributes
-  attr_age <- runif(num, min = min(ages), max = max(ages) + (365/time.unit-1)/(365/time.unit))
+  attr_age <- runif(num, min = min(ages), max = max(ages) + (364/time.unit-1)/(364/time.unit))
   out$attr$age <- attr_age
 
   attr_sqrt.age <- sqrt(attr_age)
