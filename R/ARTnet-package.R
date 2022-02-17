@@ -4,8 +4,8 @@
 #' \tabular{ll}{
 #'    Package: \tab ARTnet\cr
 #'    Type: \tab Package\cr
-#'    Version: \tab 2.5.5\cr
-#'    Date: \tab 2022-02-16\cr
+#'    Version: \tab 2.5.6\cr
+#'    Date: \tab 2022-02-17\cr
 #'    License: \tab GPL-3\cr
 #'    LazyLoad: \tab yes\cr
 #' }
