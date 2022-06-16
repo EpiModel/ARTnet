@@ -7,7 +7,9 @@
 #'              workflow.
 #'
 #' @param geog.lvl Specifies geographic level for ARTnet statistics.
-#' @param geog.cat Specifies one or more geographic strata within the level to base ARTnet statistics on.
+#' @param geog.cat Specifies one or more geographic strata within the level to base
+#'        ARTnet statistics on. If the vector is of length 2+, data from the features
+#'        will be combined into one analysis.
 #' @param age.limits Upper and lower limit. Age range to subset ARTnet data by.
 #'        Default is 15 to 65.
 #' @param age.breaks Ages that define the upper age categories. Default is
@@ -39,13 +41,11 @@
 #'   \item \code{geog.lvl}: level of geographic stratification desired. Acceptable
 #'          values are \code{"city"}, \code{"county"}, \code{"state"}, \code{"region"}, and
 #'          \code{"division"} corresponding to the metropolitan statistical area,
-#'          county, state, census region, census
-#'          division and complete geographic area respectively. Default value is "NULL",
+#'          county, state, census region, and census
+#'          division, respectively. Default value is "NULL",
 #'          indicating no geographic stratification.
 #'    \item \code{geog.cat}: given a geographic level above, \code{"geog.cat"}
-#'          is a vector comprising the desired feature(s) of interest. If the
-#'          vector is of length 2+, data from the features will be combined
-#'          into one analysis. Acceptable values are based on the chosen geographic level:
+#'          is a vector comprising the desired feature(s) of interest. Acceptable values are based on the chosen geographic level:
 #'    \itemize{
 #'      \item \code{city}: \code{"Atlanta"}, \code{"Boston"}, \code{"Chicago"},
 #'            \code{"Dallas"}, \code{"Denver"}, \code{"Detroit"}, \code{"Houston"},
@@ -125,7 +125,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
 
   out <- list()
 
-  geog_names <- c("city", "county", "state", "region", "division", "all")
+  geog_names <- c("city", "county", "state", "region", "division")
   if (!is.null(geog.lvl)) {
     if (!(geog.lvl %in% geog_names)) {
       stop("Selected geographic feature must be one of: city, county, state, region or division")
@@ -191,6 +191,8 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
       d$geog <- d$REGCODE
     }
   }
+
+
 
   # Age Processing
 
