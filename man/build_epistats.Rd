@@ -30,10 +30,10 @@ Default is 15 to 65.}
 (35, 45], (45, 55], (55, 65], (65, 100].}
 
 \item{init.hiv.prev}{Initial HIV prevalence of estimated model, vector of size
-.        three pertaining to prevalence among three racial classes (black,
-        Hispanic and white respectively). If \code{init.hiv.prev = NULL},
-        ARTnet will handle calculation of prevalence through ARTnet data.
-        Note: if `\code{race = FALSE}, prevalence vector must still be supplied.}
+three pertaining to prevalence among three racial classes (black,
+Hispanic and white respectively). If \code{init.hiv.prev = NULL},
+ARTnet will handle calculation of prevalence through ARTnet data.
+Note: if `\code{race = FALSE}, prevalence vector must still be supplied.}
 
 \item{time.unit}{Specifies time unit for ARTnet statistics. Default is 7 for
 weekly time units. Inputs are by days with a maximum of 30 days.
@@ -61,12 +61,13 @@ values for each input parameter are provided below.
 
 \itemize{
   \item \code{geog.lvl}: level of geographic stratification desired. Acceptable
-         values are \code{"city"}, \code{"state"}, \code{"region"}, and
-         \code{"division"} corresponding to city, state, census region, census
+         values are \code{"city"}, \code{"counties"}, \code{"state"}, \code{"region"}, and
+         \code{"division"} corresponding to the metropolitan statistical area,
+         counties, state, census region, census
          division and complete geographic area respectively. Default value is "NULL",
          indicating no geographic stratification.
    \item \code{geog.cat}: given a geographic level above, \code{"geog.cat"}
-         is the desired feature of interest. Acceptable values are based on the
+         is the desired feature(s) of interest. Acceptable values are based on the
          chosen geographic level:
    \itemize{
      \item \code{city}: \code{"Atlanta"}, \code{"Boston"}, \code{"Chicago"},
@@ -74,6 +75,10 @@ values for each input parameter are provided below.
            \code{"Los Angeles"}, \code{"Miami"}, \code{"New York City"},
            \code{"Philadelphia"}, \code{"San Diego"}, \code{"San Franciso"},
            \code{"Seattle"}, \code{"Washington DC"}
+     \item \code{counties}: A vector of FIPS codes for the counties or
+                   county equivalents to be included.  This is the only option that
+                   allows for an arbitrary number of geographical units to be explicitly combined
+                   into one analysis.
      \item \code{state}: \code{"AK"}, \code{"AL"}, \code{"AR"}, \code{"AZ"},
            \code{"CA"}, \code{"CO"}, \code{"CT"}, \code{"DC"}, \code{"DE"},
            \code{"FL"}, \code{"GA"}, \code{"HI"}, \code{"IA"}, \code{"ID"},
@@ -105,7 +110,7 @@ values for each input parameter are provided below.
 }
 
 \examples{
-# Age and geographic stratification, for the city of Atlanta
+# Age and geographic stratification, for the Atlanta metropolitan statistical area
 epistats1 <- build_epistats(geog.lvl = "city",
                             geog.cat = "Atlanta",
                             age.limits = c(20, 50),
@@ -117,5 +122,12 @@ epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA")
 # No race stratification
 epistats3 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
                             race = FALSE)
+
+# Age and race stratification, for the municipality (not metro) of New York City
+epistats4 <- build_epistats(geog.lvl = "counties",
+                            geog.cat = c(36005, 36047, 36061, 36081, 36085), # FIPS codes for the 5 boroughs of NYC
+                            age.limits = c(20, 50),
+                            age.breaks = c(24, 34, 44))
+
 
 }
