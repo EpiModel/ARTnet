@@ -47,7 +47,7 @@ epistats4 <- build_epistats(geog.lvl = "division", geog.cat = "5", init.hiv.prev
 epistats5 <- build_epistats(geog.lvl = "region", geog.cat = "3", init.hiv.prev = c(0.17, 0.17, 0.17))
 ```
 
-If no geographic stratification is specified, `geog.lvl = NULL`, and no geopgraphic stratification is done.
+If no geographic stratification is specified, `geog.lvl = NULL`, and no geographic stratification is done.
 
 ```{r }
 epistats6 <- build_epistats()
