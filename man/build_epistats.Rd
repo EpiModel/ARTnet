@@ -19,7 +19,7 @@ build_epistats(
 \item{geog.lvl}{Specifies geographic level for ARTnet statistics.}
 
 \item{geog.cat}{Specifies one or more geographic strata within the level to base
-ARTnet statistics on. If the vector is of length 2+, data from the features
+ARTnet statistics on. If the vector is of length 2+, data from the strata
 will be combined into one analysis.}
 
 \item{race}{Whether to stratify by racial status. Default is TRUE.}

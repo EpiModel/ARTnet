@@ -8,7 +8,7 @@
 #'
 #' @param geog.lvl Specifies geographic level for ARTnet statistics.
 #' @param geog.cat Specifies one or more geographic strata within the level to base
-#'        ARTnet statistics on. If the vector is of length 2+, data from the features
+#'        ARTnet statistics on. If the vector is of length 2+, data from the strata
 #'        will be combined into one analysis.
 #' @param age.limits Upper and lower limit. Age range to subset ARTnet data by.
 #'        Default is 15 to 65.
@@ -128,13 +128,17 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   geog_names <- c("city", "county", "state", "region", "division")
   if (!is.null(geog.lvl)) {
     if (!(geog.lvl %in% geog_names)) {
-      stop("Selected geographic feature must be one of: city, county, state, region or division")
+      stop("Selected geographic level must be one of: city, county, state, region or division")
     }
   }
 
   # Data Processing ---------------------------------------------------------
 
   # Geography
+  if (length(geog.lvl) > 1) {
+    stop("Only one geographical level may be chosen at a time.")
+  }
+
   if (!is.null(geog.lvl)) {
     if (geog.lvl == "city") {
       if (sum(geog.cat %in% unique(d$city))==0) {
