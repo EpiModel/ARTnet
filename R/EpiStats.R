@@ -37,9 +37,9 @@
 #' @section Parameter Values:
 #' \itemize{
 #'   \item \code{geog.lvl}: level of geographic stratification desired. Acceptable
-#'          values are \code{"city"}, \code{"counties"}, \code{"state"}, \code{"region"}, and
+#'          values are \code{"city"}, \code{"county"}, \code{"state"}, \code{"region"}, and
 #'          \code{"division"} corresponding to the metropolitan statistical area,
-#'          counties, state, census region, census
+#'          county, state, census region, census
 #'          division and complete geographic area respectively. Default value is "NULL",
 #'          indicating no geographic stratification.
 #'    \item \code{geog.cat}: given a geographic level above, \code{"geog.cat"}
@@ -51,7 +51,7 @@
 #'            \code{"Los Angeles"}, \code{"Miami"}, \code{"New York City"},
 #'            \code{"Philadelphia"}, \code{"San Diego"}, \code{"San Franciso"},
 #'            \code{"Seattle"}, \code{"Washington DC"}
-#'      \item \code{counties}: A vector of FIPS codes for the counties or
+#'      \item \code{county}: A vector of FIPS codes for the county or
 #'                    county equivalents to be included.  This is the only option that
 #'                    allows for an arbitrary number of geographical units to be explicitly combined
 #'                    into one analysis.
@@ -99,7 +99,7 @@
 #'                             race = FALSE)
 #'
 #' # Age and race stratification, for the municipality (not metro) of New York City
-#' epistats4 <- build_epistats(geog.lvl = "counties",
+#' epistats4 <- build_epistats(geog.lvl = "county",
 #'                             geog.cat = c(36005, 36047, 36061, 36081, 36085), # FIPS codes for the 5 boroughs of NYC
 #'                             age.limits = c(20, 50),
 #'                             age.breaks = c(24, 34, 44))
@@ -124,39 +124,31 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
 
   out <- list()
 
-  geog_names <- c("city", "counties", "state", "region", "division", "all")
+  geog_names <- c("city", "county", "state", "region", "division", "all")
   if (!is.null(geog.lvl)) {
     if (!(geog.lvl %in% geog_names)) {
-      stop("Selected geographic feature must be one of: city, counties, state, region or division")
+      stop("Selected geographic feature must be one of: city, county, state, region or division")
     }
   }
 
   # Data Processing ---------------------------------------------------------
 
   # Geography
-  if (length(geog.lvl) > 1) {
-    stop("Only one geographical factor may be chosen at a time.")
-  }
-
-  if (length(geog.cat) > 1 && !is.null(geog.lvl) && geog.lvl!='counties') {
-    stop("Only one value of geog.cat may be chosen at a time (for values of geog.lvl other than 'counties')")
-  }
-
   if (!is.null(geog.lvl)) {
     if (geog.lvl == "city") {
-      if (!(geog.cat %in% unique(d$city))) {
-        stop("City name not found")
+      if (sum(geog.cat %in% unique(d$city))==0) {
+        stop("None of the city names found in the data")
       }
       l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "city2")]))
-      l$geogYN <- ifelse(l[, "city2"] == geog.cat, 1, 0)
+      l$geogYN <- ifelse(l[, "city2"] %in% geog.cat, 1, 0)
       l$geog <- l$city2
-      d$geogYN <- ifelse(d[, "city2"] == geog.cat, 1, 0)
+      d$geogYN <- ifelse(d[, "city2"] %in% geog.cat, 1, 0)
       d$geog <- d$city2
     }
 
-    if (geog.lvl == "counties") {
+    if (geog.lvl == "county") {
       if (sum(geog.cat %in% unique(d$COUNTYFIPS))==0) {
-         stop("None of the FIPS codes found")
+         stop("None of the county FIPS codes found in the data")
       }
       l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "COUNTYFIPS")]))
       l$geogYN <- ifelse(l[, "COUNTYFIPS"] %in% geog.cat, 1, 0)
@@ -166,35 +158,35 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
     }
 
     if (geog.lvl == "state") {
-      if (!(geog.cat %in% unique(d$State))) {
-        stop("State name not found")
+      if (sum(geog.cat %in% unique(d$State))==0) {
+        stop("None of the states found in the data")
       }
       l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "State")]))
-      l$geogYN <- ifelse(l[, "State"] == geog.cat, 1, 0)
+      l$geogYN <- ifelse(l[, "State"] %in% geog.cat, 1, 0)
       l$geog <- l$State
-      d$geogYN <- ifelse(d[, "State"] == geog.cat, 1, 0)
+      d$geogYN <- ifelse(d[, "State"] %in% geog.cat, 1, 0)
       d$geog <- d$State
     }
 
     if (geog.lvl == "division") {
-      if (!(geog.cat %in% unique(d$DIVCODE))) {
-        stop("Division number not found")
+      if (sum(geog.cat %in% unique(d$DIVCODE))==0) {
+        stop("None of the census division codes found in the data")
       }
       l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "DIVCODE")]))
-      l$geogYN <- ifelse(l[, "DIVCODE"] == geog.cat, 1, 0)
+      l$geogYN <- ifelse(l[, "DIVCODE"] %in% geog.cat, 1, 0)
       l$geog <- l$DIVCODE
-      d$geogYN <- ifelse(d[, "DIVCODE"] == geog.cat, 1, 0)
+      d$geogYN <- ifelse(d[, "DIVCODE"] %in% geog.cat, 1, 0)
       d$geog <- d$DIVCODE
     }
 
     if (geog.lvl == "region") {
-      if (!(geog.cat %in% unique(d$REGCODE))) {
-        stop("Regional code not found")
+      if (sum(geog.cat %in% unique(d$REGCODE))==0) {
+        stop("None of the census region codes found in the data")
       }
       l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "REGCODE")]))
-      l$geogYN <- ifelse(l[, "REGCODE"] == geog.cat, 1, 0)
+      l$geogYN <- ifelse(l[, "REGCODE"] %in% geog.cat, 1, 0)
       l$geog <- l$REGCODE
-      d$geogYN <- ifelse(d[, "REGCODE"] == geog.cat, 1, 0)
+      d$geogYN <- ifelse(d[, "REGCODE"] %in% geog.cat, 1, 0)
       d$geog <- d$REGCODE
     }
   }
