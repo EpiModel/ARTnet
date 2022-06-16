@@ -16,7 +16,7 @@
 #' @param race Whether to stratify by racial status. Default is TRUE.
 #' @param browser Run function in interactive browser mode. Default is FALSE.
 #' @param init.hiv.prev Initial HIV prevalence of estimated model, vector of size
-#'.        three pertaining to prevalence among three racial classes (black,
+#'         three pertaining to prevalence among three racial classes (black,
 #'         Hispanic and white respectively). If \code{init.hiv.prev = NULL},
 #'         ARTnet will handle calculation of prevalence through ARTnet data.
 #'         Note: if `\code{race = FALSE}, prevalence vector must still be supplied.
@@ -37,12 +37,13 @@
 #' @section Parameter Values:
 #' \itemize{
 #'   \item \code{geog.lvl}: level of geographic stratification desired. Acceptable
-#'          values are \code{"city"}, \code{"state"}, \code{"region"}, and
-#'          \code{"division"} corresponding to city, state, census region, census
+#'          values are \code{"city"}, \code{"counties"}, \code{"state"}, \code{"region"}, and
+#'          \code{"division"} corresponding to the metropolitan statistical area,
+#'          counties, state, census region, census
 #'          division and complete geographic area respectively. Default value is "NULL",
 #'          indicating no geographic stratification.
 #'    \item \code{geog.cat}: given a geographic level above, \code{"geog.cat"}
-#'          is the desired feature of interest. Acceptable values are based on the
+#'          is the desired feature(s) of interest. Acceptable values are based on the
 #'          chosen geographic level:
 #'    \itemize{
 #'      \item \code{city}: \code{"Atlanta"}, \code{"Boston"}, \code{"Chicago"},
@@ -50,6 +51,10 @@
 #'            \code{"Los Angeles"}, \code{"Miami"}, \code{"New York City"},
 #'            \code{"Philadelphia"}, \code{"San Diego"}, \code{"San Franciso"},
 #'            \code{"Seattle"}, \code{"Washington DC"}
+#'      \item \code{counties}: A vector of FIPS codes for the counties or
+#'                    county equivalents to be included.  This is the only option that
+#'                    allows for an arbitrary number of geographical units to be explicitly combined
+#'                    into one analysis.
 #'      \item \code{state}: \code{"AK"}, \code{"AL"}, \code{"AR"}, \code{"AZ"},
 #'            \code{"CA"}, \code{"CO"}, \code{"CT"}, \code{"DC"}, \code{"DE"},
 #'            \code{"FL"}, \code{"GA"}, \code{"HI"}, \code{"IA"}, \code{"ID"},
@@ -80,7 +85,7 @@
 #' }
 #'
 #' @examples
-#' # Age and geographic stratification, for the city of Atlanta
+#' # Age and geographic stratification, for the Atlanta metropolitan statistical area
 #' epistats1 <- build_epistats(geog.lvl = "city",
 #'                             geog.cat = "Atlanta",
 #'                             age.limits = c(20, 50),
@@ -92,6 +97,13 @@
 #' # No race stratification
 #' epistats3 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
 #'                             race = FALSE)
+#'
+#' # Age and race stratification, for the municipality (not metro) of New York City
+#' epistats4 <- build_epistats(geog.lvl = "counties",
+#'                             geog.cat = c(36005, 36047, 36061, 36081, 36085), # FIPS codes for the 5 boroughs of NYC
+#'                             age.limits = c(20, 50),
+#'                             age.breaks = c(24, 34, 44))
+#'
 #'
 #' @export
 build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
@@ -112,10 +124,10 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
 
   out <- list()
 
-  geog_names <- c("city", "state", "region", "division", "all")
+  geog_names <- c("city", "counties", "state", "region", "division", "all")
   if (!is.null(geog.lvl)) {
     if (!(geog.lvl %in% geog_names)) {
-      stop("Selected geographic feature must be one of: city, state, region or division")
+      stop("Selected geographic feature must be one of: city, counties, state, region or division")
     }
   }
 
@@ -126,8 +138,8 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
     stop("Only one geographical factor may be chosen at a time.")
   }
 
-  if (length(geog.cat) > 1) {
-    stop("Only one variable name may be chosen at a time.")
+  if (length(geog.cat) > 1 && !is.null(geog.lvl) && geog.lvl!='counties') {
+    stop("Only one value of geog.cat may be chosen at a time (for values of geog.lvl other than 'counties')")
   }
 
   if (!is.null(geog.lvl)) {
@@ -140,6 +152,17 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
       l$geog <- l$city2
       d$geogYN <- ifelse(d[, "city2"] == geog.cat, 1, 0)
       d$geog <- d$city2
+    }
+
+    if (geog.lvl == "counties") {
+      if (sum(geog.cat %in% unique(d$COUNTYFIPS))==0) {
+         stop("None of the FIPS codes found")
+      }
+      l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "COUNTYFIPS")]))
+      l$geogYN <- ifelse(l[, "COUNTYFIPS"] %in% geog.cat, 1, 0)
+      l$geog <- l$COUNTYFIPS
+      d$geogYN <- ifelse(d[, "COUNTYFIPS"] %in% geog.cat, 1, 0)
+      d$geog <- d$COUNTYFIPS
     }
 
     if (geog.lvl == "state") {
