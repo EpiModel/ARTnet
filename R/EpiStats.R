@@ -6,8 +6,10 @@
 #'              the probability of diagnosed HIV infection, for use in the EpiModelHIV
 #'              workflow.
 #'
-#' @param geog.lvl Specifies geographic feature for ARTnet statistics.
-#' @param geog.cat Specifies geographic stratum to base ARTnet statistics on.
+#' @param geog.lvl Specifies geographic level for ARTnet statistics.
+#' @param geog.cat Specifies one or more geographic strata within the level to base
+#'        ARTnet statistics on. If the vector is of length 2+, data from the strata
+#'        will be combined into one analysis.
 #' @param age.limits Upper and lower limit. Age range to subset ARTnet data by.
 #'        Default is 15 to 65.
 #' @param age.breaks Ages that define the upper age categories. Default is
@@ -16,7 +18,7 @@
 #' @param race Whether to stratify by racial status. Default is TRUE.
 #' @param browser Run function in interactive browser mode. Default is FALSE.
 #' @param init.hiv.prev Initial HIV prevalence of estimated model, vector of size
-#'.        three pertaining to prevalence among three racial classes (black,
+#'         three pertaining to prevalence among three racial classes (black,
 #'         Hispanic and white respectively). If \code{init.hiv.prev = NULL},
 #'         ARTnet will handle calculation of prevalence through ARTnet data.
 #'         Note: if `\code{race = FALSE}, prevalence vector must still be supplied.
@@ -37,19 +39,20 @@
 #' @section Parameter Values:
 #' \itemize{
 #'   \item \code{geog.lvl}: level of geographic stratification desired. Acceptable
-#'          values are \code{"city"}, \code{"state"}, \code{"region"}, and
-#'          \code{"division"} corresponding to city, state, census region, census
-#'          division and complete geographic area respectively. Default value is "NULL",
+#'          values are \code{"city"}, \code{"county"}, \code{"state"}, \code{"region"}, and
+#'          \code{"division"} corresponding to the metropolitan statistical area,
+#'          county, state, census region, and census
+#'          division, respectively. Default value is "NULL",
 #'          indicating no geographic stratification.
 #'    \item \code{geog.cat}: given a geographic level above, \code{"geog.cat"}
-#'          is the desired feature of interest. Acceptable values are based on the
-#'          chosen geographic level:
+#'          is a vector comprising the desired feature(s) of interest. Acceptable values are based on the chosen geographic level:
 #'    \itemize{
 #'      \item \code{city}: \code{"Atlanta"}, \code{"Boston"}, \code{"Chicago"},
 #'            \code{"Dallas"}, \code{"Denver"}, \code{"Detroit"}, \code{"Houston"},
 #'            \code{"Los Angeles"}, \code{"Miami"}, \code{"New York City"},
 #'            \code{"Philadelphia"}, \code{"San Diego"}, \code{"San Franciso"},
 #'            \code{"Seattle"}, \code{"Washington DC"}
+#'      \item \code{county}: FIPS codes for the county or county equivalents to be included.
 #'      \item \code{state}: \code{"AK"}, \code{"AL"}, \code{"AR"}, \code{"AZ"},
 #'            \code{"CA"}, \code{"CO"}, \code{"CT"}, \code{"DC"}, \code{"DE"},
 #'            \code{"FL"}, \code{"GA"}, \code{"HI"}, \code{"IA"}, \code{"ID"},
@@ -80,7 +83,7 @@
 #' }
 #'
 #' @examples
-#' # Age and geographic stratification, for the city of Atlanta
+#' # Age and geographic stratification, for the Atlanta metropolitan statistical area
 #' epistats1 <- build_epistats(geog.lvl = "city",
 #'                             geog.cat = "Atlanta",
 #'                             age.limits = c(20, 50),
@@ -89,9 +92,19 @@
 #' # Default age stratification
 #' epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA")
 #'
+#' # Default age stratification, multiple states
+#' epistats3 <- build_epistats(geog.lvl = "state", geog.cat = c("ME", "NH", "VT"))
+
 #' # No race stratification
-#' epistats3 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
+#' epistats4 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
 #'                             race = FALSE)
+#'
+#' # Age and race stratification, for the municipality (not metro) of New York City
+#' epistats5 <- build_epistats(geog.lvl = "county",
+#'                             geog.cat = c(36005, 36047, 36061, 36081, 36085), # FIPS codes for the 5 boroughs of NYC
+#'                             age.limits = c(20, 50),
+#'                             age.breaks = c(24, 34, 44))
+#'
 #'
 #' @export
 build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
@@ -112,10 +125,10 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
 
   out <- list()
 
-  geog_names <- c("city", "state", "region", "division", "all")
+  geog_names <- c("city", "county", "state", "region", "division")
   if (!is.null(geog.lvl)) {
     if (!(geog.lvl %in% geog_names)) {
-      stop("Selected geographic feature must be one of: city, state, region or division")
+      stop("Selected geographic level must be one of: city, county, state, region or division")
     }
   }
 
@@ -123,58 +136,67 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
 
   # Geography
   if (length(geog.lvl) > 1) {
-    stop("Only one geographical factor may be chosen at a time.")
-  }
-
-  if (length(geog.cat) > 1) {
-    stop("Only one variable name may be chosen at a time.")
+    stop("Only one geographical level may be chosen at a time.")
   }
 
   if (!is.null(geog.lvl)) {
     if (geog.lvl == "city") {
-      if (!(geog.cat %in% unique(d$city))) {
-        stop("City name not found")
+      if (sum(geog.cat %in% unique(d$city))==0) {
+        stop("None of the city names found in the data")
       }
       l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "city2")]))
-      l$geogYN <- ifelse(l[, "city2"] == geog.cat, 1, 0)
+      l$geogYN <- ifelse(l[, "city2"] %in% geog.cat, 1, 0)
       l$geog <- l$city2
-      d$geogYN <- ifelse(d[, "city2"] == geog.cat, 1, 0)
+      d$geogYN <- ifelse(d[, "city2"] %in% geog.cat, 1, 0)
       d$geog <- d$city2
     }
 
+    if (geog.lvl == "county") {
+      if (sum(geog.cat %in% unique(d$COUNTYFIPS))==0) {
+         stop("None of the county FIPS codes found in the data")
+      }
+      l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "COUNTYFIPS")]))
+      l$geogYN <- ifelse(l[, "COUNTYFIPS"] %in% geog.cat, 1, 0)
+      l$geog <- l$COUNTYFIPS
+      d$geogYN <- ifelse(d[, "COUNTYFIPS"] %in% geog.cat, 1, 0)
+      d$geog <- d$COUNTYFIPS
+    }
+
     if (geog.lvl == "state") {
-      if (!(geog.cat %in% unique(d$State))) {
-        stop("State name not found")
+      if (sum(geog.cat %in% unique(d$State))==0) {
+        stop("None of the states found in the data")
       }
       l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "State")]))
-      l$geogYN <- ifelse(l[, "State"] == geog.cat, 1, 0)
+      l$geogYN <- ifelse(l[, "State"] %in% geog.cat, 1, 0)
       l$geog <- l$State
-      d$geogYN <- ifelse(d[, "State"] == geog.cat, 1, 0)
+      d$geogYN <- ifelse(d[, "State"] %in% geog.cat, 1, 0)
       d$geog <- d$State
     }
 
     if (geog.lvl == "division") {
-      if (!(geog.cat %in% unique(d$DIVCODE))) {
-        stop("Division number not found")
+      if (sum(geog.cat %in% unique(d$DIVCODE))==0) {
+        stop("None of the census division codes found in the data")
       }
       l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "DIVCODE")]))
-      l$geogYN <- ifelse(l[, "DIVCODE"] == geog.cat, 1, 0)
+      l$geogYN <- ifelse(l[, "DIVCODE"] %in% geog.cat, 1, 0)
       l$geog <- l$DIVCODE
-      d$geogYN <- ifelse(d[, "DIVCODE"] == geog.cat, 1, 0)
+      d$geogYN <- ifelse(d[, "DIVCODE"] %in% geog.cat, 1, 0)
       d$geog <- d$DIVCODE
     }
 
     if (geog.lvl == "region") {
-      if (!(geog.cat %in% unique(d$REGCODE))) {
-        stop("Regional code not found")
+      if (sum(geog.cat %in% unique(d$REGCODE))==0) {
+        stop("None of the census region codes found in the data")
       }
       l <- suppressMessages(left_join(l, d[, c("AMIS_ID", "REGCODE")]))
-      l$geogYN <- ifelse(l[, "REGCODE"] == geog.cat, 1, 0)
+      l$geogYN <- ifelse(l[, "REGCODE"] %in% geog.cat, 1, 0)
       l$geog <- l$REGCODE
-      d$geogYN <- ifelse(d[, "REGCODE"] == geog.cat, 1, 0)
+      d$geogYN <- ifelse(d[, "REGCODE"] %in% geog.cat, 1, 0)
       d$geog <- d$REGCODE
     }
   }
+
+
 
   # Age Processing
 
