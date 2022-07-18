@@ -9,7 +9,8 @@ build_netstats(
   netparams,
   network.size = 10000,
   expect.mort = 1e-04,
-  edges.avg = FALSE
+  edges.avg = FALSE,
+  race.prop = NULL
 )
 }
 \arguments{

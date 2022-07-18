@@ -34,7 +34,8 @@
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,
                            expect.mort = 0.0001,
-                           edges.avg = FALSE) {
+                           edges.avg = FALSE,
+                           race.prop = NULL) {
 
   ## Data ##
   #NOTE: Not actually used
@@ -64,10 +65,15 @@ build_netstats <- function(epistats, netparams,
   # Population size by race group
   # race.dist.3cat
 
-  if (!is.null(geog.lvl)) {
-  props <- race.dist[[geog.lvl]][which(race.dist[[geog.lvl]]$Geog == geog.cat), -c(1,2)]/100
+  if (!is.null(race.prop)) {
+    props <- as.data.frame(t(race.prop))
+    colnames(props) <- c('White.Other','Black','Hispanic')
   } else {
-    props <- race.dist[["national"]][, -c(1,2)]/100
+    if (!is.null(geog.lvl)) {
+      props <- race.dist[[geog.lvl]][which(race.dist[[geog.lvl]]$Geog == geog.cat), -c(1,2)]/100
+    } else {
+      props <- race.dist[["national"]][, -c(1,2)]/100
+    }
   }
   num.B <- out$demog$num.B <- round(num * props$Black)
   num.H <- out$demog$num.H <- round(num * props$Hispanic)
