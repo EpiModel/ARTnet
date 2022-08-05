@@ -12,6 +12,12 @@
 #'        \code{\link{dissolution_coefs}} function.
 #' @param edges.avg Whether degree differences exist along race. TRUE
 #'        or FALSE; default of FALSE.
+#' @param race.prop The proportion of the population with each of the three
+#'        values for the nodal attribute "race" (White.Other, Black, Hispanic).
+#'        This only needs to be supplied if geog.lvl = "county" or if geog.cat
+#'        has length >1; otherwise, the values can be obtained automatically
+#'        from a look-up table. If it is not supplied in either of these cases,
+#'        the function will default to national US values.
 #'
 #' @details
 #' \code{build_netstats} takes output from \code{\link{build_epistats}} and
