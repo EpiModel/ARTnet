@@ -45,7 +45,7 @@ Use 1 for daily time units and 30 for monthly time units.}
 }
 \description{
 Builds statistical models governing act rates and probability of
-             condom use among main, casual and one-of sexual partnerships, and
+             condom use among main, casual and one-time sexual partnerships, and
              the probability of diagnosed HIV infection, for use in the EpiModelHIV
              workflow.
 }
@@ -76,7 +76,11 @@ values for each input parameter are provided below.
            \code{"Los Angeles"}, \code{"Miami"}, \code{"New York City"},
            \code{"Philadelphia"}, \code{"San Diego"}, \code{"San Franciso"},
            \code{"Seattle"}, \code{"Washington DC"}
-     \item \code{county}: FIPS codes for the county or county equivalents to be included.
+     \item \code{county}: FIPS codes for the county or county equivalents to
+     be included. Be aware that selecting a single county or a set of smaller
+     counties may lead to insufficient data being used to estimate the model;
+     if the sample lacks sufficient behavioral diversity (e.g. if nobody
+     reports 2+ ongoing casual partners), an error may result.
      \item \code{state}: \code{"AK"}, \code{"AL"}, \code{"AR"}, \code{"AZ"},
            \code{"CA"}, \code{"CO"}, \code{"CT"}, \code{"DC"}, \code{"DE"},
            \code{"FL"}, \code{"GA"}, \code{"HI"}, \code{"IA"}, \code{"ID"},
