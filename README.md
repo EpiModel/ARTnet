@@ -92,7 +92,7 @@ vignette(package = "ARTnet")
 
 9. 	Maloney KM, Benkeser D, Sullivan PS, Kelley C, Sanchez T, Jenness SM. Sexual Mixing by Diagnosed HIV Status and Pre-Exposure Prophylaxis Use among Men Who Have Sex with Men: Stochastic Reclassification to Address Information Bias in Egocentric Network Data. _Epidemiology._ 2022. Epub ahead of print. DOI: 10.1097/EDE.0000000000001525. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/35895578/)
 
-10. Chandra C, Morris M, Van Meter C, Goodreau SM, Sanchez T, Janulis P, Birkett M, Jenness SM. Comparing Sexual Network Mean Active Degree Measurement Metrics among Men Who Have Sex with Men. _Pre-Print:_ DOI: 10.1101/2022.02.11.22270855. [[medRxiv]](https://doi.org/10.1101/2022.02.11.22270855)
+10. Chandra C, Morris M, Van Meter C, Goodreau SM, Sanchez T, Janulis P, Birkett M, Jenness SM. Comparing Sexual Network Mean Active Degree Measurement Metrics among Men Who Have Sex with Men. _Sexually Transmitted Diseases_ 2022. Epub ahead of print. [[medRxiv]](https://pubmed.ncbi.nlm.nih.gov/36112005/)
 
 
 #### ARTnet Used in HIV/STI Transmission Models
@@ -109,7 +109,7 @@ vignette(package = "ARTnet")
 
 6. Wheatley MM, Knowlton G, Kao SY, Jenness SM, Enns E. Cost-Effectiveness of Interventions to Improve HIV Pre-Exposure Prophylaxis Initiation, Adherence, and Persistence among Men Who Have Sex with Men. _Journal of Acquired Immune Deficiency Syndrome._ 2022; 90(1): 41-49 [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/35090155/)
 
-7. Jones J, Le Guillou A, Gift TL, Chesson H, Bernstein K, Delaney K, Lyles C, Berruit A, Sullivan PS, Jenness SM. Effect of Screening and Treatment for Gonorrhea and Chlamydia on HIV Incidence among Men who Have Sex with Men in the United States: A Modeling Analysis. _Sexually Transmitted Diseases._ Epub ahead of print. DOI: 10.1097/OLQ.0000000000001685. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/35921635/)
+7. Jones J, Le Guillou A, Gift TL, Chesson H, Bernstein K, Delaney K, Lyles C, Berruit A, Sullivan PS, Jenness SM. Effect of Screening and Treatment for Gonorrhea and Chlamydia on HIV Incidence among Men who Have Sex with Men in the United States: A Modeling Analysis. _Sexually Transmitted Diseases._ 2022; 49(10):669-676. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/35921635/)
 
 8. Jenness SM, Le Guillou A, Lyles C, Bernstein KT, Krupinsky K, Enns EA, Sullivan PS, Delaney KP. The Role of HIV Partner Services in the Modern Biomedical HIV Prevention Era: A Network Modeling Study. _Pre-Print:_ DOI: 10.1101/2022.05.20.22275395.[[medRxiv]](https://doi.org/10.1101/2022.05.20.22275395)
 
