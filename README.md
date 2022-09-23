@@ -8,7 +8,7 @@ Access to the data requires a Memorandum of Understanding (MOU) that outlines th
 
 ### ARTnetData Dependency
 
-The ARTnet package depends on the ARTnetData package, which contains the limited use public dataset. Because of the restrictions of the dataset, the ARTnetData package must be installed separately, before installing the ARTnet package, using the following directions.
+The ARTnet package depends on the [ARTnetData package](https://github.com/EpiModel/ARTnetData), which contains the limited use public dataset. Because of the restrictions of the dataset, the ARTnetData package must be installed separately, before installing the ARTnet package, using the following directions.
 
 #### Installation
 The suggested method for accessing the dataset is to directly install the `ARTnetData` package in R, using the `remotes` package as follows:
@@ -36,8 +36,7 @@ str(l)
 ```
 
 ### The ARTnet Package
-The ARTnet package contains standardized scripts to analyze the ARTnet data for the purposes of parameterizing the epidemic modeling with EpiModel and EpiModelHIV. There are three primary functions, detailed below, that conduct statistical analysis of the data for a specific target population of MSM defined by geography, 
-age, and race/ethnicity. Users may also conduct analyses of the ARTnet dataset without the ARTnet package, but this package automates several standard analyses needed for many epidemic modeling projects.
+The ARTnet package contains standardized scripts to analyze the ARTnet data for the purposes of parameterizing the epidemic modeling with EpiModel and EpiModelHIV. There are three primary functions, detailed below, that conduct statistical analysis of the data for a specific target population of MSM defined by geography, age, and race/ethnicity. Users may also conduct analyses of the ARTnet dataset without the ARTnet package, but this package automates several standard analyses needed for many epidemic modeling projects.
 
 #### Installation
 The ARTnet package may be installed with the `remotes` package:
