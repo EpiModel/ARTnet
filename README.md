@@ -4,24 +4,40 @@ ARTnet is an anonymous cross-sectional web-based survey conducted from 2017 to 2
 
 For further details on the ARTnet Study, you can read the descriptive paper ["Egocentric Sexual Networks of Men Who Have Sex with Men in the United States: Results from the ARTnet Study"](https://www.sciencedirect.com/science/article/pii/S1755436519301409?via%3Dihub) by Weiss et al. in _Epidemics._ See the **ARTnet Scientific Publications** section below for further details.
 
-Access to the data requires a Memorandum of Understanding (MOU) that outlines the personnel analyzing the data and purposes of the data analyses. This dataset may not be shared without the consent of the ARTnet Study PI (Samuel Jenness, Emory University) as outlined in an MOU. 
+### Data Use Agreement
+Access to the data requires a Memorandum of Understanding (MOU) that outlines the personnel analyzing the data and purposes of the data analyses. This dataset may not be shared without the consent of the ARTnet Study PI (Samuel Jenness, Emory University) as outlined in an MOU. Please contact the PI by email (mailto:samuel.m.jenness@emory.edu) to request access. A template MOU will be sent; after review access to the ARTnet dataset will be provided via Github.
 
 ### ARTnetData Dependency
 
 The ARTnet package depends on the [ARTnetData package](https://github.com/EpiModel/ARTnetData), which contains the limited use public dataset. Because of the restrictions of the dataset, the ARTnetData package must be installed separately, before installing the ARTnet package, using the following directions.
 
 #### Installation
-The suggested method for accessing the dataset is to directly install the `ARTnetData` package in R, using the `remotes` package as follows:
+The suggested method for accessing the dataset is to directly install the `ARTnetData` package in R, using the `remotes` package. First, because this repository is private, installing this package requires a [Github Personal Access Token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/).
+
+You can use the `usethis` package to create a new PAT for use in R, like this:
+```r
+usethis::create_github_token()
+```
+
+Copy the PAT, and then put it in your `.Renviron` file as a system variable called `GITHUB_PAT`. You can open your `.Renviron` like this:
+```r
+usethis::edit_r_environ()
+```
+
+Your `.Renviron` file should contain a line like this, but with your own unique PAT on the right-hand side.
+```r
+GITHUB_PAT=XXXXXX
+```
+
+Note that there are other potentially more sophisticated and secure ways to manage your Github PAT, as detailed in the [usethis vignette](https://usethis.r-lib.org/articles/articles/git-credentials.html).
+
+After creating a PAT, restart R/Rstudio and use the `remotes` package to install `ARTnetData`.
 ```r
 remotes::install_github("EpiModel/ARTnetData")
 ```
-Because this repository is private, installing this package may require setting up a 
-[Github Personal Access Token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/).
-
-This package comes with two included datasets, a wide-form dataset (rows = study participants) and a long-form dataset (rows = partnerships, with multiple rows per unique study participant).
 
 #### Dataset Loading
-The suggested method for accessing the dataset is to directly install the `ARTnetData` package in R, using the `remotes` package as follows:
+This R package comes with two included datasets, a wide-form dataset (rows = study participants) and a long-form dataset (rows = partnerships, with multiple rows per unique study participant). The suggested method for accessing the dataset is to directly install the `ARTnetData` package in R, using the `remotes` package as follows:
 ```r
 library("ARTnetData")
 d <- ARTnet.wide
