@@ -92,7 +92,7 @@ vignette(package = "ARTnet")
 
 9. 	Maloney KM, Benkeser D, Sullivan PS, Kelley C, Sanchez T, Jenness SM. Sexual Mixing by Diagnosed HIV Status and Pre-Exposure Prophylaxis Use among Men Who Have Sex with Men: Stochastic Reclassification to Address Information Bias in Egocentric Network Data. _Epidemiology._ 2022. Epub ahead of print. DOI: 10.1097/EDE.0000000000001525. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/35895578/)
 
-10. Chandra C, Morris M, Van Meter C, Goodreau SM, Sanchez T, Janulis P, Birkett M, Jenness SM. Comparing Sexual Network Mean Active Degree Measurement Metrics among Men Who Have Sex with Men. _Sexually Transmitted Diseases_ 2022. Epub ahead of print. [[medRxiv]](https://pubmed.ncbi.nlm.nih.gov/36112005/)
+10. Chandra C, Morris M, Van Meter C, Goodreau SM, Sanchez T, Janulis P, Birkett M, Jenness SM. Comparing Sexual Network Mean Active Degree Measurement Metrics among Men Who Have Sex with Men. _Sexually Transmitted Diseases_ 2022. Epub ahead of print. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/36112005/)
 
 
 #### ARTnet Used in HIV/STI Transmission Models
