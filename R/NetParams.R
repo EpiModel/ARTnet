@@ -32,7 +32,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   ## Inputs ##
   geog.lvl <- epistats$geog.lvl
-  geog.cat <- epistats$geog.cat
   race <- epistats$race
   age.limits <- epistats$age.limits
   age.breaks <- epistats$age.breaks
@@ -56,7 +55,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
 
-  l$duration.time <- l$duration*7/time.unit
+  l$duration.time <- l$duration * 7 / time.unit
 
   #Append Data when geog.lvl is defined
   if (!is.null(geog.lvl)) {
@@ -90,20 +89,11 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   d$deg.main <- ifelse(is.na(d$deg.main), 0, d$deg.main)
   d$deg.casl <- ifelse(is.na(d$deg.casl), 0, d$deg.casl)
 
-  # summary(d$deg.main)
-  # summary(d$deg.casl)
-
   # recoding to truncate degree
   d$deg.casl <- ifelse(d$deg.casl > 3, 3, d$deg.casl)
   d$deg.main <- ifelse(d$deg.main > 2, 2, d$deg.main)
 
   d$deg.tot <- d$deg.main + d$deg.casl
-
-  # md <- group_by(d, city2) %>%
-  #   summarise(dm = mean(deg.main), dc = mean(deg.casl), dt = mean(deg.tot))
-  # print(md, n = nrow(md))
-  #
-  # round(prop.table(table(d$deg.main, d$deg.casl)), 3)
 
   # Concurrency
   d$deg.main.conc <- ifelse(d$deg.main > 1, 1, 0)
@@ -124,40 +114,25 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   d$count.oo.part <- d$ai.part - d$count.mc.part
   d$count.oo.part <- pmax(0, d$count.oo.part)
 
-  # head(data.frame(d$ai.part, d$count.mc.part, d$count.oo.part), 25)
-  # summary(d$count.oo.part)
-
   # Truncated OO part
   d$count.oo.part.trunc <- ifelse(d$count.oo.part > 100, 100, d$count.oo.part)
-  # summary(d$count.oo.part.trunc)
-  # table(d$count.oo.part.trunc)
 
 
   if (race == TRUE) {
-    ## Race/Ethnicity
-    # table(d$race.cat)
+    # Race Ethnicity
     d$race.cat3 <- rep(NA, nrow(d))
     d$race.cat3[d$race.cat == "black"] <- 1
     d$race.cat3[d$race.cat == "hispanic"] <- 2
     d$race.cat3[d$race.cat %in% c("white", "other")] <- 3
-    # table(d$race.cat, d$race.cat3)
 
-    # table(l$race.cat, useNA = "always")
-    # table(l$p_race.cat, useNA = "always")
-    # table(l$race.cat, l$p_race.cat, useNA = "always")
-
-    # l$race.cat3 <- rep(NA, nrow(l))
     l$race.cat3[l$race.cat == "black"] <- 1
     l$race.cat3[l$race.cat == "hispanic"] <- 2
     l$race.cat3[l$race.cat %in% c("white", "other")] <- 3
-    # table(l$race.cat3, useNA = "always")
 
-    # table(l$p_race.cat, useNA = "always")
     l$p_race.cat3 <- rep(NA, nrow(l))
     l$p_race.cat3[l$p_race.cat == "black"] <- 1
     l$p_race.cat3[l$p_race.cat == "hispanic"] <- 2
     l$p_race.cat3[l$p_race.cat %in% c("white", "other")] <- 3
-    # table(l$p_race.cat3, useNA = "always")
 
     # redistribute NAs in proportion to non-missing partner races
     probs <- prop.table(table(l$race.cat3, l$p_race.cat3), 1)
@@ -171,7 +146,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     imp_white <- which(is.na(l$p_race.cat3) & l$race.cat3 == 3)
     l$p_race.cat3[imp_white] <- sample(1:3, length(imp_white), TRUE, probs[3, ])
 
-    # table(l$race.cat3, l$p_race.cat3, useNA = "always")
   }
 
   ## HIV status
@@ -186,11 +160,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   hiv.combo[l$hiv2 == 0 & l$p_hiv == 1] <- 3
   hiv.combo[l$hiv2 == 0 & l$p_hiv == 2] <- 4
   hiv.combo[l$hiv2 == 1 & l$p_hiv == 2] <- 5
-  # table(hiv.combo, useNA = "always")
 
   l$hiv.concord.pos <- ifelse(hiv.combo == 2, 1, 0)
-  # table(l$hiv.concord.pos)
-
 
   ## Setup output list ##
 
@@ -205,17 +176,13 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   ## edges ----
   if (is.null(geog.lvl)) {
-    mod <- glm(deg.main ~ 1,
-               data = d, family = poisson())
-    # summary(mod)
+    mod <- glm(deg.main ~ 1, data = d, family = poisson())
 
     pred <- exp(coef(mod)[[1]])
 
     out$main$md.main <- as.numeric(pred)
   } else {
-    mod <- glm(deg.main ~ geogYN,
-               data = d, family = poisson())
-    # summary(mod)
+    mod <- glm(deg.main ~ geogYN, data = d, family = poisson())
 
     dat <- data.frame(geogYN = 1)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -230,14 +197,12 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                              right = FALSE, include.lowest = FALSE)
   lmain$part.age.grp <- cut(as.numeric(lmain$p_age_imp), age.breaks, labels = FALSE,
                             right = FALSE, include.lowest = FALSE)
-  # data.frame(lmain$age, lmain$index.age.grp, lmain$p_age_imp, lmain$part.age.grp)
 
   lmain$same.age.grp <- ifelse(lmain$index.age.grp == lmain$part.age.grp, 1, 0)
 
   if (is.null(geog.lvl)) {
     mod <- glm(same.age.grp ~ index.age.grp,
                data = lmain, family = binomial())
-    # summary(mod)
 
     dat <- data.frame(index.age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -246,7 +211,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   } else {
     mod <- glm(same.age.grp ~ geogYN + index.age.grp,
                data = lmain, family = binomial())
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1, index.age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -262,14 +226,12 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   if (is.null(geog.lvl)) {
     mod <- lm(ad ~ 1, data = lmain)
-    # summary(mod)
 
     pred <- coef(mod)[[1]]
 
     out$main$absdiff.age <- as.numeric(pred)
   } else {
     mod <- lm(ad ~ geogYN, data = lmain)
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -282,14 +244,12 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   if (is.null(geog.lvl)) {
     mod <- lm(ad.sr ~ 1, data = lmain)
-    # summary(mod)
 
     pred <- coef(mod)[[1]]
 
     out$main$absdiff.sqrt.age <- as.numeric(pred)
   } else {
     mod <- lm(ad.sr ~ geogYN, data = lmain)
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -306,7 +266,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   if (is.null(geog.lvl)) {
     mod <- glm(deg.main ~ + age.grp + sqrt(age.grp),
                data = d, family = poisson())
-    # summary(mod)
 
     dat <- data.frame(age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -315,7 +274,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   } else {
     mod <- glm(deg.main ~ geogYN + age.grp + sqrt(age.grp),
                data = d, family = poisson())
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1, age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -332,7 +290,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     if (is.null(geog.lvl)) {
       mod <- glm(same.race ~ as.factor(race.cat3),
                  data = lmain, family = binomial())
-      # summary(mod)
 
       dat <- data.frame(race.cat3 = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
@@ -341,7 +298,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     } else {
       mod <- glm(same.race ~ geogYN + as.factor(race.cat3),
                  data = lmain, family = binomial())
-      # summary(mod)
 
       dat <- data.frame(geogYN = 1, race.cat3 = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
@@ -353,17 +309,14 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     ## nodematch("race", diff = FALSE) ----
 
     if (is.null(geog.lvl)) {
-      mod <- glm(same.race ~ 1,
-                 data = lmain, family = binomial())
-      # summary(mod)
+      mod <- glm(same.race ~ 1, data = lmain, family = binomial())
 
-      pred <- exp(coef(mod)[[1]])/(1+exp(coef(mod)[[1]]))
+      pred <- exp(coef(mod)[[1]]) / (1 + exp(coef(mod)[[1]]))
 
       out$main$nm.race_diffF <- as.numeric(pred)
     } else {
       mod <- glm(same.race ~ geogYN,
                  data = lmain, family = binomial())
-      # summary(mod)
 
       dat <- data.frame(geogYN = 1)
       pred <- predict(mod, newdata = dat, type = "response")
@@ -371,40 +324,17 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
       out$main$nm.race_diffF <- as.numeric(pred)
     }
 
-
-    ## nodefactor("race") ----
-    # props <- race.dist[[geog.lvl]][which(race.dist[[geog.lvl]]$Geog == geog.cat), -c(1,2)]/100
-    # d$pw <- ifelse(d$race.cat3 == 1, 1/props[2],
-    #                ifelse(d$race.cat3 == 2, 1/props[3], 1/props[1]))
-    # d$pw <- as.numeric(d$pw)
-    # d.design <- survey::svydesign(id      = ~AMIS_ID,
-    #                               strata  = ~race.cat3,
-    #                               weights = ~pw,
-    #                               nest    = TRUE,
-    #                               data    = d)
-
     if (is.null(geog.lvl)) {
-      # mod <- survey::svyglm(deg.main ~ race.cat3,
-      #                       design = d.design,
-      #                       family = poisson())
-
       mod <- glm(deg.main ~ as.factor(race.cat3),
                  data = d, family = poisson())
-
-      # summary(mod)
 
       dat <- data.frame(race.cat3 = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
 
       out$main$nf.race <- as.numeric(pred)
     } else {
-      # mod <- survey::svyglm(deg.main ~ geog + race.cat3,
-      #                       design = d.design,
-      #                       family = poisson())
-
       mod <- glm(deg.main ~ geogYN + as.factor(race.cat3),
                  data = d, family = poisson())
-      # summary(mod)
 
       dat <- data.frame(geogYN = 1, race.cat3 = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
@@ -418,7 +348,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   if (is.null(geog.lvl)) {
     mod <- glm(deg.main ~ deg.casl,
                data = d, family = poisson())
-    # summary(mod)
 
     dat <- data.frame(deg.casl = sort(unique(d$deg.casl)))
     pred <- predict(mod, newdata = dat, type = "response")
@@ -430,7 +359,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   } else {
     mod <- glm(deg.main ~ geogYN + deg.casl,
                data = d, family = poisson())
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1, deg.casl = sort(unique(d$deg.casl)))
     pred <- predict(mod, newdata = dat, type = "response")
@@ -445,17 +373,14 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   ## concurrent ----
 
   if (is.null(geog.lvl)) {
-    mod <- glm(deg.main.conc ~ 1,
-               data = d, family = binomial())
-    # summary(mod)
+    mod <- glm(deg.main.conc ~ 1, data = d, family = binomial())
 
-    pred <- exp(coef(mod)[[1]])/(1+exp(coef(mod)[[1]]))
+    pred <- exp(coef(mod)[[1]]) / (1 + exp(coef(mod)[[1]]))
 
     out$main$concurrent <- as.numeric(pred)
   } else {
     mod <- glm(deg.main.conc ~ geogYN,
                data = d, family = binomial())
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -467,9 +392,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   ## nodefactor("diag.status") ----
 
   if (is.null(geog.lvl)) {
-    mod <- glm(deg.main ~ hiv2,
-               data = d, family = poisson())
-    # summary(mod)
+    mod <- glm(deg.main ~ hiv2, data = d, family = poisson())
 
     dat <- data.frame(hiv2 = 0:1)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -478,7 +401,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   } else {
     mod <- glm(deg.main ~ geogYN + hiv2,
                data = d, family = poisson())
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1, hiv2 = 0:1)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -510,17 +432,17 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
       as.data.frame()
 
     # city-specific weight based on ratio of medians
-    wt <- durs.main.geo$median.dur/durs.main$median.dur
+    wt <- durs.main.geo$median.dur / durs.main$median.dur
   } else {
     wt <- 1
   }
 
   # The dissolution rate is function of the mean of the geometric distribution
   # which relates to the median as:
-  durs.main$rates.main.adj <- 1 - (2^(-1/(wt*durs.main$median.dur)))
+  durs.main$rates.main.adj <- 1 - (2^(-1 / (wt * durs.main$median.dur)))
 
   # Mean duration associated with a geometric distribution that median:
-  durs.main$mean.dur.adj <- 1/(1 - (2^(-1/(wt*durs.main$median.dur))))
+  durs.main$mean.dur.adj <- 1 / (1 - (2^(-1 / (wt * durs.main$median.dur))))
   out$main$durs.main.homog <- durs.main
 
   # stratified by age
@@ -551,17 +473,18 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   durs.main.all <- rbind(durs.main.nonmatch, durs.main.matched)
 
-  durs.main.all$rates.main.adj <- 1 - (2^(-1/(wt*durs.main.all$median.dur)))
-  durs.main.all$mean.dur.adj <- 1/(1 - (2^(-1/(wt*durs.main.all$median.dur))))
+  durs.main.all$rates.main.adj <- 1 - (2^(-1 / (wt * durs.main.all$median.dur)))
+  durs.main.all$mean.dur.adj <- 1 / (1 - (2^(-1 / (wt * durs.main.all$median.dur))))
 
   durs.main.all <- durs.main.all[, c(3, 1, 2, 4, 5)]
   out$main$durs.main.byage <- durs.main.all
 
   if (smooth.main.dur == TRUE) {
     n2 <- nrow(durs.main.all)
-    n1 <- n2-1
+    n1 <- n2 - 1
     if (n2 > 3) {
-      out$main$durs.main.byage$mean.dur.adj[n2] <- mean(out$main$durs.main.byage$mean.dur.adj[n1:n2])
+      out$main$durs.main.byage$mean.dur.adj[n2] <-
+        mean(out$main$durs.main.byage$mean.dur.adj[n1:n2])
     }
   }
 
@@ -575,17 +498,13 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   ## edges ----
 
   if (is.null(geog.lvl)) {
-    mod <- glm(deg.casl ~ 1,
-               data = d, family = poisson())
-    # summary(mod)
+    mod <- glm(deg.casl ~ 1, data = d, family = poisson())
 
     pred <- exp(coef(mod)[[1]])
 
     out$casl$md.casl <- as.numeric(pred)
   } else {
-    mod <- glm(deg.casl ~ geogYN,
-               data = d, family = poisson())
-    # summary(mod)
+    mod <- glm(deg.casl ~ geogYN, data = d, family = poisson())
 
     dat <- data.frame(geogYN = 1)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -599,14 +518,12 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                              include.lowest = FALSE)
   lcasl$part.age.grp <- cut(as.numeric(lcasl$p_age_imp), age.breaks,
                             right = FALSE, labels = FALSE, include.lowest = FALSE)
-  # data.frame(lcasl$age, lcasl$index.age.grp, lcasl$p_age_imp, lcasl$part.age.grp)
 
   lcasl$same.age.grp <- ifelse(lcasl$index.age.grp == lcasl$part.age.grp, 1, 0)
 
   if (is.null(geog.lvl)) {
     mod <- glm(same.age.grp ~ index.age.grp,
                data = lcasl, family = binomial())
-    # summary(mod)
 
     dat <- data.frame(index.age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -615,7 +532,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   } else {
     mod <- glm(same.age.grp ~ geogYN + index.age.grp,
                data = lcasl, family = binomial())
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1, index.age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -631,14 +547,12 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   if (is.null(geog.lvl)) {
     mod <- lm(ad ~ 1, data = lcasl)
-    # summary(mod)
 
     pred <- coef(mod)[[1]]
 
     out$casl$absdiff.age <- as.numeric(pred)
   } else {
     mod <- lm(ad ~ geogYN, data = lcasl)
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -651,14 +565,12 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   if (is.null(geog.lvl)) {
     mod <- lm(ad.sr ~ 1, data = lcasl)
-    # summary(mod)
 
     pred <- coef(mod)[[1]]
 
     out$casl$absdiff.sqrt.age <- as.numeric(pred)
   } else {
     mod <- lm(ad.sr ~ geogYN, data = lcasl)
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -675,7 +587,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   if (is.null(geog.lvl)) {
     mod <- glm(deg.casl ~ age.grp + sqrt(age.grp),
                data = d, family = poisson())
-    # summary(mod)
 
     dat <- data.frame(age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -684,7 +595,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   } else {
     mod <- glm(deg.casl ~ geogYN + age.grp + sqrt(age.grp),
                data = d, family = poisson())
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1, age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -697,14 +607,11 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
     ## nodematch("race") ----
 
-    # prop.table(table(lcasl$race.cat3, lcasl$p_race.cat3), 1)
-
     lcasl$same.race <- ifelse(lcasl$race.cat3 == lcasl$p_race.cat3, 1, 0)
 
     if (is.null(geog.lvl)) {
       mod <- glm(same.race ~ as.factor(race.cat3),
                  data = lcasl, family = binomial())
-      # summary(mod)
 
       dat <- data.frame(race.cat3 = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
@@ -713,7 +620,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     } else {
       mod <- glm(same.race ~ geogYN + as.factor(race.cat3),
                  data = lcasl, family = binomial())
-      # summary(mod)
 
       dat <- data.frame(geogYN = 1, race.cat3 = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
@@ -727,15 +633,13 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     if (is.null(geog.lvl)) {
       mod <- glm(same.race ~ 1,
                  data = lcasl, family = binomial())
-      # summary(mod)
 
-      pred <- exp(coef(mod)[[1]])/(1+exp(coef(mod)[[1]]))
+      pred <- exp(coef(mod)[[1]]) / (1 + exp(coef(mod)[[1]]))
 
       out$casl$nm.race_diffF <- as.numeric(pred)
     } else {
       mod <- glm(same.race ~ geogYN,
                  data = lcasl, family = binomial())
-      # summary(mod)
 
       dat <- data.frame(geogYN = 1)
       pred <- predict(mod, newdata = dat, type = "response")
@@ -746,27 +650,17 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     ## nodefactor("race") ----
 
     if (is.null(geog.lvl)) {
-      #mod <- survey::svyglm(deg.casl ~ race.cat3,
-      #                      design = d.design,
-      #                      family = poisson())
 
       mod <- glm(deg.casl ~ as.factor(race.cat3),
                  data = d, family = poisson())
-
-      # summary(mod)
 
       dat <- data.frame(race.cat3 = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
 
       out$casl$nf.race <- as.numeric(pred)
     } else {
-      #mod <- survey::svyglm(deg.casl ~ geog + race.cat3,
-      #                      design = d.design,
-      #                      family = poisson())
-
       mod <- glm(deg.casl ~ geogYN + as.factor(race.cat3),
                  data = d, family = poisson())
-      # summary(mod)
 
       dat <- data.frame(geogYN = 1, race.cat3 = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
@@ -780,7 +674,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   if (is.null(geog.lvl)) {
     mod <- glm(deg.casl ~ deg.main,
                data = d, family = poisson())
-    # summary(mod)
 
     dat <- data.frame(deg.main = 0:2)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -792,7 +685,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   } else {
     mod <- glm(deg.casl ~ geogYN + deg.main,
                data = d, family = poisson())
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1, deg.main = 0:2)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -809,15 +701,13 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   if (is.null(geog.lvl)) {
     mod <- glm(deg.casl.conc ~ 1,
                data = d, family = binomial())
-    # summary(mod)
 
-    pred <- exp(coef(mod)[[1]])/(1+exp(coef(mod)[[1]]))
+    pred <- exp(coef(mod)[[1]]) / (1 + exp(coef(mod)[[1]]))
 
     out$casl$concurrent <- as.numeric(pred)
   } else {
     mod <- glm(deg.casl.conc ~ geogYN,
                data = d, family = binomial())
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -831,7 +721,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   if (is.null(geog.lvl)) {
     mod <- glm(deg.casl ~ hiv2,
                data = d, family = poisson())
-    # summary(mod)
 
     dat <- data.frame(hiv2 = 0:1)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -840,7 +729,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   } else {
     mod <- glm(deg.casl ~ geogYN + hiv2,
                data = d, family = poisson())
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1, hiv2 = 0:1)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -872,17 +760,17 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
       as.data.frame()
 
     # city-specific weight based on ratio of medians
-    wt <- durs.casl.geo$median.dur/durs.casl$median.dur
+    wt <- durs.casl.geo$median.dur / durs.casl$median.dur
   } else {
     wt <- 1
   }
 
   # The dissolution rate is function of the mean of the geometric distribution
   # which relates to the median as:
-  durs.casl$rates.casl.adj <- 1 - (2^(-1/(wt*durs.casl$median.dur)))
+  durs.casl$rates.casl.adj <- 1 - (2^(-1 / (wt * durs.casl$median.dur)))
 
   # Mean duration associated with a geometric distribution that median:
-  durs.casl$mean.dur.adj <- 1/(1 - (2^(-1/(wt*durs.casl$median.dur))))
+  durs.casl$mean.dur.adj <- 1 / (1 - (2^(-1 / (wt * durs.casl$median.dur))))
   out$casl$durs.casl.homog <- durs.casl
 
   # stratified by age
@@ -909,13 +797,11 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     summarise(mean.dur = mean(duration.time, na.rm = TRUE),
               median.dur = median(duration.time, na.rm = TRUE)) %>%
     as.data.frame()
-  # durs.casl.matched
 
   durs.casl.all <- rbind(durs.casl.nonmatch, durs.casl.matched)
-  # durs.casl.all
 
-  durs.casl.all$rates.casl.adj <- 1 - (2^(-1/(wt*durs.casl.all$median.dur)))
-  durs.casl.all$mean.dur.adj <- 1/(1 - (2^(-1/(wt*durs.casl.all$median.dur))))
+  durs.casl.all$rates.casl.adj <- 1 - (2^(-1 / (wt * durs.casl.all$median.dur)))
+  durs.casl.all$mean.dur.adj <- 1 / (1 - (2^(-1 / (wt * durs.casl.all$median.dur))))
 
   durs.casl.all <- durs.casl.all[, c(3, 1, 2, 4, 5)]
   out$casl$durs.casl.byage <- durs.casl.all
@@ -929,27 +815,23 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   ## edges ----
 
   head(d$count.oo.part, 25)
-  # summary(d$count.oo.part)
 
   # rate by time unit
-  d$rate.oo.part <- d$count.oo.part/(364/time.unit)
-  # summary(d$rate.oo.part)
+  d$rate.oo.part <- d$count.oo.part / (364 / time.unit)
 
   if (is.null(geog.lvl)) {
     mod <- glm(count.oo.part ~ 1,
                data = d, family = poisson())
-    # summary(mod)
 
-    pred <- exp(coef(mod)[[1]])/(364/time.unit)
+    pred <- exp(coef(mod)[[1]]) / (364 / time.unit)
 
     out$inst$md.inst <- as.numeric(pred)
   } else {
     mod <- glm(count.oo.part ~ geogYN,
                data = d, family = poisson())
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1)
-    pred <- predict(mod, newdata = dat, type = "response")/(364/time.unit)
+    pred <- predict(mod, newdata = dat, type = "response") / (364 / time.unit)
 
     out$inst$md.inst <- as.numeric(pred)
   }
@@ -961,14 +843,12 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
                              right = FALSE, include.lowest = FALSE)
   linst$part.age.grp <- cut(as.numeric(linst$p_age_imp), age.breaks, labels = FALSE,
                             right = FALSE, include.lowest = FALSE)
-  # data.frame(linst$age, linst$index.age.grp, linst$p_age_imp, linst$part.age.grp)
 
   linst$same.age.grp <- ifelse(linst$index.age.grp == linst$part.age.grp, 1, 0)
 
   if (is.null(geog.lvl)) {
     mod <- glm(same.age.grp ~ index.age.grp,
                data = linst, family = binomial())
-    # summary(mod)
 
     dat <- data.frame(index.age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -977,7 +857,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   } else {
     mod <- glm(same.age.grp ~ geogYN + index.age.grp,
                data = linst, family = binomial())
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1, index.age.grp = 1:age.grps)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -993,14 +872,12 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   if (is.null(geog.lvl)) {
     mod <- lm(ad ~ 1, data = linst)
-    # summary(mod)
 
     pred <- coef(mod)[[1]]
 
     out$inst$absdiff.age <- as.numeric(pred)
   } else {
     mod <- lm(ad ~ geogYN, data = linst)
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -1013,14 +890,12 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   if (is.null(geog.lvl)) {
     mod <- lm(ad.sr ~ 1, data = linst)
-    # summary(mod)
 
     pred <- coef(mod)[[1]]
 
     out$inst$absdiff.sqrt.age <- as.numeric(pred)
   } else {
     mod <- lm(ad.sr ~ geogYN, data = linst)
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1)
     pred <- predict(mod, newdata = dat, type = "response")
@@ -1037,19 +912,17 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   if (is.null(geog.lvl)) {
     mod <- glm(count.oo.part ~ age.grp + sqrt(age.grp),
                data = d, family = poisson())
-    # summary(mod)
 
     dat <- data.frame(age.grp = 1:age.grps)
-    pred <- predict(mod, newdata = dat, type = "response")/(364/time.unit)
+    pred <- predict(mod, newdata = dat, type = "response") / (364 / time.unit)
 
     out$inst$nf.age.grp <- as.numeric(pred)
   } else {
     mod <- glm(count.oo.part ~ geogYN + age.grp + sqrt(age.grp),
                data = d, family = poisson())
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1, age.grp = 1:age.grps)
-    pred <- predict(mod, newdata = dat, type = "response")/(364/time.unit)
+    pred <- predict(mod, newdata = dat, type = "response") / (364 / time.unit)
 
     out$inst$nf.age.grp <- as.numeric(pred)
   }
@@ -1059,14 +932,11 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
     ## nodematch("race", diff = TRUE) ----
 
-    #prop.table(table(linst$race.cat3, linst$p_race.cat3), 1)
-
     linst$same.race <- ifelse(linst$race.cat3 == linst$p_race.cat3, 1, 0)
 
     if (is.null(geog.lvl)) {
       mod <- glm(same.race ~ as.factor(race.cat3),
                  data = linst, family = binomial())
-      # summary(mod)
 
       dat <- data.frame(race.cat3 = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
@@ -1075,7 +945,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     } else {
       mod <- glm(same.race ~ geogYN + as.factor(race.cat3),
                  data = linst, family = binomial())
-      # summary(mod)
 
       dat <- data.frame(geogYN = 1, race.cat3 = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
@@ -1089,15 +958,13 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     if (is.null(geog.lvl)) {
       mod <- glm(same.race ~ 1,
                  data = linst, family = binomial())
-      # summary(mod)
 
-      pred <- exp(coef(mod)[[1]])/(1+exp(coef(mod)[[1]]))
+      pred <- exp(coef(mod)[[1]]) / (1 + exp(coef(mod)[[1]]))
 
       out$inst$nm.race_diffF <- as.numeric(pred)
     } else {
       mod <- glm(same.race ~ geogYN,
                  data = linst, family = binomial())
-      # summary(mod)
 
       dat <- data.frame(geogYN = 1)
       pred <- predict(mod, newdata = dat, type = "response")
@@ -1112,19 +979,16 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
       mod <- glm(count.oo.part ~ as.factor(race.cat3),
                  data = d, family = poisson())
 
-      # summary(mod)
-
       dat <- data.frame(race.cat3 = 1:3)
-      pred <- predict(mod, newdata = dat, type = "response")/(364/time.unit)
+      pred <- predict(mod, newdata = dat, type = "response") / (364 / time.unit)
 
       out$inst$nf.race <- as.numeric(pred)
     } else {
       mod <- glm(count.oo.part ~ geogYN + as.factor(race.cat3),
                  data = d, family = poisson())
-      # summary(mod)
 
       dat <- data.frame(geogYN = 1, race.cat3 = 1:3)
-      pred <- predict(mod, newdata = dat, type = "response")/(364/time.unit)
+      pred <- predict(mod, newdata = dat, type = "response") / (364 / time.unit)
 
       out$inst$nf.race <- as.numeric(pred)
     }
@@ -1135,8 +999,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   # geography-specific wts
 
   if (!is.null(geog.lvl)) {
-    wt <- mean(d$rate.oo.part[d$geogYN == 1],
-               na.rm = TRUE)/mean(d$rate.oo.part, na.rm = TRUE)
+    wt <- mean(d$rate.oo.part[d$geogYN == 1], na.rm = TRUE) /
+      mean(d$rate.oo.part, na.rm = TRUE)
   } else {
     wt <- 1
   }
@@ -1149,24 +1013,12 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   for (i in 1:nquants) {
     if (i == 1) {
       oo.quants[i] <- mean(sr[1:qsize])
-    } else if (i > 1 & i < nquants) {
-      oo.quants[i] <- mean(sr[(((i - 1)*qsize) + 1):(i*qsize)])
+    } else if (i > 1 && i < nquants) {
+      oo.quants[i] <- mean(sr[(((i - 1) * qsize) + 1):(i * qsize)])
     } else if (i == nquants) {
-      oo.quants[i] <- mean(sr[(((i - 1)*qsize) + 1):length(sr)])
+      oo.quants[i] <- mean(sr[(((i - 1) * qsize) + 1):length(sr)])
     }
   }
-
-  # acquisition rate
-  # oo.quants
-
-  # Yearly OO partner count
-  # oo.quants * 365/time.unit
-
-  # New OO partner every X years
-  # 1/(oo.quants * 365/time.unit)
-
-  # New OO partner every time.unit
-  # 1/oo.quants
 
   # Save it
   out$inst$nf.risk.grp <- oo.quants
@@ -1187,19 +1039,17 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   if (is.null(geog.lvl)) {
     mod <- glm(count.oo.part ~ deg.tot3 + sqrt(deg.tot3),
                data = d, family = poisson())
-    # summary(mod)
 
     dat <- data.frame(deg.tot3 = 0:3)
-    pred <- predict(mod, newdata = dat, type = "response")/(364/time.unit)
+    pred <- predict(mod, newdata = dat, type = "response") / (364 / time.unit)
 
     out$inst$nf.deg.tot <- as.numeric(pred)
   } else {
     mod <- glm(count.oo.part ~ geogYN + deg.tot3 + sqrt(deg.tot3),
                data = d, family = poisson())
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1, deg.tot3 = 0:3)
-    pred <- predict(mod, newdata = dat, type = "response")/(364/time.unit)
+    pred <- predict(mod, newdata = dat, type = "response") / (364 / time.unit)
 
     out$inst$nf.deg.tot <- as.numeric(pred)
   }
@@ -1210,19 +1060,17 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   if (is.null(geog.lvl)) {
     mod <- glm(count.oo.part ~ hiv2,
                data = d, family = poisson())
-    # summary(mod)
 
     dat <- data.frame(hiv2 = 0:1)
-    pred <- predict(mod, newdata = dat, type = "response")/(364/time.unit)
+    pred <- predict(mod, newdata = dat, type = "response") / (364 / time.unit)
 
     out$inst$nf.diag.status <- as.numeric(pred)
   } else {
     mod <- glm(count.oo.part ~ geogYN + hiv2,
                data = d, family = poisson())
-    # summary(mod)
 
     dat <- data.frame(geogYN = 1, hiv2 = 0:1)
-    pred <- predict(mod, newdata = dat, type = "response")/(364/time.unit)
+    pred <- predict(mod, newdata = dat, type = "response") / (364 / time.unit)
 
     out$inst$nf.diag.status <- as.numeric(pred)
   }
@@ -1241,7 +1089,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     right_join(d, by = "AMIS_ID") %>%
     as.data.frame()
   d$nRAIpart <- ifelse(is.na(d$nRAIpart), 0, d$nRAIpart)
-  # table(d$nRAIpart, useNA = "always")
 
   d <- l %>%
     filter(IAI == 1) %>%
@@ -1257,7 +1104,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   roletype[d$nRAIpart == 0 & d$nIAIpart > 0] <- 0
   roletype[d$nIAIpart == 0 & d$nRAIpart > 0] <- 1
   roletype[d$nIAIpart > 0 & d$nRAIpart > 0] <- 2
-  # table(roletype, useNA = "always")
 
   out$all$role.type <- prop.table(table(roletype))
 

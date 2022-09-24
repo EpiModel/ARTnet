@@ -44,16 +44,12 @@ build_netstats <- function(epistats, netparams,
                            race.prop = NULL) {
 
   ## Data ##
-  #NOTE: Not actually used
-  d <- epistats$wide
-  l <- epistats$long
   race.dist <- ARTnetData::race.dist
 
   ## Inputs ##
   geog.cat <- epistats$geog.cat
   geog.lvl <- epistats$geog.lvl
   race <- epistats$race
-  age.grps <- epistats$age.grps
   age.limits <- epistats$age.limits
   time.unit <- epistats$time.unit
 
@@ -73,10 +69,10 @@ build_netstats <- function(epistats, netparams,
 
   if (!is.null(race.prop)) {
     props <- as.data.frame(t(race.prop))
-    colnames(props) <- c('White.Other','Black','Hispanic')
+    colnames(props) <- c("White.Other", "Black", "Hispanic")
   } else {
     if (!is.null(geog.lvl) && geog.lvl != "county" && length(geog.cat) == 1) {
-      props <- race.dist[[geog.lvl]][which(race.dist[[geog.lvl]]$Geog == geog.cat), -c(1,2)] / 100
+      props <- race.dist[[geog.lvl]][which(race.dist[[geog.lvl]]$Geog == geog.cat), -c(1, 2)] / 100
     } else {
       props <- race.dist[["national"]][, -c(1, 2)] / 100
     }
@@ -97,9 +93,9 @@ build_netstats <- function(epistats, netparams,
 
   if (race == TRUE) {
     # transformed to rates by time unit
-    trans.asmr.B <- 1 - (1 - asmr.B)^(1/(364/time.unit))
-    trans.asmr.H <- 1 - (1 - asmr.H)^(1/(364/time.unit))
-    trans.asmr.W <- 1 - (1 - asmr.W)^(1/(364/time.unit))
+    trans.asmr.B <- 1 - (1 - asmr.B)^(1 / (364 / time.unit))
+    trans.asmr.H <- 1 - (1 - asmr.H)^(1 / (364 / time.unit))
+    trans.asmr.W <- 1 - (1 - asmr.W)^(1 / (364 / time.unit))
 
     # Null rate for 0-14, transformed rates, total rate for 65
     vec.asmr.B <- c(rep(0, 14), rep(trans.asmr.B, each = 5), 1)
@@ -113,10 +109,10 @@ build_netstats <- function(epistats, netparams,
     asmr.O <- colMeans(asmr.O)
 
     # transformed to rates by time unit
-    trans.asmr <- 1 - (1 - asmr.O)^(1/(364/time.unit))
+    trans.asmr <- 1 - (1 - asmr.O)^(1 / (364 / time.unit))
 
     # Null rate for 0-14, transformed rates, total rate for 65
-    vec.asmr <- c(rep(0,14), rep(trans.asmr, each = 5),1)
+    vec.asmr <- c(rep(0, 14), rep(trans.asmr, each = 5), 1)
     asmr <- data.frame(age = 1:65, vec.asmr, vec.asmr, vec.asmr)
     out$demog$asmr <- asmr
   }
@@ -126,7 +122,8 @@ build_netstats <- function(epistats, netparams,
   out$attr <- list()
 
   # age attributes
-  attr_age <- runif(num, min = min(ages), max = max(ages) + (364/time.unit-1)/(364/time.unit))
+  attr_age <- runif(num, min = min(ages),
+                    max = max(ages) + (364 / time.unit - 1) / (364 / time.unit))
   out$attr$age <- attr_age
 
   attr_sqrt.age <- sqrt(attr_age)
@@ -138,23 +135,19 @@ build_netstats <- function(epistats, netparams,
   out$attr$age.grp <- attr_age.grp
 
   # race attribute
-  attr_race <- apportion_lr(num, 1:3, c(num.B/num, num.H/num, num.W/num),
-                            shuffled = TRUE)
+  attr_race <- apportion_lr(num, 1:3, c(num.B / num, num.H / num, num.W / num), shuffled = TRUE)
   out$attr$race <- attr_race
 
   # deg.casl attribute
-  attr_deg.casl <- apportion_lr(num, 0:3, netparams$main$deg.casl.dist,
-                                shuffled = TRUE)
+  attr_deg.casl <- apportion_lr(num, 0:3, netparams$main$deg.casl.dist, shuffled = TRUE)
   out$attr$deg.casl <- attr_deg.casl
 
   # deg main attribute
-  attr_deg.main <- apportion_lr(num, 0:2, netparams$casl$deg.main.dist,
-                                shuffled = TRUE)
+  attr_deg.main <- apportion_lr(num, 0:2, netparams$casl$deg.main.dist, shuffled = TRUE)
   out$attr$deg.main <- attr_deg.main
 
   # deg tot 3 attribute
-  attr_deg.tot <- apportion_lr(num, 0:3, netparams$inst$deg.tot.dist,
-                               shuffled = TRUE)
+  attr_deg.tot <- apportion_lr(num, 0:3, netparams$inst$deg.tot.dist, shuffled = TRUE)
   out$attr$deg.tot <- attr_deg.tot
 
   # risk group
@@ -162,8 +155,7 @@ build_netstats <- function(epistats, netparams,
   out$attr$risk.grp <- attr_risk.grp
 
   # role class
-  attr_role.class <- apportion_lr(num, 0:2, netparams$all$role.type,
-                                  shuffled = TRUE)
+  attr_role.class <- apportion_lr(num, 0:2, netparams$all$role.type, shuffled = TRUE)
   out$attr$role.class <- attr_role.class
 
   # diag status
@@ -183,11 +175,11 @@ build_netstats <- function(epistats, netparams,
     if (race == TRUE) {
       init.hiv.prev <- epistats$init.hiv.prev
       samp.B <- which(attr_race == 1)
-      exp.B <- ceiling(length(samp.B)*init.hiv.prev[1])
+      exp.B <- ceiling(length(samp.B) * init.hiv.prev[1])
       samp.H <- which(attr_race == 2)
-      exp.H <- ceiling(length(samp.H)*init.hiv.prev[2])
+      exp.H <- ceiling(length(samp.H) * init.hiv.prev[2])
       samp.W <- which(attr_race == 3)
-      exp.W <- ceiling(length(samp.W)*init.hiv.prev[3])
+      exp.W <- ceiling(length(samp.W) * init.hiv.prev[3])
 
       attr_diag.status <- rep(0, network.size)
 
@@ -199,7 +191,7 @@ build_netstats <- function(epistats, netparams,
 
     } else {
       init.hiv.prev <- epistats$init.hiv.prev[1]
-      samp.size <- ceiling(network.size*init.hiv.prev)
+      samp.size <- ceiling(network.size * init.hiv.prev)
       attr_diag.status <- sample(1:network.size, samp.size)
       out$attr$diag.status <- rep(0, network.size)
       out$attr$diag.status[attr_diag.status] <- 1
@@ -211,61 +203,60 @@ build_netstats <- function(epistats, netparams,
 
   out$main <- list()
 
-  ## edges
+  # edges ---
   if (race == TRUE) {
     if (edges.avg == FALSE) {
       out$main$edges <- (netparams$main$md.main * num) / 2
     } else {
-      out$main$edges <- sum(unname(table(out$attr$race)) * netparams$main$nf.race)/2
+      out$main$edges <- sum(unname(table(out$attr$race)) * netparams$main$nf.race) / 2
     }
-    ## nodefactor("race")
+    # nodefactor("race") ---
     nodefactor_race <- table(out$attr$race) * netparams$main$nf.race
     out$main$nodefactor_race <- unname(nodefactor_race)
 
-    ## nodematch("race")
-    nodematch_race <- nodefactor_race/2 * netparams$main$nm.race
+    # nodematch("race") ---
+    nodematch_race <- nodefactor_race / 2 * netparams$main$nm.race
     out$main$nodematch_race <- unname(nodematch_race)
 
-    ## nodematch("race", diff = FALSE)
+    # nodematch("race", diff = FALSE) ---
     nodematch_race <- out$main$edges * netparams$main$nm.race_diffF
     out$main$nodematch_race_diffF <- unname(nodematch_race)
   } else {
     out$main$edges <- (netparams$main$md.main * num) / 2
   }
 
-  ## nodefactor("age.grp
+  # nodefactor("age.grp") ---
   nodefactor_age.grp <- table(out$attr$age.grp) * netparams$main$nf.age.grp
   out$main$nodefactor_age.grp <- unname(nodefactor_age.grp)
 
-  ## nodematch("age.grp")
-  nodematch_age.grp <- nodefactor_age.grp/2 * netparams$main$nm.age.grp
+  # nodematch("age.grp") ---
+  nodematch_age.grp <- nodefactor_age.grp / 2 * netparams$main$nm.age.grp
   out$main$nodematch_age.grp <- unname(nodematch_age.grp)
 
-  ## absdiff("age")
+  # absdiff("age") ---
   absdiff_age <- out$main$edges * netparams$main$absdiff.age
   out$main$absdiff_age <- absdiff_age
 
-  ## absdiff("sqrt.age")
+  # absdiff("sqrt.age") ---
   absdiff_sqrt.age <- out$main$edges * netparams$main$absdiff.sqrt.age
   out$main$absdiff_sqrt.age <- absdiff_sqrt.age
 
-  ## nodefactor("deg.casl")
-  out$main$nodefactor_deg.casl <-
-    num * netparams$main$deg.casl.dist * netparams$main$nf.deg.casl
+  # nodefactor("deg.casl") ---
+  out$main$nodefactor_deg.casl <- num * netparams$main$deg.casl.dist * netparams$main$nf.deg.casl
 
-  ## concurrent
+  # concurrent ---
   out$main$concurrent <- num * netparams$main$concurrent
 
-  ## nodefactor("diag.status")
-  nodefactor_diag.status <-
-    table(out$attr$diag.status) * netparams$main$nf.diag.status
+  # nodefactor("diag.status") ---
+  nodefactor_diag.status <- table(out$attr$diag.status) * netparams$main$nf.diag.status
   out$main$nodefactor_diag.status <- unname(nodefactor_diag.status)
 
-  ## Dissolution
+  # Dissolution ---
   out$main$diss.homog <- dissolution_coefs(dissolution = ~offset(edges),
                                            duration = netparams$main$durs.main.homog$mean.dur.adj,
                                            d.rate = expect.mort)
-  out$main$diss.byage <- dissolution_coefs(dissolution = ~offset(edges) + offset(nodematch("age.grp", diff = TRUE)),
+  out$main$diss.byage <- dissolution_coefs(dissolution = ~offset(edges) +
+                                             offset(nodematch("age.grp", diff = TRUE)),
                                            duration = netparams$main$durs.main.byage$mean.dur.adj,
                                            d.rate = expect.mort)
 
@@ -275,59 +266,60 @@ build_netstats <- function(epistats, netparams,
 
   out$casl <- list()
 
-  ## edges
+  # edges ---
   if (race == TRUE) {
     if (edges.avg == FALSE) {
       out$casl$edges <- (netparams$casl$md.casl * num) / 2
     } else {
-      out$casl$edges <- sum(unname(table(out$attr$race)) * netparams$casl$nf.race)/2
+      out$casl$edges <- sum(unname(table(out$attr$race)) * netparams$casl$nf.race) / 2
     }
-    ## nodefactor("race")
+    # nodefactor("race") ---
     nodefactor_race <- table(out$attr$race) * netparams$casl$nf.race
     out$casl$nodefactor_race <- unname(nodefactor_race)
 
-    ## nodematch("race")
-    nodematch_race <- nodefactor_race/2 * netparams$casl$nm.race
+    # nodematch("race") ---
+    nodematch_race <- nodefactor_race / 2 * netparams$casl$nm.race
     out$casl$nodematch_race <- unname(nodematch_race)
 
-    ## nodematch("race", diff = FALSE)
+    # nodematch("race", diff = FALSE) ---
     nodematch_race <- out$casl$edges * netparams$casl$nm.race_diffF
     out$casl$nodematch_race_diffF <- unname(nodematch_race)
   } else {
     out$casl$edges <- (netparams$casl$md.casl * num) / 2
   }
 
-  ## nodefactor("age.grp")
+  # nodefactor("age.grp") ---
   nodefactor_age.grp <- table(out$attr$age.grp) * netparams$casl$nf.age.grp
   out$casl$nodefactor_age.grp <- unname(nodefactor_age.grp)
 
-  ## nodematch("age.grp")
-  nodematch_age.grp <- nodefactor_age.grp/2 * netparams$casl$nm.age.grp
+  # nodematch("age.grp") ---
+  nodematch_age.grp <- nodefactor_age.grp / 2 * netparams$casl$nm.age.grp
   out$casl$nodematch_age.grp <- unname(nodematch_age.grp)
 
-  ## absdiff("age")
+  # absdiff("age") ---
   absdiff_age <- out$casl$edges * netparams$casl$absdiff.age
   out$casl$absdiff_age <- absdiff_age
 
-  ## absdiff("sqrt.age")
+  # absdiff("sqrt.age") ---
   absdiff_sqrt.age <- out$casl$edges * netparams$casl$absdiff.sqrt.age
   out$casl$absdiff_sqrt.age <- absdiff_sqrt.age
 
-  ## nodefactor("deg.main")
+  # nodefactor("deg.main") ---
   out$casl$nodefactor_deg.main <- num * netparams$casl$deg.main.dist * netparams$casl$nf.deg.main
 
-  ## concurrent
+  # concurrent ---
   out$casl$concurrent <- num * netparams$casl$concurrent
 
-  ## nodefactor("diag.status")
+  # nodefactor("diag.status") ---
   nodefactor_diag.status <- table(out$attr$diag.status) * netparams$casl$nf.diag.status
   out$casl$nodefactor_diag.status <- unname(nodefactor_diag.status)
 
-  ## Dissolution
+  # Dissolution
   out$casl$diss.homog <- dissolution_coefs(dissolution = ~offset(edges),
                                            duration = netparams$casl$durs.casl.homog$mean.dur.adj,
                                            d.rate = expect.mort)
-  out$casl$diss.byage <- dissolution_coefs(dissolution = ~offset(edges) + offset(nodematch("age.grp", diff = TRUE)),
+  out$casl$diss.byage <- dissolution_coefs(dissolution = ~offset(edges) +
+                                             offset(nodematch("age.grp", diff = TRUE)),
                                            duration = netparams$casl$durs.casl.byage$mean.dur.adj,
                                            d.rate = expect.mort)
 
@@ -336,53 +328,53 @@ build_netstats <- function(epistats, netparams,
 
   out$inst <- list()
 
-  ## edges
+  # edges ---
   if (race == TRUE) {
     if (edges.avg == FALSE) {
       out$inst$edges <- (netparams$inst$md.inst * num) / 2
     } else {
-      out$inst$edges <- sum(unname(table(out$attr$race)) * netparams$inst$nf.race)/2
+      out$inst$edges <- sum(unname(table(out$attr$race)) * netparams$inst$nf.race) / 2
     }
-    ## nodefactor("race")
+    # nodefactor("race") ---
     nodefactor_race <- table(out$attr$race) * netparams$inst$nf.race
     out$inst$nodefactor_race <- unname(nodefactor_race)
 
-    ## nodematch("race")
-    nodematch_race <- nodefactor_race/2 * netparams$inst$nm.race
+    # nodematch("race") ---
+    nodematch_race <- nodefactor_race / 2 * netparams$inst$nm.race
     out$inst$nodematch_race <- unname(nodematch_race)
 
-    ## nodematch("race", diff = FALSE)
+    # nodematch("race", diff = FALSE) ---
     nodematch_race <- out$inst$edges * netparams$inst$nm.race_diffF
     out$inst$nodematch_race_diffF <- unname(nodematch_race)
   } else {
     out$inst$edges <- (netparams$inst$md.inst * num) / 2
   }
 
-  ## nodefactor("age.grp")
+  # nodefactor("age.grp") ---
   nodefactor_age.grp <- table(out$attr$age.grp) * netparams$inst$nf.age.grp
   out$inst$nodefactor_age.grp <- unname(nodefactor_age.grp)
 
-  ## nodematch("age.grp")
-  nodematch_age.grp <- nodefactor_age.grp/2 * netparams$inst$nm.age.grp
+  # nodematch("age.grp") ---
+  nodematch_age.grp <- nodefactor_age.grp / 2 * netparams$inst$nm.age.grp
   out$inst$nodematch_age.grp <- unname(nodematch_age.grp)
 
-  ## absdiff("age")
+  # absdiff("age") ---
   absdiff_age <- out$inst$edges * netparams$inst$absdiff.age
   out$inst$absdiff_age <- absdiff_age
 
-  ## absdiff("sqrt.age")
+  # absdiff("sqrt.age") ---
   absdiff_sqrt.age <- out$inst$edges * netparams$inst$absdiff.sqrt.age
   out$inst$absdiff_sqrt.age <- absdiff_sqrt.age
 
-  ## nodefactor("risk.grp")
+  # nodefactor("risk.grp") ---
   nodefactor_risk.grp <- table(out$attr$risk.grp) * netparams$inst$nf.risk.grp
   out$inst$nodefactor_risk.grp <- unname(nodefactor_risk.grp)
 
-  ## nodefactor("deg.tot")
+  # nodefactor("deg.tot") ---
   nodefactor_deg.tot <- table(out$attr$deg.tot) * netparams$inst$nf.deg.tot
   out$inst$nodefactor_deg.tot <- unname(nodefactor_deg.tot)
 
-  ## nodefactor("diag.status")
+  # nodefactor("diag.status") ---
   nodefactor_diag.status <- table(out$attr$diag.status) * netparams$inst$nf.diag.status
   out$inst$nodefactor_diag.status <- unname(nodefactor_diag.status)
 
