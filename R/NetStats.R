@@ -12,6 +12,12 @@
 #'        \code{\link{dissolution_coefs}} function.
 #' @param edges.avg Whether degree differences exist along race. TRUE
 #'        or FALSE; default of FALSE.
+#' @param race.prop The proportion of the population with each of the three
+#'        values for the nodal attribute "race" (White.Other, Black, Hispanic).
+#'        This only needs to be supplied if geog.lvl = "county" or if geog.cat
+#'        has length >1; otherwise, the values can be obtained automatically
+#'        from a look-up table. If it is not supplied in either of these cases,
+#'        the function will default to national US values.
 #'
 #' @details
 #' \code{build_netstats} takes output from \code{\link{build_epistats}} and
@@ -34,7 +40,8 @@
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,
                            expect.mort = 0.0001,
-                           edges.avg = FALSE) {
+                           edges.avg = FALSE,
+                           race.prop = NULL) {
 
   ## Data ##
   #NOTE: Not actually used
@@ -64,10 +71,16 @@ build_netstats <- function(epistats, netparams,
   # Population size by race group
   # race.dist.3cat
 
-  if (!is.null(geog.lvl)) {
-  props <- race.dist[[geog.lvl]][which(race.dist[[geog.lvl]]$Geog == geog.cat), -c(1,2)]/100
+  if (!is.null(race.prop)) {
+    props <- as.data.frame(t(race.prop))
+    colnames(props) <- c('White.Other','Black','Hispanic')
   } else {
-    props <- race.dist[["national"]][, -c(1,2)]/100
+    if (!is.null(geog.lvl) & geog.lvl !="county" & length(geog.cat)==1) {
+      props <- race.dist[[geog.lvl]][which(race.dist[[geog.lvl]]$Geog == geog.cat),
+                                     -c(1,2)]/100
+    } else {
+      props <- race.dist[["national"]][, -c(1,2)]/100
+    }
   }
   num.B <- out$demog$num.B <- round(num * props$Black)
   num.H <- out$demog$num.H <- round(num * props$Hispanic)

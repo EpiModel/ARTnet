@@ -9,7 +9,8 @@ build_netstats(
   netparams,
   network.size = 10000,
   expect.mort = 1e-04,
-  edges.avg = FALSE
+  edges.avg = FALSE,
+  race.prop = NULL
 )
 }
 \arguments{
@@ -24,6 +25,13 @@ build_netstats(
 
 \item{edges.avg}{Whether degree differences exist along race. TRUE
 or FALSE; default of FALSE.}
+
+\item{race.prop}{The proportion of the population with each of the three
+values for the nodal attribute "race" (White.Other, Black, Hispanic).
+This only needs to be supplied if geog.lvl = "county" or if geog.cat
+has length >1; otherwise, the values can be obtained automatically
+from a look-up table. If it is not supplied in either of these cases,
+the function will default to national US values.}
 }
 \description{
 Calculates the final target statistics for the network models by
