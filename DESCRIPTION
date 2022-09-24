@@ -1,6 +1,6 @@
 Package: ARTnet
-Version: 2.5.6
-Date: 2022-02-17
+Version: 2.6.0
+Date: 2022-09-22
 Title: Epidemic and Network Model Parameterization with the ARTnet Dataset
 Description: Epidemic and Network Model Parameterization with the ARTnet Dataset.
 Maintainer: Samuel Jenness <samuel.m.jenness@emory.edu>
@@ -19,7 +19,7 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.1
 Encoding: UTF-8
 Remotes:
    github::EpiModel/ARTnetData@main
