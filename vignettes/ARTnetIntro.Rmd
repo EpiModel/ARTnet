@@ -37,14 +37,17 @@ epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
 This new input tells `build_epistats` that the geographical level of interest is the city level and that the geographical region of interest is Atlanta. There are five levels of geographical subsetting available in ARTnet: city, state, census division and geographic region. These are called by `geog.lvl = ` city, state, div, and reg respectively in the `build_epistats` function call. An individual who would like to build a network structure based on, say, Georgia, would then use:
 
 ```{r }
-epistats3 <- build_epistats(geog.lvl = "state", geog.cat = "GA", init.hiv.prev = c(0.17, 0.17, 0.17))
+epistats3 <- build_epistats(geog.lvl = "state", geog.cat = "GA", 
+                            init.hiv.prev = c(0.17, 0.17, 0.17))
 ```
 
 Similarly, if one wishes to use the other levels of geographic stratification they can do so as above:
 
 ```{r }
-epistats4 <- build_epistats(geog.lvl = "division", geog.cat = "5", init.hiv.prev = c(0.17, 0.17, 0.17))
-epistats5 <- build_epistats(geog.lvl = "region", geog.cat = "3", init.hiv.prev = c(0.17, 0.17, 0.17))
+epistats4 <- build_epistats(geog.lvl = "division", geog.cat = "5", 
+                            init.hiv.prev = c(0.17, 0.17, 0.17))
+epistats5 <- build_epistats(geog.lvl = "region", geog.cat = "3", 
+                            init.hiv.prev = c(0.17, 0.17, 0.17))
 ```
 
 If no geographic stratification is specified, `geog.lvl = NULL`, and no geographic stratification is done.
