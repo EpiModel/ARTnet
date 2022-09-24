@@ -45,7 +45,8 @@
 #'          division, respectively. Default value is "NULL",
 #'          indicating no geographic stratification.
 #'    \item \code{geog.cat}: given a geographic level above, \code{"geog.cat"}
-#'          is a vector comprising the desired feature(s) of interest. Acceptable values are based on the chosen geographic level:
+#'          is a vector comprising the desired feature(s) of interest. Acceptable values
+#'          are based on the chosen geographic level:
 #'    \itemize{
 #'      \item \code{city}: \code{"Atlanta"}, \code{"Boston"}, \code{"Chicago"},
 #'            \code{"Dallas"}, \code{"Denver"}, \code{"Detroit"}, \code{"Houston"},
@@ -104,13 +105,14 @@
 #'                             race = FALSE)
 #'
 #' # Age and race stratification, for the municipality (not metro) of New York City
+#' # geog.cat values are FIPS codes for the 5 boroughs of NYC
 #' epistats5 <- build_epistats(geog.lvl = "county",
-#'                             geog.cat = c(36005, 36047, 36061, 36081, 36085), # FIPS codes for the 5 boroughs of NYC
+#'                             geog.cat = c(36005, 36047, 36061, 36081, 36085),
 #'                             age.limits = c(20, 50),
 #'                             age.breaks = c(24, 34, 44))
 #'
-#'
 #' @export
+#'
 build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
                            age.limits = c(15, 65), age.breaks = c(25, 35, 45, 55),
                            init.hiv.prev = NULL, time.unit = 7, browser = FALSE) {
