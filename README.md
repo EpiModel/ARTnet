@@ -107,7 +107,7 @@ vignette(package = "ARTnet")
 
 9. Mann LM, Le Guillou A, Goodreau SM, Marcus JL, Sanchez T, Weiss KM, Jenness SM. Correlations Between Community-Level HIV Preexposure Prophylaxis Coverage and Individual-Level Sexual Behaviors among US Men Who Have Sex with Men. _AIDS._ 2022. Epub ahead of print. DOI: 10.1097/QAD.0000000000003343. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/35876641/)
 
-10. Chandra C, Morris M, Van Meter C, Goodreau SM, Sanchez T, Janulis P, Birkett M, Jenness SM. Comparing Sexual Network Mean Active Degree Measurement Metrics among Men Who Have Sex with Men. _Sexually Transmitted Diseases_ 2022. Epub ahead of print. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/36112005/)
+10. Chandra C, Morris M, Van Meter C, Goodreau SM, Sanchez T, Janulis P, Birkett M, Jenness SM. Comparing Sexual Network Mean Active Degree Measurement Metrics among Men Who Have Sex with Men. _Sexually Transmitted Diseases_ 2022. Epub ahead of print. DOI: 10.1097/OLQ.0000000000001708. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/36112005/)
 
 
 #### ARTnet Used in HIV/STI Transmission Models
@@ -122,9 +122,9 @@ vignette(package = "ARTnet")
 
 5. Le Guillou A, Buchbinder S, Scott H, Liu A, Havlir D, Scheer S, Jenness SM. Population Impact and Efficiency of Improvements to HIV PrEP Under Conditions of High ART Coverage among San Francisco Men Who Have Sex with Men. _Journal of Acquired Immune Deficiency Syndrome._ 2021; 88(4): 340–347. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/34354011/)
 
-6. Wheatley MM, Knowlton G, Kao SY, Jenness SM, Enns E. Cost-Effectiveness of Interventions to Improve HIV Pre-Exposure Prophylaxis Initiation, Adherence, and Persistence among Men Who Have Sex with Men. _Journal of Acquired Immune Deficiency Syndrome._ 2022; 90(1): 41-49 [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/35090155/)
+6. Wheatley MM, Knowlton G, Kao SY, Jenness SM, Enns E. Cost-Effectiveness of Interventions to Improve HIV Pre-Exposure Prophylaxis Initiation, Adherence, and Persistence among Men Who Have Sex with Men. _Journal of Acquired Immune Deficiency Syndrome._ 2022; 90(1): 41-49. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/35090155/)
 
 7. Jones J, Le Guillou A, Gift TL, Chesson H, Bernstein K, Delaney K, Lyles C, Berruit A, Sullivan PS, Jenness SM. Effect of Screening and Treatment for Gonorrhea and Chlamydia on HIV Incidence among Men who Have Sex with Men in the United States: A Modeling Analysis. _Sexually Transmitted Diseases._ 2022; 49(10):669-676. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/35921635/)
 
-8. Jenness SM, Le Guillou A, Lyles C, Bernstein KT, Krupinsky K, Enns EA, Sullivan PS, Delaney KP. The Role of HIV Partner Services in the Modern Biomedical HIV Prevention Era: A Network Modeling Study. _Sexually Transmitted Diseases_ 2022. Epub ahead of print. DOI: 10.1097/OLQ.0000000000001711.[[PubMed]](https://pubmed.ncbi.nlm.nih.gov/36194831/)
+8. Jenness SM, Le Guillou A, Lyles C, Bernstein KT, Krupinsky K, Enns EA, Sullivan PS, Delaney KP. The Role of HIV Partner Services in the Modern Biomedical HIV Prevention Era: A Network Modeling Study. _Sexually Transmitted Diseases._ 2022. Epub ahead of print. DOI: 10.1097/OLQ.0000000000001711. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/36194831/)
 
