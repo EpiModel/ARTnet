@@ -103,9 +103,9 @@ vignette(package = "ARTnet")
 
 7. Weiss KM, Prasad P, Sanchez T, Goodreau SM, Jenness SM. Association Between HIV PrEP Indications and Use in a National Sexual Network Study of Men Who Have Sex with Men. _Journal of the International AIDS Society._ 2021; 24(10): e25826. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/34605174/)
 
-8. Mann LM, Le Guillou A, Goodreau SM, Marcus JL, Sanchez T, Weiss KM, Jenness SM. Correlations Between Community-Level HIV Preexposure Prophylaxis Coverage and Individual-Level Sexual Behaviors among US Men Who Have Sex with Men. _AIDS._ 2022. Epub ahead of print. DOI: 10.1097/QAD.0000000000003343. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/35876641/)
+8. 	Maloney KM, Benkeser D, Sullivan PS, Kelley C, Sanchez T, Jenness SM. Sexual Mixing by HIV Status and Pre-exposure Prophylaxis Use Among Men Who Have Sex With Men: Addressing Information Bias. _Epidemiology._ 2022; 33(6): 808-16. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/35895578/)
 
-9. 	Maloney KM, Benkeser D, Sullivan PS, Kelley C, Sanchez T, Jenness SM. Sexual Mixing by Diagnosed HIV Status and Pre-Exposure Prophylaxis Use among Men Who Have Sex with Men: Stochastic Reclassification to Address Information Bias in Egocentric Network Data. _Epidemiology._ 2022. Epub ahead of print. DOI: 10.1097/EDE.0000000000001525. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/35895578/)
+9. Mann LM, Le Guillou A, Goodreau SM, Marcus JL, Sanchez T, Weiss KM, Jenness SM. Correlations Between Community-Level HIV Preexposure Prophylaxis Coverage and Individual-Level Sexual Behaviors among US Men Who Have Sex with Men. _AIDS._ 2022. Epub ahead of print. DOI: 10.1097/QAD.0000000000003343. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/35876641/)
 
 10. Chandra C, Morris M, Van Meter C, Goodreau SM, Sanchez T, Janulis P, Birkett M, Jenness SM. Comparing Sexual Network Mean Active Degree Measurement Metrics among Men Who Have Sex with Men. _Sexually Transmitted Diseases_ 2022. Epub ahead of print. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/36112005/)
 
