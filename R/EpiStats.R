@@ -115,8 +115,9 @@
 #'
 build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
                            age.limits = c(15, 65), age.breaks = c(25, 35, 45, 55),
+                           age.ces = 65,
                            init.hiv.prev = NULL, time.unit = 7, browser = FALSE) {
-
+  browser()
   # Fix global binding check errors
   duration.time <- anal.acts.time <- anal.acts.time.cp <- NULL
 
@@ -210,8 +211,8 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
 
 
   # Warning if age range is out of allowed range
-  flag.ll <- age.limits[1] >= 15 & age.limits[1] <= 65
-  flag.ul <- age.limits[2] >= 15 & age.limits[2] <= 65
+  flag.ll <- age.limits[1] >= 15 & age.limits[1] <= 100
+  flag.ul <- age.limits[2] >= 15 & age.limits[2] <= 100
   flag.lim <- flag.ll * flag.ul
 
   if (flag.lim == 0) {
@@ -226,13 +227,17 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
     stop("Age breaks must be between specified age limits")
   }
 
-  age.breaks <- unique(sort(c(age.limits[1], age.breaks, 100)))
+  age.breaks <- unique(sort(c(age.limits[1], age.breaks, age.ces, 100)))
 
   l <- subset(l, age >= age.limits[1] & age <= age.limits[2])
   d <- subset(d, age >= age.limits[1] & age <= age.limits[2])
 
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
+  
+  age.pyramid <- c(table(l$p_age_imp)[1:51] + table(l$age), 
+                   table(l$p_age_imp)[-c(1:51)])
+  age.pyramid <-  age.pyramid / sum(age.pyramid)
 
   if (race == TRUE) {
     # Race
@@ -529,6 +534,8 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   out$age.limits <- age.limits
   out$age.breaks <- age.breaks
   out$age.grps <- length(age.breaks) - 1
+  out$age.pyramid <- age.pyramid
+  out$age.ces <- age.ces
   out$init.hiv.prev <- init.hiv.prev
   out$time.unit <- time.unit
   return(out)

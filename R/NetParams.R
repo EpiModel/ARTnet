@@ -30,6 +30,7 @@
 #'
 build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
+  browser()
   ## Inputs ##
   geog.lvl <- epistats$geog.lvl
   race <- epistats$race
