@@ -14,8 +14,8 @@ and second oldest age groups.}
 }
 \description{
 Builds statistical models predicting mean degree, mixing, and
-             duration of sexual partnerships, for use in the EpiModelHIV
-             workflow.
+duration of sexual partnerships, for use in the EpiModelHIV
+workflow.
 }
 \details{
 \code{build_netparams} is a helper function that constructs the necessary

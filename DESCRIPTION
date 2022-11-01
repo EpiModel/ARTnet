@@ -23,3 +23,4 @@ RoxygenNote: 7.2.1
 Encoding: UTF-8
 Remotes:
    github::EpiModel/ARTnetData@main
+Roxygen: list(markdown = TRUE)

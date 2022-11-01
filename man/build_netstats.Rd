@@ -35,8 +35,8 @@ the function will default to national US values.}
 }
 \description{
 Calculates the final target statistics for the network models by
-             applying individual-level network statistics against the population
-             size and structure, for use in the EpiModelHIV workflow.
+applying individual-level network statistics against the population
+size and structure, for use in the EpiModelHIV workflow.
 }
 \details{
 \code{build_netstats} takes output from \code{\link{build_epistats}} and
