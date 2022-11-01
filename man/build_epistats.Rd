@@ -7,7 +7,7 @@
 build_epistats(
   geog.lvl = NULL,
   geog.cat = NULL,
-  race = FALSE,
+  race = TRUE,
   age.limits = c(15, 65),
   age.breaks = c(25, 35, 45, 55),
   age.ces = 65,
@@ -19,106 +19,82 @@ build_epistats(
 \arguments{
 \item{geog.lvl}{Specifies geographic level for ARTnet statistics.}
 
-\item{geog.cat}{Specifies one or more geographic strata within the level to base
-ARTnet statistics on. If the vector is of length 2+, data from the strata
-will be combined into one analysis.}
+\item{geog.cat}{Specifies one or more geographic strata within the level to base ARTnet
+statistics on. If the vector is of length 2+, data from the strata will be combined into
+one analysis.}
 
-\item{race}{Whether to stratify by racial status. Default is TRUE.}
+\item{race}{If \code{TRUE}, stratify model estimates by race/ethnic grouping.}
 
-\item{age.limits}{Upper and lower limit. Age range to subset ARTnet data by.
-Default is 15 to 65.}
+\item{age.limits}{Upper and lower limit of age range to subset ARTnet data by. Minimum of 15 and
+maximum of 100 allowed.}
 
-\item{age.breaks}{Ages that define the upper age categories. Default is
-\code{c(25, 35, 45, 55, 65)}, which corresponds to (0, 25], (25, 35],
-(35, 45], (45, 55], (55, 65], (65, 100].}
+\item{age.breaks}{Ages that define the upper age categories. Default is \code{c(25, 35, 45, 55, 65)},
+which corresponds to \verb{(0, 25], (25, 35], (35, 45], (45, 55], (55, 65], (65, 100]}.}
 
-\item{init.hiv.prev}{Initial HIV prevalence of estimated model, vector of size
-three pertaining to prevalence among three racial classes (black,
-Hispanic and white respectively). If \code{init.hiv.prev = NULL},
-ARTnet will handle calculation of prevalence through ARTnet data.
-Note: if `\code{race = FALSE}, prevalence vector must still be supplied.}
+\item{init.hiv.prev}{Initial HIV prevalence to be used in epidemic model estimated model, with a
+numerical vector of size 3 corresponding to starting prevalence in three race/ethnic
+groups (Black, Hispanic, and White/Other, respectively). If \code{init.hiv.prev = NULL},
+\code{build_epistats} will estimate a logistic regression model to predict starting prevalence
+as a function of estimated prevalence in ARTnet as a function of race/ethnicity and age.}
 
-\item{time.unit}{Specifies time unit for ARTnet statistics. Default is 7 for
-weekly time units. Inputs are by days with a maximum of 30 days.
-Use 1 for daily time units and 30 for monthly time units.}
+\item{time.unit}{Specifies time unit for time-dependent ARTnet statistics. Default is 7,
+corresponding to a weekly time unit. Allowed inputs range from 1 for a daily time unit to
+30 for a monthly time unit.}
 
-\item{browser}{Run function in interactive browser mode. Default is FALSE.}
+\item{browser}{If \code{TRUE}, run \code{build_epistats} in interactive browser mode.}
 }
 \description{
-Builds statistical models governing act rates and probability of
-condom use among main, casual and one-time sexual partnerships, and
-the probability of diagnosed HIV infection, for use in the EpiModelHIV
-workflow.
+Builds statistical models governing act rates and probability of condom use among
+main, casual and one-time sexual partnerships, and the probability of diagnosed HIV infection,
+for use in the EpiModelHIV workflow.
 }
 \details{
-\code{build_epistats}, through input of geographic, age and racial
-parameters, builds the necessary statistical models predicting sexual activity
-and condom use during sexual activity in main, casual and one-off partnerships
-among men-who-have-sex-with-men (MSM). Estimation of these linear models is
-done using data from the ARTnetData package, a package containing the
-results of the online ARTnet survey of HIV-related risk behaviors, testing
-and use of preventive services among MSM in the United States. Accepted
-values for each input parameter are provided below.
-}
-\section{Parameter Values}{
-
+The \code{build_epistats} function provides a way to input of geographic, age, and racial parameters
+necessary to build statistical models predicting sexual activity and condom use in sexual
+partnerships among men who have sex with men (MSM). Estimation of these models is performed using
+data from the \code{ARTnetData} package, containing the results of the ARTnet study.
+\subsection{Explanation of Parameter Values}{
 \itemize{
-\item \code{geog.lvl}: level of geographic stratification desired. Acceptable
-values are \code{"city"}, \code{"county"}, \code{"state"}, \code{"region"}, and
-\code{"division"} corresponding to the metropolitan statistical area,
-county, state, census region, and census
-division, respectively. Default value is "NULL",
-indicating no geographic stratification.
-\item \code{geog.cat}: given a geographic level above, \code{"geog.cat"}
-is a vector comprising the desired feature(s) of interest. Acceptable values
-are based on the chosen geographic level:
+\item \code{geog.lvl}: level of geographic stratification desired. Acceptable values are \code{"city"},
+\code{"county"}, \code{"state"}, \code{"region"}, and \code{"division"} corresponding to the metropolitan
+statistical area, county, state, census region, and census division, respectively. Default
+value is \code{NULL}, indicating no geographic stratification.
+\item \code{geog.cat}: given a geographic level above, \code{"geog.cat"} is a vector comprising the desired
+feature(s) of interest. Acceptable values are based on the chosen geographic level:
 \itemize{
-\item \code{city}: \code{"Atlanta"}, \code{"Boston"}, \code{"Chicago"},
-\code{"Dallas"}, \code{"Denver"}, \code{"Detroit"}, \code{"Houston"},
-\code{"Los Angeles"}, \code{"Miami"}, \code{"New York City"},
-\code{"Philadelphia"}, \code{"San Diego"}, \code{"San Franciso"},
-\code{"Seattle"}, \code{"Washington DC"}
-\item \code{county}: FIPS codes for the county or county equivalents to
-be included. Be aware that selecting a single county or a set of smaller
-counties may lead to insufficient data being used to estimate the model;
-if the sample lacks sufficient behavioral diversity (e.g. if nobody
-reports 2+ ongoing casual partners), an error may result.
-\item \code{state}: \code{"AK"}, \code{"AL"}, \code{"AR"}, \code{"AZ"},
-\code{"CA"}, \code{"CO"}, \code{"CT"}, \code{"DC"}, \code{"DE"},
-\code{"FL"}, \code{"GA"}, \code{"HI"}, \code{"IA"}, \code{"ID"},
-\code{"IL"}, \code{"IN"}, \code{"KS"}, \code{"KY"}, \code{"LA"},
-\code{"MA"}, \code{"MD"}, \code{"ME"}, \code{"MI"}, \code{"MN"},
-\code{"MO"}, \code{"MS"}, \code{"MT"}, \code{"NC"}, \code{"ND"},
-\code{"NE"}, \code{"NH"}, \code{"NJ"}, \code{"NM"}, \code{"NV"},
-\code{"NY"}, \code{"OH"}, \code{"OK"}, \code{"OR"}, \code{"PA"},
-\code{"RI"}, \code{"SC"}, \code{"SD"}, \code{"TN"}, \code{"TX"},
-\code{"UT"}, \code{"VA"}, \code{"VT"}, \code{"WA"}, \code{"WI"},
-\code{"WV"}, \code{"WY"}
-\item \code{division}: \code{"1"} (New England),
-\code{"2"} (Middle Atlantic), \code{"3"} (East North Central),
-\code{"4"} (West North Central), \code{"5"} (South Atlantic),
-\code{"6"} (East South Central), \code{"7"} (West South Central),
-\code{"8"} (Mountain) \code{"9"} (Pacific)
-\item \code{region}: \code{"1"} (Northeast), \code{"2"} (Midwest),
-\code{"3"} (South), \code{"4"} (North)
+\item \code{city}: \code{"Atlanta"}, \code{"Boston"}, \code{"Chicago"}, \code{"Dallas"}, \code{"Denver"}, \code{"Detroit"},
+\code{"Houston"}, \code{"Los Angeles"}, \code{"Miami"}, \code{"New York City"}, \code{"Philadelphia"}, \code{"San Diego"},
+\code{"San Francisco"}, \code{"Seattle"}, \code{"Washington DC"}.
+\item \code{county}: FIPS codes for the county or county equivalents to be included. Selecting a
+single county or a set of smaller counties may lead to insufficient data used to estimate
+the models; an error may result.
+\item \code{state}: Two-letter postal code for each state.
+\item \code{division}: \code{"1"} (New England), \code{"2"} (Middle Atlantic), \code{"3"} (East North Central),
+\code{"4"} (West North Central), \code{"5"} (South Atlantic), \code{"6"} (East South Central),
+\code{"7"} (West South Central), \code{"8"} (Mountain) \code{"9"} (Pacific).
+\item \code{region}: \code{"1"} (Northeast), \code{"2"} (Midwest), \code{"3"} (South), \code{"4"} (North)
 }
-\item \code{race}: whether to introduce modeling by racial stratification.
-\code{TRUE} or \code{FALSE}.
-\item \code{age.limits}: a vector giving the lower and upper limit for
-the age of interest. Set to \code{c(15, 65)} by default.
-\item \code{age.breaks}: a vector giving the upper age breaks to categorize
-data by age. Must be within the bounds specified by \code{age.limits}.
-\item \code{time.unit}: a number between 1 and 30 that specifies time units
-for ARTnet statistics. Set to \code{7} by default.
+\item \code{race}: whether to introduce modeling by racial stratification. \code{TRUE} or \code{FALSE}.
+\item \code{age.limits}: a vector giving the lower and upper limit for the age of interest. Set to
+\code{c(15, 65)} by default.
+\item \code{age.breaks}: a vector giving the upper age breaks to categorize data by age. Must be within
+the bounds specified by \code{age.limits}.
+\item \code{time.unit}: a number between 1 and 30 that specifies time units for ARTnet statistics. Set to
+\code{7} by default.
 }
 }
-
+}
 \examples{
 # Age and geographic stratification, for the Atlanta metropolitan statistical area
 epistats1 <- build_epistats(geog.lvl = "city",
                             geog.cat = "Atlanta",
                             age.limits = c(20, 50),
                             age.breaks = c(24, 34, 44))
+
+
+epistats.new <- build_epistats(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
+           age.limits = c(15, 65), age.breaks = c(25, 35, 45, 55),
+           age.ces = 65, init.hiv.prev = NULL, time.unit = 7, browser = FALSE)
 
 # Default age stratification
 epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA")
