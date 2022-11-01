@@ -82,11 +82,16 @@
 #'
 #' @export
 #'
-build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
-                           age.limits = c(15, 65), age.breaks = c(25, 35, 45, 55),
-                           age.ces = 65,
-                           init.hiv.prev = NULL, time.unit = 7, browser = FALSE) {
-  browser()
+build_epistats <- function(geog.lvl = NULL,
+                           geog.cat = NULL,
+                           race = TRUE,
+                           age.limits = c(15, 65),
+                           age.breaks = c(25, 35, 45, 55),
+                           age.sexual.cessation = 65,
+                           init.hiv.prev = NULL,
+                           time.unit = 7,
+                           browser = FALSE) {
+
   # Fix global binding check errors
   duration.time <- anal.acts.time <- anal.acts.time.cp <- NULL
 
@@ -185,7 +190,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   flag.lim <- flag.ll * flag.ul
 
   if (flag.lim == 0) {
-    stop("Age range must be between 15 and 65")
+    stop("Age range specified in `age.limits` must be between 15 and 100")
   }
 
   age.limits <- c(min(age.limits), max(age.limits))
@@ -196,15 +201,15 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
     stop("Age breaks must be between specified age limits")
   }
 
-  age.breaks <- unique(sort(c(age.limits[1], age.breaks, age.ces, 100)))
+  age.breaks <- unique(sort(c(age.limits[1], age.breaks, age.sexual.cessation, 100)))
 
   l <- subset(l, age >= age.limits[1] & age <= age.limits[2])
   d <- subset(d, age >= age.limits[1] & age <= age.limits[2])
 
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
-  
-  age.pyramid <- c(table(l$p_age_imp)[1:51] + table(l$age), 
+
+  age.pyramid <- c(table(l$p_age_imp)[1:51] + table(l$age),
                    table(l$p_age_imp)[-c(1:51)])
   age.pyramid <-  age.pyramid / sum(age.pyramid)
 
@@ -504,7 +509,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   out$age.breaks <- age.breaks
   out$age.grps <- length(age.breaks) - 1
   out$age.pyramid <- age.pyramid
-  out$age.ces <- age.ces
+  out$age.sexual.cessation <- age.sexual.cessation
   out$init.hiv.prev <- init.hiv.prev
   out$time.unit <- time.unit
   return(out)
