@@ -25,8 +25,9 @@ one analysis.}
 
 \item{race}{If \code{TRUE}, stratify model estimates by race/ethnic grouping.}
 
-\item{age.limits}{Upper and lower limit of age range to subset ARTnet data by. Minimum of 15 and
-maximum of 100 allowed.}
+\item{age.limits}{Lower and upper limit of age range to include in model. Minimum of 15 and
+maximum of 100 allowed. Lower limit is inclusive boundary and upper boundary is
+exclusive boundary.}
 
 \item{age.breaks}{Ages that define the upper closed boundary of the age categories. Default is
 \code{c(25, 35, 45, 55)}, which corresponds to \verb{(0, 25], (25, 35], (35, 45], (45, 55], (55, 65]}
@@ -80,7 +81,9 @@ the models; an error may result.
 }
 \item \code{race}: whether to introduce modeling by racial stratification. \code{TRUE} or \code{FALSE}.
 \item \code{age.limits}: a vector giving the lower and upper limit for the age of interest. Set to
-\code{c(15, 65)} by default. Although the ARTnet data include respondents from age 15 to 65, this
+\code{c(15, 65)} by default. The lower boundary is inclusive, meaning persons may be initialized into
+the model at age 15.0; the upper boundary is exclusive, meaning exit from the population will
+occur on turning 65.0 years. Although the ARTnet data include respondents from age 15 to 65, this
 may be set to restricted values within that range (for example, \code{c(25, 40)}) for a subsetted
 data analysis. The upper boundary may be set up to age 100 (that is, \code{c(15, 100)}), which may
 be used in models where sexual activity ceases before mortality.
