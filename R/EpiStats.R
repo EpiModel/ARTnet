@@ -95,7 +95,7 @@
 #'                             age.limits = c(20, 50),
 #'                             age.breaks = c(24, 34, 44))
 #'
-#' # Use broader age range (to age 100) but with sexual cessation at age 65
+#' # Use broader age range (to age 100) but with sexual cessation at age 66
 #' epistats6 <- build_epistats(geog.lvl = "city",
 #'                             geog.cat = "Atlanta",
 #'                             race = TRUE,
@@ -231,9 +231,9 @@ build_epistats <- function(geog.lvl = NULL,
 
   age.breaks <- unique(sort(c(age.limits[1], age.breaks, age.sexual.cessation, age.limits[2])))
 
-  l <- subset(l, age >= age.limits[1] & age < age.limits[2] &
-                p_age_imp >= age.limits[1] & p_age_imp < age.limits[2])
-  d <- subset(d, age >= age.limits[1] & age < age.limits[2])
+  l <- subset(l, age >= age.limits[1] & age < age.sexual.cessation &
+                p_age_imp >= age.limits[1] & p_age_imp < age.sexual.cessation)
+  d <- subset(d, age >= age.limits[1] & age < age.sexual.cessation)
 
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
@@ -537,7 +537,6 @@ build_epistats <- function(geog.lvl = NULL,
   out$age.limits <- age.limits
   out$age.breaks <- age.breaks
   out$age.grps <- length(age.breaks) - 1
-  out$age.pyramid <- age.pyramid
   out$age.sexual.cessation <- age.sexual.cessation
   out$init.hiv.prev <- init.hiv.prev
   out$time.unit <- time.unit
