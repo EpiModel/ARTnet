@@ -35,9 +35,11 @@
 #'                             age.limits = c(15, 100),
 #'                             age.breaks = c(25, 35, 45, 55, 65),
 #'                             age.sexual.cessation = 65)
-#' netparams2 <- build_netparams(epistats2, smooth.main.dur = TRUE)
+#' netparams2 <- build_netparams(epistats2, smooth.main.dur = TRUE, browser = TRUE)
 #'
-build_netparams <- function(epistats, smooth.main.dur = FALSE, browser = FALSE) {
+build_netparams <- function(epistats,
+                            smooth.main.dur = FALSE,
+                            browser = FALSE) {
 
   if (browser == TRUE) {
     browser()
@@ -61,6 +63,10 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE, browser = FALSE) 
   ## Data ##
   d <- ARTnet.wide
   l <- ARTnet.long
+
+  ## TODO: respecify age.limits to age.limits.data for analyses below
+  ##       then subset by age.limits.data
+  ##       then recalculate the age.breaks based on the age.limits.data
 
   l <- subset(l, age >= age.limits[1] & age <= age.limits[2])
   d <- subset(d, age >= age.limits[1] & age <= age.limits[2])
