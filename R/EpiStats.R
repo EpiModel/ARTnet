@@ -17,7 +17,7 @@
 #'        `c(25, 35, 45, 55)`, which corresponds to `(0, 25], (25, 35], (35, 45], (45, 55], (55, 65]`
 #'        with `age.limits = c(15, 65)`.
 #' @param age.sexual.cessation Age of cessation of sexual activity, while aging process continues
-#'        through the upper age limit. Maximum allowed value of 65.
+#'        through the upper age limit. Maximum allowed value of 66.
 #' @param init.hiv.prev Initial HIV prevalence to be used in epidemic model estimated model, with a
 #'        numerical vector of size 3 corresponding to starting prevalence in three race/ethnic
 #'        groups (Black, Hispanic, and White/Other, respectively). If `init.hiv.prev = NULL`,
@@ -66,7 +66,7 @@
 #'   then this age is also added to the age breaks if it is not explicitly specified.
 #' * `age.sexual.cessation`: a numerical value for the age of cessation of sexual activity. This may
 #'   be by assumption or given data constraints (ARTnet eligibility were through age 65, so the
-#'   maximum value here is 65). This specification is useful for models in which the HIV transmission
+#'   maximum value here is 66). This specification is useful for models in which the HIV transmission
 #'   process stops at a certain age but aging and other demographic features should continue through
 #'   natural mortality.
 #' * `time.unit`: a number between 1 and 30 that specifies time units for ARTnet statistics. Set to
@@ -100,8 +100,8 @@
 #'                             geog.cat = "Atlanta",
 #'                             race = TRUE,
 #'                             age.limits = c(15, 100),
-#'                             age.breaks = c(25, 35, 45, 55, 65),
-#'                             age.sexual.cessation = 65)
+#'                             age.breaks = c(25, 35, 45, 55),
+#'                             age.sexual.cessation = 66)
 #'
 #' @export
 #'
@@ -204,13 +204,17 @@ build_epistats <- function(geog.lvl = NULL,
 
   # Age Processing
 
+  if (length(age.limits) != 2 || age.limits[1] > age.limits[2]) {
+    stop("age.limits must be a vector of length 2, where age.limits[2] > age.limits[1]")
+  }
+
   # Warning if age range is out of allowed range
   flag.ll <- age.limits[1] >= 15 & age.limits[1] <= 100
   flag.ul <- age.limits[2] >= 15 & age.limits[2] <= 100
   flag.lim <- flag.ll * flag.ul
 
   if (flag.lim == 0) {
-    stop("Age range specified in `age.limits` must be between 15 and 100")
+    stop("Age range specified in `age.limits` must be >= 15 and <= 100")
   }
 
   age.limits <- c(min(age.limits), max(age.limits))
@@ -224,9 +228,9 @@ build_epistats <- function(geog.lvl = NULL,
   if (is.null(age.sexual.cessation)) {
     age.sexual.cessation <- age.limits[2]
   }
-  if (age.sexual.cessation > 65) {
-    stop("Maximum allowed age of sexual cessation is 65, corresponding to the upper age eligilibity
-         criteria in ARTnet")
+  if (age.sexual.cessation > 66) {
+    stop("Maximum allowed age of sexual cessation is 66, corresponding to the upper age eligilibity
+         criteria of 65 (inclusive) in ARTnet")
   }
 
   age.breaks <- unique(sort(c(age.limits[1], age.breaks, age.sexual.cessation, age.limits[2])))

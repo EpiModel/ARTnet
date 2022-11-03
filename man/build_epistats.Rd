@@ -34,7 +34,7 @@ exclusive boundary.}
 with \code{age.limits = c(15, 65)}.}
 
 \item{age.sexual.cessation}{Age of cessation of sexual activity, while aging process continues
-through the upper age limit. Maximum allowed value of 65.}
+through the upper age limit. Maximum allowed value of 66.}
 
 \item{init.hiv.prev}{Initial HIV prevalence to be used in epidemic model estimated model, with a
 numerical vector of size 3 corresponding to starting prevalence in three race/ethnic
@@ -93,7 +93,7 @@ there is no need to include the age limit boundaries). If an age of sexual cessa
 then this age is also added to the age breaks if it is not explicitly specified.
 \item \code{age.sexual.cessation}: a numerical value for the age of cessation of sexual activity. This may
 be by assumption or given data constraints (ARTnet eligibility were through age 65, so the
-maximum value here is 65). This specification is useful for models in which the HIV transmission
+maximum value here is 66). This specification is useful for models in which the HIV transmission
 process stops at a certain age but aging and other demographic features should continue through
 natural mortality.
 \item \code{time.unit}: a number between 1 and 30 that specifies time units for ARTnet statistics. Set to
@@ -124,12 +124,12 @@ epistats5 <- build_epistats(geog.lvl = "county",
                             age.limits = c(20, 50),
                             age.breaks = c(24, 34, 44))
 
-# Use broader age range (to age 100) but with sexual cessation at age 65
+# Use broader age range (to age 100) but with sexual cessation at age 66
 epistats6 <- build_epistats(geog.lvl = "city",
                             geog.cat = "Atlanta",
                             race = TRUE,
                             age.limits = c(15, 100),
-                            age.breaks = c(25, 35, 45, 55, 65),
-                            age.sexual.cessation = 65)
+                            age.breaks = c(25, 35, 45, 55),
+                            age.sexual.cessation = 66)
 
 }
