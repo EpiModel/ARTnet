@@ -93,12 +93,12 @@
 #'                             age.breaks = c(24, 34, 44))
 #'
 #' # Use broader age range (to age 100) but with sexual cessation at age 65
-#' epistat6 <- build_epistats(geog.lvl = "city",
-#'                            geog.cat = "Atlanta",
-#'                            race = TRUE,
-#'                            age.limits = c(15, 100),
-#'                            age.breaks = c(25, 35, 45, 55, 65),
-#'                            age.sexual.cessation = 66)
+#' epistats6 <- build_epistats(geog.lvl = "city",
+#'                             geog.cat = "Atlanta",
+#'                             race = TRUE,
+#'                             age.limits = c(15, 100),
+#'                             age.breaks = c(25, 35, 45, 55, 65),
+#'                             age.sexual.cessation = 65)
 #'
 #' @export
 #'
