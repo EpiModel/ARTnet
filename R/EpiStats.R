@@ -9,11 +9,14 @@
 #' @param geog.cat Specifies one or more geographic strata within the level to base ARTnet
 #'        statistics on. If the vector is of length 2+, data from the strata will be combined into
 #'        one analysis.
+#' @param race If `TRUE`, stratify model estimates by race/ethnic grouping.
 #' @param age.limits Upper and lower limit of age range to subset ARTnet data by. Minimum of 15 and
 #'        maximum of 100 allowed.
-#' @param age.breaks Ages that define the upper age categories. Default is `c(25, 35, 45, 55, 65)`,
-#'        which corresponds to `(0, 25], (25, 35], (35, 45], (45, 55], (55, 65], (65, 100]`.
-#' @param race If `TRUE`, stratify model estimates by race/ethnic grouping.
+#' @param age.breaks Ages that define the upper closed boundary of the age categories. Default is
+#'        `c(25, 35, 45, 55)`, which corresponds to `(0, 25], (25, 35], (35, 45], (45, 55], (55, 65]`
+#'        with `age.limits = c(15, 65)`.
+#' @param age.sexual.cessation Age of cessation of sexual activity, while aging process continues
+#'        through the upper age limit. Maximum allowed value of 65.
 #' @param init.hiv.prev Initial HIV prevalence to be used in epidemic model estimated model, with a
 #'        numerical vector of size 3 corresponding to starting prevalence in three race/ethnic
 #'        groups (Black, Hispanic, and White/Other, respectively). If `init.hiv.prev = NULL`,
@@ -50,9 +53,19 @@
 #'     - `region`: `"1"` (Northeast), `"2"` (Midwest), `"3"` (South), `"4"` (North)
 #' * `race`: whether to introduce modeling by racial stratification. `TRUE` or `FALSE`.
 #' * `age.limits`: a vector giving the lower and upper limit for the age of interest. Set to
-#'   `c(15, 65)` by default.
+#'   `c(15, 65)` by default. Although the ARTnet data include respondents from age 15 to 65, this
+#'   may be set to restricted values within that range (for example, `c(25, 40)`) for a subsetted
+#'   data analysis. The upper boundary may be set up to age 100 (that is, `c(15, 100)`), which may
+#'   be used in models where sexual activity ceases before mortality.
 #' * `age.breaks`: a vector giving the upper age breaks to categorize data by age. Must be within
-#'   the bounds specified by `age.limits`.
+#'   the bounds specified by `age.limits`. These should be the interior age breaks only (that is,
+#'   there is no need to include the age limit boundaries). If an age of sexual cessation is added,
+#'   then this age is also added to the age breaks if it is not explicitly specified.
+#' * `age.sexual.cessation`: a numerical value for the age of cessation of sexual activity. This may
+#'   be by assumption or given data constraints (ARTnet eligibility were through age 65, so the
+#'   maximum value here is 65). This specification is useful for models in which the HIV transmission
+#'   process stops at a certain age but aging and other demographic features should continue through
+#'   natural mortality.
 #' * `time.unit`: a number between 1 and 30 that specifies time units for ARTnet statistics. Set to
 #'   `7` by default.
 #'
@@ -68,10 +81,9 @@
 #'
 #' # Default age stratification, multiple states
 #' epistats3 <- build_epistats(geog.lvl = "state", geog.cat = c("ME", "NH", "VT"))
-
+#'
 #' # No race stratification
-#' epistats4 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
-#'                             race = FALSE)
+#' epistats4 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE)
 #'
 #' # Age and race stratification, for the municipality (not metro) of New York City
 #' # geog.cat values are FIPS codes for the 5 boroughs of NYC
@@ -80,6 +92,14 @@
 #'                             age.limits = c(20, 50),
 #'                             age.breaks = c(24, 34, 44))
 #'
+#' # Use broader age range (to age 100) but with sexual cessation at age 65
+#' epistat6 <- build_epistats(geog.lvl = "city",
+#'                            geog.cat = "Atlanta",
+#'                            race = TRUE,
+#'                            age.limits = c(15, 100),
+#'                            age.breaks = c(25, 35, 45, 55, 65),
+#'                            age.sexual.cessation = 66)
+#'
 #' @export
 #'
 build_epistats <- function(geog.lvl = NULL,
@@ -87,7 +107,7 @@ build_epistats <- function(geog.lvl = NULL,
                            race = TRUE,
                            age.limits = c(15, 65),
                            age.breaks = c(25, 35, 45, 55),
-                           age.sexual.cessation = 65,
+                           age.sexual.cessation = NULL,
                            init.hiv.prev = NULL,
                            time.unit = 7,
                            browser = FALSE) {
@@ -201,8 +221,15 @@ build_epistats <- function(geog.lvl = NULL,
     stop("Age breaks must be between specified age limits")
   }
 
-  age.breaks <- unique(sort(c(age.limits[1], age.breaks, age.sexual.cessation, age.limits[2])))
+  if (is.null(age.sexual.cessation)) {
+    age.sexual.cessation <- age.limits[2]
+  }
+  if (age.sexual.cessation > 65) {
+    stop("Maximum allowed age of sexual cessation is 65, corresponding to the upper age eligilibity
+         criteria in ARTnet")
+  }
 
+  age.breaks <- unique(sort(c(age.limits[1], age.breaks, age.sexual.cessation, age.limits[2])))
 
   l <- subset(l, age >= age.limits[1] & age <= age.limits[2])
   d <- subset(d, age >= age.limits[1] & age <= age.limits[2])
@@ -210,9 +237,9 @@ build_epistats <- function(geog.lvl = NULL,
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
 
-  age.pyramid <- c(table(l$p_age_imp)[1:51] + table(l$age),
-                   table(l$p_age_imp)[-c(1:51)])
-  age.pyramid <-  age.pyramid / sum(age.pyramid)
+  # Currently uniform; TODO: substitute actual age pyramid
+  nAges <- age.limits[2] - age.limits[1]
+  age.pyramid <- rep(1/nAges, nAges)
 
   if (race == TRUE) {
     # Race

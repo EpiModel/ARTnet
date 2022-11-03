@@ -10,7 +10,7 @@ build_epistats(
   race = TRUE,
   age.limits = c(15, 65),
   age.breaks = c(25, 35, 45, 55),
-  age.ces = 65,
+  age.sexual.cessation = NULL,
   init.hiv.prev = NULL,
   time.unit = 7,
   browser = FALSE
@@ -28,8 +28,12 @@ one analysis.}
 \item{age.limits}{Upper and lower limit of age range to subset ARTnet data by. Minimum of 15 and
 maximum of 100 allowed.}
 
-\item{age.breaks}{Ages that define the upper age categories. Default is \code{c(25, 35, 45, 55, 65)},
-which corresponds to \verb{(0, 25], (25, 35], (35, 45], (45, 55], (55, 65], (65, 100]}.}
+\item{age.breaks}{Ages that define the upper closed boundary of the age categories. Default is
+\code{c(25, 35, 45, 55)}, which corresponds to \verb{(0, 25], (25, 35], (35, 45], (45, 55], (55, 65]}
+with \code{age.limits = c(15, 65)}.}
+
+\item{age.sexual.cessation}{Age of cessation of sexual activity, while aging process continues
+through the upper age limit. Maximum allowed value of 65.}
 
 \item{init.hiv.prev}{Initial HIV prevalence to be used in epidemic model estimated model, with a
 numerical vector of size 3 corresponding to starting prevalence in three race/ethnic
@@ -76,9 +80,19 @@ the models; an error may result.
 }
 \item \code{race}: whether to introduce modeling by racial stratification. \code{TRUE} or \code{FALSE}.
 \item \code{age.limits}: a vector giving the lower and upper limit for the age of interest. Set to
-\code{c(15, 65)} by default.
+\code{c(15, 65)} by default. Although the ARTnet data include respondents from age 15 to 65, this
+may be set to restricted values within that range (for example, \code{c(25, 40)}) for a subsetted
+data analysis. The upper boundary may be set up to age 100 (that is, \code{c(15, 100)}), which may
+be used in models where sexual activity ceases before mortality.
 \item \code{age.breaks}: a vector giving the upper age breaks to categorize data by age. Must be within
-the bounds specified by \code{age.limits}.
+the bounds specified by \code{age.limits}. These should be the interior age breaks only (that is,
+there is no need to include the age limit boundaries). If an age of sexual cessation is added,
+then this age is also added to the age breaks if it is not explicitly specified.
+\item \code{age.sexual.cessation}: a numerical value for the age of cessation of sexual activity. This may
+be by assumption or given data constraints (ARTnet eligibility were through age 65, so the
+maximum value here is 65). This specification is useful for models in which the HIV transmission
+process stops at a certain age but aging and other demographic features should continue through
+natural mortality.
 \item \code{time.unit}: a number between 1 and 30 that specifies time units for ARTnet statistics. Set to
 \code{7} by default.
 }
@@ -91,19 +105,14 @@ epistats1 <- build_epistats(geog.lvl = "city",
                             age.limits = c(20, 50),
                             age.breaks = c(24, 34, 44))
 
-
-epistats.new <- build_epistats(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
-           age.limits = c(15, 65), age.breaks = c(25, 35, 45, 55),
-           age.ces = 65, init.hiv.prev = NULL, time.unit = 7, browser = FALSE)
-
 # Default age stratification
 epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "WA")
 
 # Default age stratification, multiple states
 epistats3 <- build_epistats(geog.lvl = "state", geog.cat = c("ME", "NH", "VT"))
+
 # No race stratification
-epistats4 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
-                            race = FALSE)
+epistats4 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE)
 
 # Age and race stratification, for the municipality (not metro) of New York City
 # geog.cat values are FIPS codes for the 5 boroughs of NYC
@@ -111,5 +120,13 @@ epistats5 <- build_epistats(geog.lvl = "county",
                             geog.cat = c(36005, 36047, 36061, 36081, 36085),
                             age.limits = c(20, 50),
                             age.breaks = c(24, 34, 44))
+
+# Use broader age range (to age 100) but with sexual cessation at age 65
+epistat6 <- build_epistats(geog.lvl = "city",
+                           geog.cat = "Atlanta",
+                           race = TRUE,
+                           age.limits = c(15, 100),
+                           age.breaks = c(25, 35, 45, 55, 65),
+                           age.sexual.cessation = 66)
 
 }
