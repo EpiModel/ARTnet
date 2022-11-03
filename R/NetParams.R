@@ -7,6 +7,7 @@
 #' @param epistats Output from [`build_epistats`].
 #' @param smooth.main.dur If `TRUE`, function averages the main sexual partnership durations for
 #'        oldest and second oldest age groups.
+#' @param browser If `TRUE`, run `build_netparams` in interactive browser mode.
 #'
 #' @details
 #' `build_netparams` is a helper function that constructs the necessary network parameters for use
@@ -36,7 +37,11 @@
 #'                             age.sexual.cessation = 65)
 #' netparams2 <- build_netparams(epistats2, smooth.main.dur = TRUE)
 #'
-build_netparams <- function(epistats, smooth.main.dur = FALSE) {
+build_netparams <- function(epistats, smooth.main.dur = FALSE, browser = FALSE) {
+
+  if (browser == TRUE) {
+    browser()
+  }
 
   ## Inputs ##
   geog.lvl <- epistats$geog.lvl

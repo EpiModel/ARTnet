@@ -4,13 +4,15 @@
 \alias{build_netparams}
 \title{Calculate Individual-Level Network Parameters}
 \usage{
-build_netparams(epistats, smooth.main.dur = FALSE)
+build_netparams(epistats, smooth.main.dur = FALSE, browser = FALSE)
 }
 \arguments{
 \item{epistats}{Output from \code{\link{build_epistats}}.}
 
 \item{smooth.main.dur}{If \code{TRUE}, function averages the main sexual partnership durations for
 oldest and second oldest age groups.}
+
+\item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
 }
 \description{
 Builds statistical models predicting mean degree, mixing, and duration of sexual
