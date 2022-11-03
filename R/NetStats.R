@@ -52,7 +52,7 @@ build_netstats <- function(epistats, netparams,
   geog.lvl <- epistats$geog.lvl
   race <- epistats$race
   age.limits <- epistats$age.limits
-  age.pyramid <- epistats$age.pyramid
+
   time.unit <- epistats$time.unit
 
 
@@ -124,7 +124,11 @@ build_netstats <- function(epistats, netparams,
   out$attr <- list()
 
   # age attributes
-  attr_age <- sample(x=as.numeric(names(age.pyramid)), 
+  # Currently uniform; TODO: substitute actual age pyramid
+  nAges <- age.limits[2] - age.limits[1]
+  age.pyramid <- rep(1/nAges, nAges)
+
+  attr_age <- sample(x=as.numeric(names(age.pyramid)),
                      size=num, prob = age.pyramid, replace = TRUE)
   # attr_age <- runif(num, min = min(ages),
   #                   max = max(ages) + (364 / time.unit - 1) / (364 / time.unit))
@@ -365,7 +369,7 @@ build_netstats <- function(epistats, netparams,
   nodefactor_age.grp <- table(out$attr$age.grp) * netparams$inst$nf.age.grp
   out$inst$nodefactor_age.grp <- unname(nodefactor_age.grp)
   out$ins$nodefactor_age.grp[6] <- 0
-  
+
   # nodematch("age.grp") ---
   nodematch_age.grp <- nodefactor_age.grp / 2 * netparams$inst$nm.age.grp
   out$inst$nodematch_age.grp <- unname(nodematch_age.grp)

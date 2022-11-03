@@ -238,9 +238,6 @@ build_epistats <- function(geog.lvl = NULL,
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
 
-  # Currently uniform; TODO: substitute actual age pyramid
-  nAges <- age.limits[2] - age.limits[1]
-  age.pyramid <- rep(1/nAges, nAges)
 
   if (race == TRUE) {
     # Race
