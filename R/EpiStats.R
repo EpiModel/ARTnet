@@ -201,9 +201,7 @@ build_epistats <- function(geog.lvl = NULL,
   }
 
 
-
-  # Age Processing
-
+  ## Age Processing ##
   if (length(age.limits) != 2 || age.limits[1] > age.limits[2]) {
     stop("age.limits must be a vector of length 2, where age.limits[2] > age.limits[1]")
   }
@@ -212,19 +210,17 @@ build_epistats <- function(geog.lvl = NULL,
   flag.ll <- age.limits[1] >= 15 & age.limits[1] <= 100
   flag.ul <- age.limits[2] >= 15 & age.limits[2] <= 100
   flag.lim <- flag.ll * flag.ul
-
   if (flag.lim == 0) {
     stop("Age range specified in `age.limits` must be >= 15 and <= 100")
   }
 
-  age.limits <- c(min(age.limits), max(age.limits))
-
+  # Warning if age breaks fall outside age limits
   flag.bks <- prod(age.breaks < age.limits[2] & age.breaks >= age.limits[1])
-
   if (flag.bks == 0) {
     stop("Age breaks must be between specified age limits")
   }
 
+  # Set default age.sexual.cessation and error if > ARTnet data
   if (is.null(age.sexual.cessation)) {
     age.sexual.cessation <- age.limits[2]
   }
@@ -233,18 +229,22 @@ build_epistats <- function(geog.lvl = NULL,
          criteria of 65 (inclusive) in ARTnet")
   }
 
+  # Composite age.breaks are now union of age.limits, age.breaks, and age.sexual.cessation
   age.breaks <- unique(sort(c(age.limits[1], age.breaks, age.sexual.cessation, age.limits[2])))
 
+  # Subset datasets by lower age limit and age.sexual.cessation
+  # Now applies to both index (respondents) and partners for long dataset
   l <- subset(l, age >= age.limits[1] & age < age.sexual.cessation &
                 p_age_imp >= age.limits[1] & p_age_imp < age.sexual.cessation)
   d <- subset(d, age >= age.limits[1] & age < age.sexual.cessation)
 
+  # Calculate combine age of index and partners
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
 
 
+  ## Race/ethnicity ##
   if (race == TRUE) {
-    # Race
     d$race.cat3 <- rep(NA, nrow(d))
     d$race.cat3[d$race.cat == "black"] <- 1
     d$race.cat3[d$race.cat == "hispanic"] <- 2
@@ -283,8 +283,7 @@ build_epistats <- function(geog.lvl = NULL,
     l <- select(l, -c(race.cat3, p_race.cat3))
   }
 
-
-  # HIV
+  ## HIV diagnosed status of index and partners ##
   l$p_hiv2 <- ifelse(l$p_hiv == 1, 1, 0)
 
   hiv.combo <- rep(NA, nrow(l))
@@ -296,22 +295,20 @@ build_epistats <- function(geog.lvl = NULL,
   hiv.combo[l$hiv2 == 1 & l$p_hiv == 2] <- 5
   l$hiv.concord.pos <- ifelse(hiv.combo == 2, 1, 0)
 
-  # PrEP
+  ## PrEP ##
   d$prep <- ifelse(d$artnetPREP_CURRENT == 0 | is.na(d$artnetPREP_CURRENT), 0, 1)
 
   dlim <- select(d, c(AMIS_ID, survey.year, prep))
   l <- left_join(l, dlim, by = "AMIS_ID")
 
-  # Time unit processing
+  ## Time unit processing ##
 
-  ## Set time.unit limits from 1 to 30
-
+  # Set time.unit limits from 1 to 30
   if (time.unit < 1 || time.unit > 30) {
-    stop("Time unit must be between 1 and 30")
+    stop("time.unit must be between 1 and 30")
   }
 
-  ## Create time-based ARTnet statistics using time.unit
-
+  # Scale time-based ARTnet data by time.unit
   l$duration.time <- l$duration * 7 / time.unit
   l$anal.acts.time <- l$anal.acts.week * time.unit / 7
   l$anal.acts.time.cp <- l$anal.acts.week.cp * time.unit / 7
