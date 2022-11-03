@@ -10,8 +10,9 @@
 #'        statistics on. If the vector is of length 2+, data from the strata will be combined into
 #'        one analysis.
 #' @param race If `TRUE`, stratify model estimates by race/ethnic grouping.
-#' @param age.limits Upper and lower limit of age range to subset ARTnet data by. Minimum of 15 and
-#'        maximum of 100 allowed.
+#' @param age.limits Lower and upper limit of age range to include in model. Minimum of 15 and
+#'        maximum of 100 allowed. Lower limit is inclusive boundary and upper boundary is
+#'        exclusive boundary.
 #' @param age.breaks Ages that define the upper closed boundary of the age categories. Default is
 #'        `c(25, 35, 45, 55)`, which corresponds to `(0, 25], (25, 35], (35, 45], (45, 55], (55, 65]`
 #'        with `age.limits = c(15, 65)`.
@@ -53,7 +54,9 @@
 #'     - `region`: `"1"` (Northeast), `"2"` (Midwest), `"3"` (South), `"4"` (North)
 #' * `race`: whether to introduce modeling by racial stratification. `TRUE` or `FALSE`.
 #' * `age.limits`: a vector giving the lower and upper limit for the age of interest. Set to
-#'   `c(15, 65)` by default. Although the ARTnet data include respondents from age 15 to 65, this
+#'   `c(15, 65)` by default. The lower boundary is inclusive, meaning persons may be initialized into
+#'   the model at age 15.0; the upper boundary is exclusive, meaning exit from the population will
+#'   occur on turning 65.0 years. Although the ARTnet data include respondents from age 15 to 65, this
 #'   may be set to restricted values within that range (for example, `c(25, 40)`) for a subsetted
 #'   data analysis. The upper boundary may be set up to age 100 (that is, `c(15, 100)`), which may
 #'   be used in models where sexual activity ceases before mortality.
@@ -201,9 +204,6 @@ build_epistats <- function(geog.lvl = NULL,
 
   # Age Processing
 
-  # Subset data by selected age range
-
-
   # Warning if age range is out of allowed range
   flag.ll <- age.limits[1] >= 15 & age.limits[1] <= 100
   flag.ul <- age.limits[2] >= 15 & age.limits[2] <= 100
@@ -231,8 +231,9 @@ build_epistats <- function(geog.lvl = NULL,
 
   age.breaks <- unique(sort(c(age.limits[1], age.breaks, age.sexual.cessation, age.limits[2])))
 
-  l <- subset(l, age >= age.limits[1] & age <= age.limits[2])
-  d <- subset(d, age >= age.limits[1] & age <= age.limits[2])
+  l <- subset(l, age >= age.limits[1] & age < age.limits[2] &
+                p_age_imp >= age.limits[1] & p_age_imp < age.limits[2])
+  d <- subset(d, age >= age.limits[1] & age < age.limits[2])
 
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
