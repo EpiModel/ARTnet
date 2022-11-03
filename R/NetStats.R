@@ -83,7 +83,7 @@ build_netstats <- function(epistats, netparams,
   num.W <- out$demog$num.W <- num - num.B - num.H
 
   ## Age-sex-specific mortality rates (B, H, W)
-  #  in 1-year age decrements starting with age 15
+  #  in 1-year age decrements starting with age 1
   #  from CDC NCHS Underlying Cause of Death database (for 2020)
   ages <- out$demog$ages <- age.limits[1]:age.limits[2]
   asmr.B <- c(0.00079, 0.00046, 0.00030, 0.00025, 0.00024, 0.00025, 0.00019,
