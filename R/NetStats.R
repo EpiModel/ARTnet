@@ -418,6 +418,42 @@ build_netstats <- function(epistats, netparams,
   return(out)
 }
 
+
+#' Update mortality rates
+#'
+#' @description Replaces the default age- and sex-specific mortality rates used
+#'              in \code{\link{build_netstats}} with user-specified values.
+#'
+#' @param netstats Output from \code{\link{build_netstats}}.
+#' @param asmr_df A data frame with three columns (Race, Age, and DeathRate)
+#'                specifying the desired mortality rates per time unit for each
+#'                combination of race (Black, Hispanic, White) and age
+#'                (1, 2, 3, ... 100).
+#'
+#' @details
+#' \code{update_asmr} takes the output from \code{\link{build_netstats}} and
+#' updates its mortality rates with the values specified in the input parameter
+#' \code{asmr_df}. Mortality rates should be provided for each combination of
+#' race (Black, Hispanic, White) and age (1, 2, 3, ... 100), for a total of 300
+#' rates. All input mortality rates must be non-NA, numeric, and between 0 and
+#' 1 (inclusive). The maximum mortality rate for each race must be 1,
+#' representing deterministic departure from the network at that age.
+#' \code{update_asmr} does not perform time unit conversions; the input
+#' mortality rates should be pre-converted by the user to match
+#' the \code{time.unit} used in \code{\link{build_netstats}}.
+#'
+#' @export
+#'
+#' @examples
+#' epistats  <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta",
+#'                             race = TRUE)
+#' netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
+#' netstats  <- build_netstats(epistats, netparams)
+#' asmr_df   <- data.frame(Race = rep(c("Black", "Hispanic", "White"),
+#'                                    each = 100), Age = rep(1:100,3),
+#'                         DeathRate = rep(c(runif(99), 1), 3))
+#' netstats  <- update_asmr(netstats, asmr_df)
+
 update_asmr <- function(netstats, asmr_df) {
 
   #Check that all input mortality rates are reasonable values
