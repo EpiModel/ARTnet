@@ -187,7 +187,8 @@ build_netstats <- function(epistats, netparams,
   out$attr$deg.tot <- attr_deg.tot
 
   # risk group
-  attr_risk.grp <- apportion_lr(num, 1:5, rep(0.2, 5), shuffled = TRUE)
+  nquants <- length(netparams$inst$nf.risk.grp)
+  attr_risk.grp <- apportion_lr(num, 1:nquants, rep(1/nquants, nquants), shuffled = TRUE)
   out$attr$risk.grp <- attr_risk.grp
 
   # role class
