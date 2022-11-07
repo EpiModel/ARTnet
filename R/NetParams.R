@@ -7,6 +7,8 @@
 #' @param epistats Output from [`build_epistats`].
 #' @param smooth.main.dur If `TRUE`, function averages the main sexual partnership durations for
 #'        oldest and second oldest age groups.
+#' @param oo.nquants Number of quantiles to split the one-off partnership risk distribution (count
+#'        of one-off partners per unit time).
 #' @param browser If `TRUE`, run `build_netparams` in interactive browser mode.
 #'
 #' @details
@@ -39,6 +41,7 @@
 #'
 build_netparams <- function(epistats,
                             smooth.main.dur = FALSE,
+                            oo.nquants = 5,
                             browser = FALSE) {
 
   if (browser == TRUE) {
@@ -1025,7 +1028,7 @@ build_netparams <- function(epistats,
   }
   wt.rate <- d$rate.oo.part * wt
 
-  nquants <- 5
+  nquants <- oo.nquants
   oo.quants <- rep(NA, nquants)
   sr <- sort(wt.rate)
   qsize <- floor(length(sr) / nquants)
