@@ -53,6 +53,7 @@ build_netparams <- function(epistats,
   race <- epistats$race
   age.limits <- epistats$age.limits
   age.breaks <- epistats$age.breaks
+  age.sexual.cessation <- epistats$age.sexual.cessation
   age.grps <- epistats$age.grps
   time.unit <- epistats$time.unit
 
@@ -67,12 +68,11 @@ build_netparams <- function(epistats,
   d <- ARTnet.wide
   l <- ARTnet.long
 
-  ## TODO: respecify age.limits to age.limits.data for analyses below
-  ##       then subset by age.limits.data
-  ##       then recalculate the age.breaks based on the age.limits.data
-
-  l <- subset(l, age >= age.limits[1] & age <= age.limits[2])
-  d <- subset(d, age >= age.limits[1] & age <= age.limits[2])
+  # Subset datasets by lower age limit and age.sexual.cessation
+  # Now applies to both index (respondents) and partners for long dataset
+  l <- subset(l, age >= age.limits[1] & age < age.sexual.cessation &
+                p_age_imp >= age.limits[1] & p_age_imp < age.sexual.cessation)
+  d <- subset(d, age >= age.limits[1] & age < age.sexual.cessation)
 
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
@@ -436,7 +436,6 @@ build_netparams <- function(epistats,
   # overall
   durs.main <- lmain %>%
     filter(RAI == 1 | IAI == 1) %>%
-    filter(index.age.grp < 6) %>%
     filter(ongoing2 == 1) %>%
     summarise(mean.dur = mean(duration.time, na.rm = TRUE),
               median.dur = median(duration.time, na.rm = TRUE)) %>%
@@ -446,7 +445,6 @@ build_netparams <- function(epistats,
   if (!is.null(geog.lvl)) {
     durs.main.geo <- lmain %>%
       filter(RAI == 1 | IAI == 1) %>%
-      filter(index.age.grp < 6) %>%
       filter(ongoing2 == 1) %>%
       filter(geogYN == 1) %>%
       summarise(mean.dur = mean(duration.time, na.rm = TRUE),
@@ -472,10 +470,8 @@ build_netparams <- function(epistats,
   # first, non-matched by age group
   durs.main.nonmatch <- lmain %>%
     filter(RAI == 1 | IAI == 1) %>%
-    filter(index.age.grp < 6) %>%
     filter(ongoing2 == 1) %>%
     filter(same.age.grp == 0) %>%
-    # group_by(index.age.grp) %>%
     summarise(mean.dur = mean(duration.time, na.rm = TRUE),
               median.dur = median(duration.time, na.rm = TRUE)) %>%
     as.data.frame()
@@ -484,7 +480,6 @@ build_netparams <- function(epistats,
   # then, matched within age-groups
   durs.main.matched <- lmain %>%
     filter(RAI == 1 | IAI == 1) %>%
-    filter(index.age.grp < 6) %>%
     filter(ongoing2 == 1) %>%
     filter(same.age.grp == 1) %>%
     group_by(index.age.grp) %>%
@@ -764,7 +759,6 @@ build_netparams <- function(epistats,
   # overall
   durs.casl <- lcasl %>%
     filter(RAI == 1 | IAI == 1) %>%
-    filter(index.age.grp < 6) %>%
     filter(ongoing2 == 1) %>%
     summarise(mean.dur = mean(duration.time, na.rm = TRUE),
               median.dur = median(duration.time, na.rm = TRUE)) %>%
@@ -774,7 +768,6 @@ build_netparams <- function(epistats,
   if (!is.null(geog.lvl)) {
     durs.casl.geo <- lcasl %>%
       filter(RAI == 1 | IAI == 1) %>%
-      filter(index.age.grp < 6) %>%
       filter(ongoing2 == 1) %>%
       filter(geogYN == 1) %>%
       summarise(mean.dur = mean(duration.time, na.rm = TRUE),
@@ -800,7 +793,6 @@ build_netparams <- function(epistats,
   # first, non-matched by age group
   durs.casl.nonmatch <- lcasl %>%
     filter(RAI == 1 | IAI == 1) %>%
-    filter(index.age.grp < 6) %>%
     filter(ongoing2 == 1) %>%
     filter(same.age.grp == 0) %>%
     # group_by(index.age.grp) %>%
@@ -812,7 +804,6 @@ build_netparams <- function(epistats,
   # then, matched within age-groups
   durs.casl.matched <- lcasl %>%
     filter(RAI == 1 | IAI == 1) %>%
-    filter(index.age.grp < 6) %>%
     filter(same.age.grp == 1) %>%
     filter(ongoing2 == 1) %>%
     group_by(index.age.grp) %>%
