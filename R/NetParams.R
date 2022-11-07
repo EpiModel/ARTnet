@@ -286,7 +286,7 @@ build_netparams <- function(epistats,
   ## nodefactor("age.grp") ----
 
   d$age.grp <- cut(d$age, age.breaks, labels = FALSE,
-                   right  = FALSE, include.lower = FALSE)
+                   right  = FALSE, include.lowest = FALSE)
 
   if (is.null(geog.lvl)) {
     mod <- glm(deg.main ~ + age.grp + sqrt(age.grp),
