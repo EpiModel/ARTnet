@@ -63,6 +63,12 @@ build_netstats <- function(epistats, netparams,
 
   time.unit <- epistats$time.unit
 
+  if (epistats$age.limits[2] > epistats$age.sexual.cessation) {
+    sex.cess.mod <- TRUE
+  } else {
+    sex.cess.mod <- FALSE
+  }
+
 
   # Demographic Initialization ----------------------------------------------
 
@@ -149,24 +155,36 @@ build_netstats <- function(epistats, netparams,
   attr_age.grp <- cut(attr_age, age.breaks, labels = FALSE, right = FALSE, include.lowest = FALSE)
   out$attr$age.grp <- attr_age.grp
 
+  # sexually active attribute
+  attr_active.sex <- rep(1, num)
+  if (sex.cess.mod == TRUE) {
+    attr_active.sex[attr_age.grp == max(attr_age.grp)] <- 0
+  }
+
   # race attribute
   attr_race <- apportion_lr(num, 1:3, c(num.B / num, num.H / num, num.W / num), shuffled = TRUE)
   out$attr$race <- attr_race
 
   # deg.casl attribute
   attr_deg.casl <- apportion_lr(num, 0:3, netparams$main$deg.casl.dist, shuffled = TRUE)
+  if (sex.cess.mod == TRUE) {
+    attr_deg.casl[attr_active.sex == 0] <- 0
+  }
   out$attr$deg.casl <- attr_deg.casl
-  out$attr$deg.casl[out$attr$age.grp==6] <- 0
 
   # deg main attribute
   attr_deg.main <- apportion_lr(num, 0:2, netparams$casl$deg.main.dist, shuffled = TRUE)
+  if (sex.cess.mod == TRUE) {
+    attr_deg.main[attr_active.sex == 0] <- 0
+  }
   out$attr$deg.main <- attr_deg.main
-  out$attr$deg.main[out$attr$age.grp==6] <- 0
 
   # deg tot 3 attribute
   attr_deg.tot <- apportion_lr(num, 0:3, netparams$inst$deg.tot.dist, shuffled = TRUE)
+  if (sex.cess.mod == TRUE) {
+    attr_deg.tot[attr_active.sex == 0] <- 0
+  }
   out$attr$deg.tot <- attr_deg.tot
-  out$attr$deg.tot[out$attr$age.grp==6] <- 0
 
   # risk group
   attr_risk.grp <- apportion_lr(num, 1:5, rep(0.2, 5), shuffled = TRUE)
@@ -245,13 +263,14 @@ build_netstats <- function(epistats, netparams,
 
   # nodefactor("age.grp") ---
   nodefactor_age.grp <- table(out$attr$age.grp) * netparams$main$nf.age.grp
+  if (sex.cess.mod == TRUE) {
+    nodefactor_age.grp[length(nodefactor_age.grp)] <- 0
+  }
   out$main$nodefactor_age.grp <- unname(nodefactor_age.grp)
-  out$main$nodefactor_age.grp[6] <- 0
 
   # nodematch("age.grp") ---
   nodematch_age.grp <- nodefactor_age.grp / 2 * netparams$main$nm.age.grp
   out$main$nodematch_age.grp <- unname(nodematch_age.grp)
-  out$main$nodematch_age.grp[6] <- 0
 
   # absdiff("age") ---
   absdiff_age <- out$main$edges * netparams$main$absdiff.age
@@ -310,13 +329,14 @@ build_netstats <- function(epistats, netparams,
 
   # nodefactor("age.grp") ---
   nodefactor_age.grp <- table(out$attr$age.grp) * netparams$casl$nf.age.grp
+  if (sex.cess.mod == TRUE) {
+    nodefactor_age.grp[length(nodefactor_age.grp)] <- 0
+  }
   out$casl$nodefactor_age.grp <- unname(nodefactor_age.grp)
-  out$casl$nodefactor_age.grp[6] <- 0
 
   # nodematch("age.grp") ---
   nodematch_age.grp <- nodefactor_age.grp / 2 * netparams$casl$nm.age.grp
   out$casl$nodematch_age.grp <- unname(nodematch_age.grp)
-  out$casl$nodematch_age.grp[6] <- 0
 
   # absdiff("age") ---
   absdiff_age <- out$casl$edges * netparams$casl$absdiff.age
@@ -374,13 +394,14 @@ build_netstats <- function(epistats, netparams,
 
   # nodefactor("age.grp") ---
   nodefactor_age.grp <- table(out$attr$age.grp) * netparams$inst$nf.age.grp
+  if (sex.cess.mod == TRUE) {
+    nodefactor_age.grp[length(nodefactor_age.grp)] <- 0
+  }
   out$inst$nodefactor_age.grp <- unname(nodefactor_age.grp)
-  out$ins$nodefactor_age.grp[6] <- 0
 
   # nodematch("age.grp") ---
   nodematch_age.grp <- nodefactor_age.grp / 2 * netparams$inst$nm.age.grp
   out$inst$nodematch_age.grp <- unname(nodematch_age.grp)
-  out$inst$nodefactor_age.grp[6] <- 0
 
   # absdiff("age") ---
   absdiff_age <- out$inst$edges * netparams$inst$absdiff.age
@@ -402,7 +423,6 @@ build_netstats <- function(epistats, netparams,
   nodefactor_diag.status <- table(out$attr$diag.status) * netparams$inst$nf.diag.status
   out$inst$nodefactor_diag.status <- unname(nodefactor_diag.status)
 
-  # Return Out
 
   return(out)
 }
