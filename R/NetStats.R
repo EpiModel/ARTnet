@@ -37,9 +37,27 @@
 #' @export
 #'
 #' @examples
+#' # Standard model with default age stratification
 #' epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta")
-#' netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
+#' netparams <- build_netparams(epistats, smooth.main.dur = TRUE)
 #' netstats <- build_netstats(epistats, netparams)
+#'
+#' # Restricted age stratification
+#' epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
+#'                             age.limits = c(20, 50),
+#'                             age.breaks = c(20, 30, 40))
+#' netparams2 <- build_netparams(epistats2, smooth.main.dur = TRUE)
+#' netstats2 <- build_netstats(epistats2, netparams2)
+#'
+#' # Model with sexual cessation age < age limit
+#' epistats3 <- build_epistats(geog.lvl = "city",
+#'                             geog.cat = "Atlanta",
+#'                             race = TRUE,
+#'                             age.limits = c(15, 100),
+#'                             age.breaks = c(25, 35, 45, 55),
+#'                             age.sexual.cessation = 65)
+#' netparams3 <- build_netparams(epistats3, smooth.main.dur = TRUE)
+#' netstats3 <- build_netstats(epistats3, netparams3)
 #'
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,
