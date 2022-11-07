@@ -134,20 +134,19 @@ build_netstats <- function(epistats, netparams,
   # age attributes
   # Currently uniform; TODO: substitute actual age pyramid
   nAges <- age.limits[2] - age.limits[1]
+  age.vals <- age.limits[1]:(age.limits[2] - 1)
   age.pyramid <- rep(1/nAges, nAges)
 
-  attr_age <- sample(x=as.numeric(names(age.pyramid)),
-                     size=num, prob = age.pyramid, replace = TRUE)
-  # attr_age <- runif(num, min = min(ages),
-  #                   max = max(ages) + (364 / time.unit - 1) / (364 / time.unit))
+  attr_age <- sample(x = age.vals, size = num, prob = age.pyramid, replace = TRUE)
+  age_noise <- runif(num)
+  attr_age <- attr_age + age_noise
   out$attr$age <- attr_age
 
   attr_sqrt.age <- sqrt(attr_age)
   out$attr$sqrt.age <- attr_sqrt.age
 
   age.breaks <- out$demog$age.breaks <- epistats$age.breaks
-  attr_age.grp <- cut(attr_age, age.breaks, labels = FALSE,
-                      right = FALSE, include.lowest = FALSE)
+  attr_age.grp <- cut(attr_age, age.breaks, labels = FALSE, right = FALSE, include.lowest = FALSE)
   out$attr$age.grp <- attr_age.grp
 
   # race attribute
