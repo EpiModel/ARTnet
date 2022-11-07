@@ -4,13 +4,21 @@
 \alias{build_netparams}
 \title{Calculate Individual-Level Network Parameters}
 \usage{
-build_netparams(epistats, smooth.main.dur = FALSE, browser = FALSE)
+build_netparams(
+  epistats,
+  smooth.main.dur = FALSE,
+  oo.nquants = 5,
+  browser = FALSE
+)
 }
 \arguments{
 \item{epistats}{Output from \code{\link{build_epistats}}.}
 
 \item{smooth.main.dur}{If \code{TRUE}, function averages the main sexual partnership durations for
 oldest and second oldest age groups.}
+
+\item{oo.nquants}{Number of quantiles to split the one-off partnership risk distribution (count
+of one-off partners per unit time).}
 
 \item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
 }
@@ -29,20 +37,23 @@ groups (as specified by \code{age.breaks} in \code{\link{build_epistats}}). Subs
 done if there are three or more age categories specified.
 }
 \examples{
+# Standard model with default age stratification
+epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta")
+netparams <- build_netparams(epistats, smooth.main.dur = TRUE)
 
-# Example of standard model
-epistats <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = TRUE,
-                           age.limits = c(20, 50),
-                           age.breaks = c(20, 30, 40))
-netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
+# Restricted age stratification
+epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
+                            age.limits = c(20, 50),
+                            age.breaks = c(20, 30, 40))
+netparams2 <- build_netparams(epistats2, smooth.main.dur = TRUE)
 
-# Example of model with sexual cessation age < age limit
-epistats2 <- build_epistats(geog.lvl = "city",
+# Model with sexual cessation age < age limit
+epistats3 <- build_epistats(geog.lvl = "city",
                             geog.cat = "Atlanta",
                             race = TRUE,
                             age.limits = c(15, 100),
-                            age.breaks = c(25, 35, 45, 55, 65),
+                            age.breaks = c(25, 35, 45, 55),
                             age.sexual.cessation = 65)
-netparams2 <- build_netparams(epistats2, smooth.main.dur = TRUE)
+netparams3 <- build_netparams(epistats3, smooth.main.dur = TRUE)
 
 }
