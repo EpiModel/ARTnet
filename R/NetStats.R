@@ -14,6 +14,7 @@
 #' @param race.prop A numerical vector of length 3, containing the proportion of the population with
 #'        each of the three values for the nodal attribute "race" in order: White/Other, Black,
 #'        and Hispanic).
+#' @param browser If `TRUE`, run `build_netparams` in interactive browser mode.
 #'
 #' @details
 #' This function takes output from [`build_epistats`] and [`build_netparams`] to build the relevant
@@ -44,8 +45,12 @@ build_netstats <- function(epistats, netparams,
                            network.size = 10000,
                            expect.mort = 0.0001,
                            edges.avg = FALSE,
-                           race.prop = NULL) {
+                           race.prop = NULL,
+                           browser = FALSE) {
 
+  if (browser == TRUE) {
+    browser()
+  }
 
   ## Data ##
   race.dist <- ARTnetData::race.dist

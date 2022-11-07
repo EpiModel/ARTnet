@@ -10,7 +10,8 @@ build_netstats(
   network.size = 10000,
   expect.mort = 1e-04,
   edges.avg = FALSE,
-  race.prop = NULL
+  race.prop = NULL,
+  browser = FALSE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ of the statistics for edges by race/ethnicity group; if \code{FALSE}, takes the 
 \item{race.prop}{A numerical vector of length 3, containing the proportion of the population with
 each of the three values for the nodal attribute "race" in order: White/Other, Black,
 and Hispanic).}
+
+\item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
 }
 \description{
 Calculates the final target statistics for the network models by applying
