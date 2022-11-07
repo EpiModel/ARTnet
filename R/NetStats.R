@@ -1,34 +1,37 @@
 
 #' Calculate Network Target Statistics
 #'
-#' @description Calculates the final target statistics for the network models by
-#'              applying individual-level network statistics against the population
-#'              size and structure, for use in the EpiModelHIV workflow.
+#' @description Calculates the final target statistics for the network models by applying
+#'              individual-level network statistics against the population size and structure, for
+#'              use in the EpiModelHIV workflow.
 #'
-#' @param epistats Output from \code{\link{build_epistats}}.
-#' @param netparams Output from \code{\link{build_netparams}}.
+#' @param epistats Output from [`build_epistats`].
+#' @param netparams Output from [`build_netparams`].
 #' @param network.size Size of the starting network.
-#' @param expect.mort Expected average mortality level to pass into
-#'        \code{\link{dissolution_coefs}} function.
-#' @param edges.avg Whether degree differences exist along race. TRUE
-#'        or FALSE; default of FALSE.
-#' @param race.prop The proportion of the population with each of the three
-#'        values for the nodal attribute "race" (White.Other, Black, Hispanic).
-#'        This only needs to be supplied if geog.lvl = "county" or if geog.cat
-#'        has length >1; otherwise, the values can be obtained automatically
-#'        from a look-up table. If it is not supplied in either of these cases,
-#'        the function will default to national US values.
+#' @param expect.mort Expected average mortality level to pass into [`dissolution_coefs`] function.
+#' @param edges.avg If `TRUE`, calculates the overall edges target statistics as a weighted average
+#'        of the statistics for edges by race/ethnicity group; if `FALSE`, takes the raw average.
+#' @param race.prop A numerical vector of length 3, containing the proportion of the population with
+#'        each of the three values for the nodal attribute "race" in order: White/Other, Black,
+#'        and Hispanic).
 #'
 #' @details
-#' \code{build_netstats} takes output from \code{\link{build_epistats}} and
-#' \code{\link{build_netparams}} to build the relevant network statistics
-#' that will be used in network estimation using package \link{EpiModel}.
+#' This function takes output from [`build_epistats`] and [`build_netparams`] to build the relevant
+#' population-level network statistics that will be used in network estimation using the [EpiModel]
+#' package.
 #'
-#' The parameter \code{edge.avg} allows a user set the network stated edges
-#' to that estimated in \code{\link{build_netparams}} (divided by 2),
-#' with \code{edges.avg = FALSE}, or, if sample proportions do not match
-#' ARTnet population proportions, set to a weighted racial average
-#' with \code{edges.avg = TRUE}.
+#' The parameter `edge.avg` allows a user specify how the network edges statistics as estimated from
+#' ARTnet with [`build_netparams`] should be calculated. With `edges.avg = FALSE`, the edges count
+#' is the overall mean degree (divided by 2) times the `network.size`. However, this may create model
+#' fitting issues if sample proportions by race/ethnicity in ARTnet do not match the population
+#' proportions (i.e., the overall average may be inconsistent with the weighted average due to
+#' different race denominator sizes). The `edges.avg = TRUE` setting calculates the overall edges as
+#' the sum of mean degrees in each race/ethnicity group (divided by 2) times the size of each group.
+#'
+#' The `race.prop` argument only needs to be specified if the built-in race/ethnicity distribution
+#' data in [`ARTnetData::race.dist`] is not used. This may be the case `geog.lvl = "county"` or if
+#' `geog.cat` has length >1; otherwise, the values can be obtained automatically. If `race.prop` is
+#' not supplied in either of these cases, national US values will be used..
 #'
 #' @export
 #'
@@ -43,7 +46,7 @@ build_netstats <- function(epistats, netparams,
                            edges.avg = FALSE,
                            race.prop = NULL) {
 
-  browser()
+
   ## Data ##
   race.dist <- ARTnetData::race.dist
 
