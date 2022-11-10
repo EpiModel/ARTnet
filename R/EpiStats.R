@@ -238,6 +238,12 @@ build_epistats <- function(geog.lvl = NULL,
                 p_age_imp >= age.limits[1] & p_age_imp < age.sexual.cessation)
   d <- subset(d, age >= age.limits[1] & age < age.sexual.cessation)
 
+  if (age.limits[2] > age.sexual.cessation) {
+    sex.cess.mod <- TRUE
+  } else {
+    sex.cess.mod <- FALSE
+  }
+
   # Calculate combine age of index and partners
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
@@ -536,6 +542,7 @@ build_epistats <- function(geog.lvl = NULL,
   out$age.breaks <- age.breaks
   out$age.grps <- length(age.breaks) - 1
   out$age.sexual.cessation <- age.sexual.cessation
+  out$sex.cess.mod <- sex.cess.mod
   out$init.hiv.prev <- init.hiv.prev
   out$time.unit <- time.unit
   return(out)

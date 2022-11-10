@@ -76,16 +76,11 @@ build_netstats <- function(epistats, netparams,
   ## Inputs ##
   geog.cat <- epistats$geog.cat
   geog.lvl <- epistats$geog.lvl
+  sex.cess.mod <- epistats$sex.cess.mod
   race <- epistats$race
   age.limits <- epistats$age.limits
 
   time.unit <- epistats$time.unit
-
-  if (epistats$age.limits[2] > epistats$age.sexual.cessation) {
-    sex.cess.mod <- TRUE
-  } else {
-    sex.cess.mod <- FALSE
-  }
 
 
   # Demographic Initialization ----------------------------------------------

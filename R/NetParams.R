@@ -57,6 +57,7 @@ build_netparams <- function(epistats,
   age.limits <- epistats$age.limits
   age.breaks <- epistats$age.breaks
   age.sexual.cessation <- epistats$age.sexual.cessation
+  sex.cess.mod <- epistats$sex.cess.mod
   age.grps <- epistats$age.grps
   time.unit <- epistats$time.unit
 
