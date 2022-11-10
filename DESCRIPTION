@@ -17,10 +17,12 @@ Imports:
     dplyr
 Suggests:
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
 RoxygenNote: 7.2.1
 Encoding: UTF-8
 Remotes:
    github::EpiModel/ARTnetData@main
 Roxygen: list(markdown = TRUE)
+Config/testthat/edition: 3
