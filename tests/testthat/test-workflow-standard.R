@@ -15,7 +15,8 @@ epistats <- build_epistats(
   geog.lvl = "city",
   geog.cat = "Atlanta",
   init.hiv.prev = c(0.33, 0.137, 0.084),
-  time.unit = 7
+  time.unit = 7,
+  age.limits = c(15, 65)
 )
 
 netparams <- build_netparams(
@@ -269,7 +270,7 @@ model_inst_dx <- ~edges +
 
 dx_inst <- netdx(
   fit_inst,
-  nsims = 10000,
+  nsims = 50000,
   dynamic = FALSE,
   nwstats.formula = model_inst_dx,
   set.control.ergm = control.simulate.formula(MCMC.burnin = 1e5)
