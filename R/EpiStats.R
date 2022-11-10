@@ -232,6 +232,9 @@ build_epistats <- function(geog.lvl = NULL,
   # Composite age.breaks are now union of age.limits, age.breaks, and age.sexual.cessation
   age.breaks <- unique(sort(c(age.limits[1], age.breaks, age.sexual.cessation, age.limits[2])))
 
+  # p_age_imp initialization for lintr
+  p_age_imp <- NULL
+
   # Subset datasets by lower age limit and age.sexual.cessation
   # Now applies to both index (respondents) and partners for long dataset
   l <- subset(l, age >= age.limits[1] & age < age.sexual.cessation &
@@ -249,7 +252,7 @@ build_epistats <- function(geog.lvl = NULL,
   l$diff.age <- abs(l$age - l$p_age_imp)
 
 
-  ## Race/ethnicity ##
+  ## Race ethnicity ##
   if (race == TRUE) {
     d$race.cat3 <- rep(NA, nrow(d))
     d$race.cat3[d$race.cat == "black"] <- 1

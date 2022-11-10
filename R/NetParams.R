@@ -72,6 +72,9 @@ build_netparams <- function(epistats,
   d <- ARTnet.wide
   l <- ARTnet.long
 
+  # p_age_imp initialization for lintr
+  p_age_imp <- NULL
+
   # Subset datasets by lower age limit and age.sexual.cessation
   # Now applies to both index (respondents) and partners for long dataset
   l <- subset(l, age >= age.limits[1] & age < age.sexual.cessation &
