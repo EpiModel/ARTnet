@@ -208,6 +208,7 @@ build_netstats <- function(epistats, netparams,
   if (sex.cess.mod == TRUE) {
     attr_active.sex[attr_age.grp == max(attr_age.grp)] <- 0
   }
+  out$attr$attr_active.sex <- attr_active.sex
 
   # race attribute
   attr_race <- apportion_lr(num, 1:3, c(num.B / num, num.H / num, num.W / num), shuffled = TRUE)
