@@ -111,6 +111,7 @@ build_netstats <- function(epistats, netparams,
       props <- race.dist[["national"]][, -c(1, 2)] / 100
     }
   }
+  out$demog$props <- props
   num.B <- out$demog$num.B <- round(num * props$Black)
   num.H <- out$demog$num.H <- round(num * props$Hispanic)
   num.W <- out$demog$num.W <- num - num.B - num.H
@@ -172,8 +173,8 @@ build_netstats <- function(epistats, netparams,
 
     out$demog$asmr <- asmr
   } else {
-    asmr.O <- rbind(asmr.B, asmr.H, asmr.W)
-    asmr.O <- colMeans(asmr.O)
+    asmr.O <- props$Black * asmr.B + props$Hispanic * asmr.H +
+      props$White.Other * asmr.W
 
     # transformed to rates by time unit
     trans.asmr <- 1 - (1 - asmr.O)^(1 / (364 / time.unit))
@@ -557,8 +558,10 @@ update_asmr <- function(netstats, asmr_df) {
     asmr <- data.frame(age = 1:100, asmr.B$DeathRate,
                        asmr.H$DeathRate, asmr.W$DeathRate)
   } else {
-    asmr.O <-  rbind(asmr.B$DeathRate, asmr.H$DeathRate, asmr.W$DeathRate)
-    asmr.O <- colMeans(asmr.O, na.rm = TRUE)
+    props <- netstats$demog$props
+    asmr.O <- props$Black * asmr.B$DeathRate +
+      props$Hispanic * asmr.H$DeathRate +
+      props$White.Other * asmr.W$DeathRate
     asmr <- data.frame(age = 1:100, asmr.O, asmr.O, asmr.O)
   }
 
