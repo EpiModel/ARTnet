@@ -98,7 +98,7 @@ Black,96,0.16336
 Black,97,0.16336
 Black,98,0.16336
 Black,99,0.16336
-Black,100,0.16336
+Black,100,1
 Hispanic,1,0.00032
 Hispanic,2,0.00021
 Hispanic,3,0.00018
@@ -198,7 +198,7 @@ Hispanic,96,0.13436
 Hispanic,97,0.13436
 Hispanic,98,0.13436
 Hispanic,99,0.13436
-Hispanic,100,0.13436
+Hispanic,100,1
 White,1,0.00034
 White,2,0.00023
 White,3,0.00019
@@ -298,4 +298,4 @@ White,96,0.16601
 White,97,0.16601
 White,98,0.16601
 White,99,0.16601
-White,100,0.16601
+White,100,1

@@ -35,8 +35,14 @@ epistats  <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta",
                             race = TRUE)
 netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
 netstats  <- build_netstats(epistats, netparams)
+
+# Update mortality rates with random values
 asmr_df   <- data.frame(Race = rep(c("Black", "Hispanic", "White"),
                                    each = 100), Age = rep(1:100,3),
                         DeathRate = rep(c(runif(99), 1), 3))
+netstats  <- update_asmr(netstats, asmr_df)
+
+# Update mortality rates with 2020 NCHS data
+asmr_df   <- read.csv(system.file("2020DeathRates.csv", package =  "ARTnet"))
 netstats  <- update_asmr(netstats, asmr_df)
 }
