@@ -9,6 +9,9 @@
 #' @param netparams Output from [`build_netparams`].
 #' @param network.size Size of the starting network.
 #' @param expect.mort Expected average mortality level to pass into [`dissolution_coefs`] function.
+#' @param age.pyramid Numerical vector of length equal to the length of the age range specified in
+#'        [`build_epistats`], containing probability distribution of each year of age, summing to
+#'        one. If `NULL`, then a uniform distribution is used.
 #' @param edges.avg If `TRUE`, calculates the overall edges target statistics as a weighted average
 #'        of the statistics for edges by race/ethnicity group; if `FALSE`, takes the raw average.
 #' @param race.prop A numerical vector of length 3, containing the proportion of the population with
@@ -62,6 +65,7 @@
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,
                            expect.mort = 0.0001,
+                           age.pyramid = NULL,
                            edges.avg = FALSE,
                            race.prop = NULL,
                            browser = FALSE) {
@@ -185,10 +189,16 @@ build_netstats <- function(epistats, netparams,
   out$attr <- list()
 
   # age attributes
-  # Currently uniform; TODO: substitute actual age pyramid
+  # Currently uniform
   nAges <- age.limits[2] - age.limits[1]
   age.vals <- age.limits[1]:(age.limits[2] - 1)
-  age.pyramid <- rep(1/nAges, nAges)
+  if (!is.null(age.pyramid)) {
+    if (length(age.pyramid) != nAges) {
+      stop("Length of age.pyramid vector must be equal to length of unique age values: ", nAges)
+    }
+  } else {
+    age.pyramid <- rep(1/nAges, nAges)
+  }
 
   attr_age <- sample(x = age.vals, size = num, prob = age.pyramid, replace = TRUE)
   age_noise <- runif(num)

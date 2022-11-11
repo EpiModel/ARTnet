@@ -9,6 +9,7 @@ build_netstats(
   netparams,
   network.size = 10000,
   expect.mort = 1e-04,
+  age.pyramid = NULL,
   edges.avg = FALSE,
   race.prop = NULL,
   browser = FALSE
@@ -22,6 +23,10 @@ build_netstats(
 \item{network.size}{Size of the starting network.}
 
 \item{expect.mort}{Expected average mortality level to pass into \code{\link{dissolution_coefs}} function.}
+
+\item{age.pyramid}{Numerical vector of length equal to the length of the age range specified in
+\code{\link{build_epistats}}, containing probability distribution of each year of age, summing to
+one. If \code{NULL}, then a uniform distribution is used.}
 
 \item{edges.avg}{If \code{TRUE}, calculates the overall edges target statistics as a weighted average
 of the statistics for edges by race/ethnicity group; if \code{FALSE}, takes the raw average.}
