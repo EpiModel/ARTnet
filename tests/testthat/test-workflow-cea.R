@@ -7,7 +7,6 @@
 library("EpiModelHIV")
 library("ARTnet")
 
-ncores <- 1
 networks_size <- 10000
 
 # 0. Initialize Network --------------------------------------------------------
@@ -16,20 +15,36 @@ epistats <- build_epistats(
   geog.cat = "Atlanta",
   init.hiv.prev = c(0.33, 0.137, 0.084),
   time.unit = 7,
-  age.limits = c(15, 65)
+  age.limits = c(15, 100),
+  age.sexual.cessation = 65
 )
 
 netparams <- build_netparams(
   epistats = epistats,
-  smooth.main.dur = TRUE
+  smooth.main.dur = TRUE,
+  cessation.dissolve.edges = TRUE
 )
+
+# Weighted uniform age distribution
+age1 <- rep(1 / length(15:64) * 0.999, length(15:64))
+age2 <- rep(1 / length(65:99) * 0.001, length(65:99))
+age.pyramid <- c(age1, age2)
 
 netstats <- build_netstats(
   epistats,
   netparams,
   expect.mort = 0.000478213,
-  network.size = networks_size
+  age.pyramid = age.pyramid,
+  network.size = networks_size,
 )
+
+table(floor(netstats$attr$age))
+sum(netstats$attr$age >= 65)
+hist(netstats$attr$age)
+
+netstats$main$nodefactor_age.grp
+sum(netstats$main$nodefactor_age.grp) / 2
+netstats$main$edges
 
 num <- netstats$demog$num
 nw <- EpiModel::network_initialize(num)
@@ -80,7 +95,7 @@ fit_main <- netest(
     SAN.nsteps.times = 4,
     MCMC.samplesize = 1e4,
     MCMC.interval = 5e3,
-    parallel = ncores
+    parallel = 1
   ),
   verbose = FALSE
 )
@@ -91,7 +106,7 @@ fit_main <- trim_netest(fit_main)
 # Formula
 model_casl <- ~ edges +
   nodematch("age.grp", diff = TRUE) +
-  nodefactor("age.grp", levels = c(-1, -5)) +
+  nodefactor("age.grp", levels = -5) +
   nodematch("race", diff = FALSE) +
   nodefactor("race", levels = -1) +
   nodefactor("deg.main", levels = -3) +
@@ -103,7 +118,7 @@ model_casl <- ~ edges +
 netstats_casl <- c(
   edges                = netstats$casl$edges,
   nodematch_age.grp    = netstats$casl$nodematch_age.grp,
-  nodefactor_age.grp   = netstats$casl$nodefactor_age.grp[-c(1, 5)],
+  nodefactor_age.grp   = netstats$casl$nodefactor_age.grp[-5],
   nodematch_race       = netstats$casl$nodematch_race_diffF,
   nodefactor_race      = netstats$casl$nodefactor_race[-1],
   nodefactor_deg.main  = netstats$casl$nodefactor_deg.main[-3],
@@ -125,7 +140,7 @@ fit_casl <- netest(
     SAN.nsteps.times = 4,
     MCMC.samplesize = 1e4,
     MCMC.interval = 5e3,
-    parallel = ncores
+    parallel = 1
   ),
   verbose = FALSE
 )
@@ -168,7 +183,7 @@ fit_inst <- netest(
     SAN.nsteps.times = 4,
     MCMC.samplesize = 1e4,
     MCMC.interval = 5e3,
-    parallel = ncores
+    parallel = 1
   ),
   verbose = FALSE
 )
@@ -196,7 +211,7 @@ dx_main <- netdx(
   fit_main,
   nsims = nsims,
   ncores = ncores,
-  nsteps = nsteps * 2,
+  nsteps = nsteps, keep.tedgelist = TRUE,
   nwstats.formula = model_main_dx,
   set.control.ergm = control.simulate.formula(MCMC.burnin = 1e5),
   set.control.tergm = control.simulate.formula.tergm(MCMC.burnin.min = 2e5)
@@ -278,3 +293,6 @@ dx_inst <- netdx(
 
 print(dx_inst)
 plot(dx_inst, sim.lines = TRUE, sim.lwd = 0.1, mean.lwd = 0.5)
+
+nw_main
+get_vertex_attribute(nw_main, "active.sex")
