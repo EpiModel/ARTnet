@@ -1,47 +1,78 @@
 
 #' Calculate Network Target Statistics
 #'
-#' @description Calculates the final target statistics for the network models by
-#'              applying individual-level network statistics against the population
-#'              size and structure, for use in the EpiModelHIV workflow.
+#' @description Calculates the final target statistics for the network models by applying
+#'              individual-level network statistics against the population size and structure, for
+#'              use in the EpiModelHIV workflow.
 #'
-#' @param epistats Output from \code{\link{build_epistats}}.
-#' @param netparams Output from \code{\link{build_netparams}}.
+#' @param epistats Output from [`build_epistats`].
+#' @param netparams Output from [`build_netparams`].
 #' @param network.size Size of the starting network.
-#' @param expect.mort Expected average mortality level to pass into
-#'        \code{\link{dissolution_coefs}} function.
-#' @param edges.avg Whether degree differences exist along race. TRUE
-#'        or FALSE; default of FALSE.
-#' @param race.prop The proportion of the population with each of the three
-#'        values for the nodal attribute "race" (White.Other, Black, Hispanic).
-#'        This only needs to be supplied if geog.lvl = "county" or if geog.cat
-#'        has length >1; otherwise, the values can be obtained automatically
-#'        from a look-up table. If it is not supplied in either of these cases,
-#'        the function will default to national US values.
+#' @param expect.mort Expected average mortality level to pass into [`dissolution_coefs`] function.
+#' @param age.pyramid Numerical vector of length equal to the length of the age range specified in
+#'        [`build_epistats`], containing probability distribution of each year of age, summing to
+#'        one. If `NULL`, then a uniform distribution is used.
+#' @param edges.avg If `TRUE`, calculates the overall edges target statistics as a weighted average
+#'        of the statistics for edges by race/ethnicity group; if `FALSE`, takes the raw average.
+#' @param race.prop A numerical vector of length 3, containing the proportion of the population with
+#'        each of the three values for the nodal attribute "race" in order: White/Other, Black,
+#'        and Hispanic).
+#' @param browser If `TRUE`, run `build_netparams` in interactive browser mode.
 #'
 #' @details
-#' \code{build_netstats} takes output from \code{\link{build_epistats}} and
-#' \code{\link{build_netparams}} to build the relevant network statistics
-#' that will be used in network estimation using package \link{EpiModel}.
+#' This function takes output from [`build_epistats`] and [`build_netparams`] to build the relevant
+#' population-level network statistics that will be used in network estimation using the [EpiModel]
+#' package.
 #'
-#' The parameter \code{edge.avg} allows a user set the network stated edges
-#' to that estimated in \code{\link{build_netparams}} (divided by 2),
-#' with \code{edges.avg = FALSE}, or, if sample proportions do not match
-#' ARTnet population proportions, set to a weighted racial average
-#' with \code{edges.avg = TRUE}.
+#' The parameter `edge.avg` allows a user specify how the network edges statistics as estimated from
+#' ARTnet with [`build_netparams`] should be calculated. With `edges.avg = FALSE`, the edges count
+#' is the overall mean degree (divided by 2) times the `network.size`. However, this may create model
+#' fitting issues if sample proportions by race/ethnicity in ARTnet do not match the population
+#' proportions (i.e., the overall average may be inconsistent with the weighted average due to
+#' different race denominator sizes). The `edges.avg = TRUE` setting calculates the overall edges as
+#' the sum of mean degrees in each race/ethnicity group (divided by 2) times the size of each group.
+#'
+#' The `race.prop` argument only needs to be specified if the built-in race/ethnicity distribution
+#' data in [`ARTnetData::race.dist`] is not used. This may be the case `geog.lvl = "county"` or if
+#' `geog.cat` has length >1; otherwise, the values can be obtained automatically. If `race.prop` is
+#' not supplied in either of these cases, national US values will be used..
 #'
 #' @export
 #'
 #' @examples
+#' # Standard model with default age stratification
 #' epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta")
-#' netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
+#' netparams <- build_netparams(epistats, smooth.main.dur = TRUE)
 #' netstats <- build_netstats(epistats, netparams)
+#'
+#' # Restricted age stratification
+#' epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
+#'                             age.limits = c(20, 50),
+#'                             age.breaks = c(20, 30, 40))
+#' netparams2 <- build_netparams(epistats2, smooth.main.dur = TRUE)
+#' netstats2 <- build_netstats(epistats2, netparams2)
+#'
+#' # Model with sexual cessation age < age limit
+#' epistats3 <- build_epistats(geog.lvl = "city",
+#'                             geog.cat = "Atlanta",
+#'                             race = TRUE,
+#'                             age.limits = c(15, 100),
+#'                             age.breaks = c(25, 35, 45, 55),
+#'                             age.sexual.cessation = 65)
+#' netparams3 <- build_netparams(epistats3, smooth.main.dur = TRUE)
+#' netstats3 <- build_netstats(epistats3, netparams3)
 #'
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,
                            expect.mort = 0.0001,
+                           age.pyramid = NULL,
                            edges.avg = FALSE,
-                           race.prop = NULL) {
+                           race.prop = NULL,
+                           browser = FALSE) {
+
+  if (browser == TRUE) {
+    browser()
+  }
 
   ## Data ##
   race.dist <- ARTnetData::race.dist
@@ -49,8 +80,10 @@ build_netstats <- function(epistats, netparams,
   ## Inputs ##
   geog.cat <- epistats$geog.cat
   geog.lvl <- epistats$geog.lvl
+  sex.cess.mod <- epistats$sex.cess.mod
   race <- epistats$race
   age.limits <- epistats$age.limits
+
   time.unit <- epistats$time.unit
 
 
@@ -85,7 +118,6 @@ build_netstats <- function(epistats, netparams,
   ## Age-sex-specific mortality rates (B, H, W)
   #  in 1-year age decrements starting with age 1
   #  from CDC NCHS Underlying Cause of Death database (for 2020)
-  ages <- out$demog$ages <- age.limits[1]:age.limits[2]
   asmr.B <- c(0.00079, 0.00046, 0.00030, 0.00025, 0.00024, 0.00025, 0.00019,
               0.00019, 0.00021, 0.00020, 0.00026, 0.00026, 0.00038, 0.00056,
               0.00077, 0.00100, 0.00151, 0.00227, 0.00271, 0.00264, 0.00297,
@@ -157,17 +189,35 @@ build_netstats <- function(epistats, netparams,
   out$attr <- list()
 
   # age attributes
-  attr_age <- runif(num, min = min(ages),
-                    max = max(ages) + (364 / time.unit - 1) / (364 / time.unit))
+  # Currently uniform
+  nAges <- age.limits[2] - age.limits[1]
+  age.vals <- age.limits[1]:(age.limits[2] - 1)
+  if (!is.null(age.pyramid)) {
+    if (length(age.pyramid) != nAges) {
+      stop("Length of age.pyramid vector must be equal to length of unique age values: ", nAges)
+    }
+  } else {
+    age.pyramid <- rep(1/nAges, nAges)
+  }
+
+  attr_age <- sample(x = age.vals, size = num, prob = age.pyramid, replace = TRUE)
+  age_noise <- runif(num)
+  attr_age <- attr_age + age_noise
   out$attr$age <- attr_age
 
   attr_sqrt.age <- sqrt(attr_age)
   out$attr$sqrt.age <- attr_sqrt.age
 
   age.breaks <- out$demog$age.breaks <- epistats$age.breaks
-  attr_age.grp <- cut(attr_age, age.breaks, labels = FALSE,
-                      right = FALSE, include.lowest = FALSE)
+  attr_age.grp <- cut(attr_age, age.breaks, labels = FALSE, right = FALSE, include.lowest = FALSE)
   out$attr$age.grp <- attr_age.grp
+
+  # sexually active attribute
+  attr_active.sex <- rep(1, num)
+  if (sex.cess.mod == TRUE) {
+    attr_active.sex[attr_age.grp == max(attr_age.grp)] <- 0
+  }
+  out$attr$active.sex <- attr_active.sex
 
   # race attribute
   attr_race <- apportion_lr(num, 1:3, c(num.B / num, num.H / num, num.W / num), shuffled = TRUE)
@@ -175,18 +225,28 @@ build_netstats <- function(epistats, netparams,
 
   # deg.casl attribute
   attr_deg.casl <- apportion_lr(num, 0:3, netparams$main$deg.casl.dist, shuffled = TRUE)
+  if (sex.cess.mod == TRUE) {
+    attr_deg.casl[attr_active.sex == 0] <- 0
+  }
   out$attr$deg.casl <- attr_deg.casl
 
   # deg main attribute
   attr_deg.main <- apportion_lr(num, 0:2, netparams$casl$deg.main.dist, shuffled = TRUE)
+  if (sex.cess.mod == TRUE) {
+    attr_deg.main[attr_active.sex == 0] <- 0
+  }
   out$attr$deg.main <- attr_deg.main
 
   # deg tot 3 attribute
   attr_deg.tot <- apportion_lr(num, 0:3, netparams$inst$deg.tot.dist, shuffled = TRUE)
+  if (sex.cess.mod == TRUE) {
+    attr_deg.tot[attr_active.sex == 0] <- 0
+  }
   out$attr$deg.tot <- attr_deg.tot
 
   # risk group
-  attr_risk.grp <- apportion_lr(num, 1:5, rep(0.2, 5), shuffled = TRUE)
+  nquants <- length(netparams$inst$nf.risk.grp)
+  attr_risk.grp <- apportion_lr(num, 1:nquants, rep(1/nquants, nquants), shuffled = TRUE)
   out$attr$risk.grp <- attr_risk.grp
 
   # role class
@@ -262,6 +322,9 @@ build_netstats <- function(epistats, netparams,
 
   # nodefactor("age.grp") ---
   nodefactor_age.grp <- table(out$attr$age.grp) * netparams$main$nf.age.grp
+  if (sex.cess.mod == TRUE) {
+    nodefactor_age.grp[length(nodefactor_age.grp)] <- 0
+  }
   out$main$nodefactor_age.grp <- unname(nodefactor_age.grp)
 
   # nodematch("age.grp") ---
@@ -325,6 +388,9 @@ build_netstats <- function(epistats, netparams,
 
   # nodefactor("age.grp") ---
   nodefactor_age.grp <- table(out$attr$age.grp) * netparams$casl$nf.age.grp
+  if (sex.cess.mod == TRUE) {
+    nodefactor_age.grp[length(nodefactor_age.grp)] <- 0
+  }
   out$casl$nodefactor_age.grp <- unname(nodefactor_age.grp)
 
   # nodematch("age.grp") ---
@@ -387,6 +453,9 @@ build_netstats <- function(epistats, netparams,
 
   # nodefactor("age.grp") ---
   nodefactor_age.grp <- table(out$attr$age.grp) * netparams$inst$nf.age.grp
+  if (sex.cess.mod == TRUE) {
+    nodefactor_age.grp[length(nodefactor_age.grp)] <- 0
+  }
   out$inst$nodefactor_age.grp <- unname(nodefactor_age.grp)
 
   # nodematch("age.grp") ---
@@ -413,7 +482,6 @@ build_netstats <- function(epistats, netparams,
   nodefactor_diag.status <- table(out$attr$diag.status) * netparams$inst$nf.diag.status
   out$inst$nodefactor_diag.status <- unname(nodefactor_diag.status)
 
-  # Return Out
 
   return(out)
 }

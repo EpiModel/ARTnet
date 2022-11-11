@@ -16,7 +16,7 @@ combination of race (Black, Hispanic, White) and age
 }
 \description{
 Replaces the default age- and sex-specific mortality rates used
-             in \code{\link{build_netstats}} with user-specified values.
+in \code{\link{build_netstats}} with user-specified values.
 }
 \details{
 \code{update_asmr} takes the output from \code{\link{build_netstats}} and

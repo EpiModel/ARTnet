@@ -1,40 +1,78 @@
 
 #' Calculate Individual-Level Network Parameters
 #'
-#' @description Builds statistical models predicting mean degree, mixing, and
-#'              duration of sexual partnerships, for use in the EpiModelHIV
-#'              workflow.
+#' @description Builds statistical models predicting mean degree, mixing, and duration of sexual
+#'              partnerships, for use in the EpiModelHIV workflow.
 #'
-#' @param epistats Output from \code{\link{build_epistats}}.
-#' @param smooth.main.dur If \code{TRUE}, average main durations for oldest
-#'        and second oldest age groups.
+#' @param epistats Output from [`build_epistats`].
+#' @param smooth.main.dur If `TRUE`, function averages the main sexual partnership durations for
+#'        oldest and second oldest age groups.
+#' @param cessation.dissolve.edges If `TRUE`, immediate dissolution model parameters added for the
+#'        oldest age group representing persons after sexual cessation.
+#' @param oo.nquants Number of quantiles to split the one-off partnership risk distribution (count
+#'        of one-off partners per unit time).
+#' @param browser If `TRUE`, run `build_netparams` in interactive browser mode.
 #'
 #' @details
-#' \code{build_netparams} is a helper function that constructs the necessary
-#' network parameters for use in building network models with
-#' \code{\link{build_netstats}}, building on models estimated using
-#' \code{\link{build_epistats}}.
+#' `build_netparams` is a helper function that constructs the necessary network parameters for use
+#' in building network models with [`build_netstats`], building on models estimated using
+#' [`build_epistats`].
 #'
-#' The parameter \code{smooth.main.dur} is used when partnership duration and
-#' mortality compete in the eldest age group; in such a case mean duration is
-#' averaged over the oldest and second oldest age groups (as specified by
-#' \code{age.breaks} in \code{\link{build_epistats}}). Subsequently, this
-#' smoothing is only done if there are three or more age categories specified.
+#' The parameter `smooth.main.dur` is used when partnership duration and mortality compete in the
+#' eldest age group; in such a case mean duration is averaged over the oldest and second oldest age
+#' groups (as specified by `age.breaks` in [`build_epistats`]). Subsequently, this smoothing is only
+#' done if there are three or more age categories specified. Note, this does not affect calculations
+#' if an age group after sexual cessation is included; durations averaged only in the oldest two
+#' age groups within the bounds of the sexual cessation age.
+#'
+#' If the parameter `cessation.dissolve.edges` is `TRUE`, this assumes that all existing partnerships
+#' will dissolve between anyone over the upper boundary of the age of sexual cessation. If `FALSE`,
+#' no new partnerships will occur within this age group, but existing partnerships are allowed to
+#' continue through their natural dissolution. This parameter is ignored if there is no upper age
+#' group of sexually inactive persons.
 #'
 #' @export
 #' @examples
-#' epistats <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = TRUE,
-#'                            age.limits = c(20, 50),
-#'                            age.breaks = c(20, 30, 40))
-#' netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
+#' # Standard model with default age stratification
+#' epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta")
+#' netparams <- build_netparams(epistats, smooth.main.dur = TRUE)
 #'
-build_netparams <- function(epistats, smooth.main.dur = FALSE) {
+#' # Restricted age stratification
+#' epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
+#'                             age.limits = c(20, 50),
+#'                             age.breaks = c(20, 30, 40))
+#' netparams2 <- build_netparams(epistats2, smooth.main.dur = TRUE)
+#'
+#' # Model with sexual cessation age < age limit
+#' epistats3 <- build_epistats(geog.lvl = "city",
+#'                             geog.cat = "Atlanta",
+#'                             race = TRUE,
+#'                             age.limits = c(15, 100),
+#'                             age.breaks = c(25, 35, 45, 55),
+#'                             age.sexual.cessation = 65)
+#' netparams3 <- build_netparams(epistats3, smooth.main.dur = TRUE)
+#'
+#' # Alternative with cessation not dissolving edges (note duration table)
+#' netparams4 <- build_netparams(epistats3, smooth.main.dur = TRUE,
+#'                               cessation.dissolve.edges = FALSE)
+#'
+build_netparams <- function(epistats,
+                            smooth.main.dur = FALSE,
+                            cessation.dissolve.edges = TRUE,
+                            oo.nquants = 5,
+                            browser = FALSE) {
+
+  if (browser == TRUE) {
+    browser()
+  }
 
   ## Inputs ##
   geog.lvl <- epistats$geog.lvl
   race <- epistats$race
   age.limits <- epistats$age.limits
   age.breaks <- epistats$age.breaks
+  age.sexual.cessation <- epistats$age.sexual.cessation
+  sex.cess.mod <- epistats$sex.cess.mod
   age.grps <- epistats$age.grps
   time.unit <- epistats$time.unit
 
@@ -49,8 +87,14 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   d <- ARTnet.wide
   l <- ARTnet.long
 
-  l <- subset(l, age >= age.limits[1] & age <= age.limits[2])
-  d <- subset(d, age >= age.limits[1] & age <= age.limits[2])
+  # p_age_imp initialization for lintr
+  p_age_imp <- NULL
+
+  # Subset datasets by lower age limit and age.sexual.cessation
+  # Now applies to both index (respondents) and partners for long dataset
+  l <- subset(l, age >= age.limits[1] & age < age.sexual.cessation &
+                p_age_imp >= age.limits[1] & p_age_imp < age.sexual.cessation)
+  d <- subset(d, age >= age.limits[1] & age < age.sexual.cessation)
 
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
@@ -261,7 +305,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   ## nodefactor("age.grp") ----
 
   d$age.grp <- cut(d$age, age.breaks, labels = FALSE,
-                   right  = FALSE, include.lower = FALSE)
+                   right  = FALSE, include.lowest = FALSE)
 
   if (is.null(geog.lvl)) {
     mod <- glm(deg.main ~ + age.grp + sqrt(age.grp),
@@ -414,7 +458,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   # overall
   durs.main <- lmain %>%
     filter(RAI == 1 | IAI == 1) %>%
-    filter(index.age.grp < 6) %>%
     filter(ongoing2 == 1) %>%
     summarise(mean.dur = mean(duration.time, na.rm = TRUE),
               median.dur = median(duration.time, na.rm = TRUE)) %>%
@@ -424,7 +467,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   if (!is.null(geog.lvl)) {
     durs.main.geo <- lmain %>%
       filter(RAI == 1 | IAI == 1) %>%
-      filter(index.age.grp < 6) %>%
       filter(ongoing2 == 1) %>%
       filter(geogYN == 1) %>%
       summarise(mean.dur = mean(duration.time, na.rm = TRUE),
@@ -450,10 +492,8 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   # first, non-matched by age group
   durs.main.nonmatch <- lmain %>%
     filter(RAI == 1 | IAI == 1) %>%
-    filter(index.age.grp < 6) %>%
     filter(ongoing2 == 1) %>%
     filter(same.age.grp == 0) %>%
-    # group_by(index.age.grp) %>%
     summarise(mean.dur = mean(duration.time, na.rm = TRUE),
               median.dur = median(duration.time, na.rm = TRUE)) %>%
     as.data.frame()
@@ -462,7 +502,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   # then, matched within age-groups
   durs.main.matched <- lmain %>%
     filter(RAI == 1 | IAI == 1) %>%
-    filter(index.age.grp < 6) %>%
     filter(ongoing2 == 1) %>%
     filter(same.age.grp == 1) %>%
     group_by(index.age.grp) %>%
@@ -488,6 +527,18 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
     }
   }
 
+  # if dissolve edges, then setting dissolution rates for highest age group to 1
+  if (sex.cess.mod == TRUE) {
+    index.age.grp <- max(out$main$durs.main.byage$index.age.grp) + 1
+    if (cessation.dissolve.edges == TRUE) {
+      df <- data.frame(index.age.grp = index.age.grp, mean.dur = 1, median.dur = 1,
+                       rates.main.adj = 1, mean.dur.adj = 1)
+    } else {
+      df <- tail(out$main$durs.main.byage, 1)
+      df$index.age.grp <- index.age.grp
+    }
+    out$main$durs.main.byage <- rbind(out$main$durs.main.byage, df)
+  }
 
   # 2. Casual Model ---------------------------------------------------------
 
@@ -742,7 +793,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   # overall
   durs.casl <- lcasl %>%
     filter(RAI == 1 | IAI == 1) %>%
-    filter(index.age.grp < 6) %>%
     filter(ongoing2 == 1) %>%
     summarise(mean.dur = mean(duration.time, na.rm = TRUE),
               median.dur = median(duration.time, na.rm = TRUE)) %>%
@@ -752,7 +802,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   if (!is.null(geog.lvl)) {
     durs.casl.geo <- lcasl %>%
       filter(RAI == 1 | IAI == 1) %>%
-      filter(index.age.grp < 6) %>%
       filter(ongoing2 == 1) %>%
       filter(geogYN == 1) %>%
       summarise(mean.dur = mean(duration.time, na.rm = TRUE),
@@ -778,7 +827,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   # first, non-matched by age group
   durs.casl.nonmatch <- lcasl %>%
     filter(RAI == 1 | IAI == 1) %>%
-    filter(index.age.grp < 6) %>%
     filter(ongoing2 == 1) %>%
     filter(same.age.grp == 0) %>%
     # group_by(index.age.grp) %>%
@@ -790,7 +838,6 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   # then, matched within age-groups
   durs.casl.matched <- lcasl %>%
     filter(RAI == 1 | IAI == 1) %>%
-    filter(index.age.grp < 6) %>%
     filter(same.age.grp == 1) %>%
     filter(ongoing2 == 1) %>%
     group_by(index.age.grp) %>%
@@ -805,6 +852,19 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
 
   durs.casl.all <- durs.casl.all[, c(3, 1, 2, 4, 5)]
   out$casl$durs.casl.byage <- durs.casl.all
+
+  # if dissolve edges, then setting dissolution rates for highest age group to 0
+  if (sex.cess.mod == TRUE) {
+    index.age.grp <- max(out$casl$durs.casl.byage$index.age.grp) + 1
+    if (cessation.dissolve.edges == TRUE) {
+      df <- data.frame(index.age.grp = index.age.grp, mean.dur = 1, median.dur = 1,
+                       rates.casl.adj = 1, mean.dur.adj = 1)
+    } else {
+      df <- tail(out$casl$durs.casl.byage, 1)
+      df$index.age.grp <- index.age.grp
+    }
+    out$casl$durs.casl.byage <- rbind(out$casl$durs.casl.byage, df)
+  }
 
 
   # 3. One-off Model --------------------------------------------------------
@@ -1006,7 +1066,7 @@ build_netparams <- function(epistats, smooth.main.dur = FALSE) {
   }
   wt.rate <- d$rate.oo.part * wt
 
-  nquants <- 5
+  nquants <- oo.nquants
   oo.quants <- rep(NA, nquants)
   sr <- sort(wt.rate)
   qsize <- floor(length(sr) / nquants)

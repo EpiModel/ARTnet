@@ -4,35 +4,72 @@
 \alias{build_netparams}
 \title{Calculate Individual-Level Network Parameters}
 \usage{
-build_netparams(epistats, smooth.main.dur = FALSE)
+build_netparams(
+  epistats,
+  smooth.main.dur = FALSE,
+  cessation.dissolve.edges = TRUE,
+  oo.nquants = 5,
+  browser = FALSE
+)
 }
 \arguments{
 \item{epistats}{Output from \code{\link{build_epistats}}.}
 
-\item{smooth.main.dur}{If \code{TRUE}, average main durations for oldest
-and second oldest age groups.}
+\item{smooth.main.dur}{If \code{TRUE}, function averages the main sexual partnership durations for
+oldest and second oldest age groups.}
+
+\item{cessation.dissolve.edges}{If \code{TRUE}, immediate dissolution model parameters added for the
+oldest age group representing persons after sexual cessation.}
+
+\item{oo.nquants}{Number of quantiles to split the one-off partnership risk distribution (count
+of one-off partners per unit time).}
+
+\item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
 }
 \description{
-Builds statistical models predicting mean degree, mixing, and
-             duration of sexual partnerships, for use in the EpiModelHIV
-             workflow.
+Builds statistical models predicting mean degree, mixing, and duration of sexual
+partnerships, for use in the EpiModelHIV workflow.
 }
 \details{
-\code{build_netparams} is a helper function that constructs the necessary
-network parameters for use in building network models with
-\code{\link{build_netstats}}, building on models estimated using
+\code{build_netparams} is a helper function that constructs the necessary network parameters for use
+in building network models with \code{\link{build_netstats}}, building on models estimated using
 \code{\link{build_epistats}}.
 
-The parameter \code{smooth.main.dur} is used when partnership duration and
-mortality compete in the eldest age group; in such a case mean duration is
-averaged over the oldest and second oldest age groups (as specified by
-\code{age.breaks} in \code{\link{build_epistats}}). Subsequently, this
-smoothing is only done if there are three or more age categories specified.
+The parameter \code{smooth.main.dur} is used when partnership duration and mortality compete in the
+eldest age group; in such a case mean duration is averaged over the oldest and second oldest age
+groups (as specified by \code{age.breaks} in \code{\link{build_epistats}}). Subsequently, this smoothing is only
+done if there are three or more age categories specified. Note, this does not affect calculations
+if an age group after sexual cessation is included; durations averaged only in the oldest two
+age groups within the bounds of the sexual cessation age.
+
+If the parameter \code{cessation.dissolve.edges} is \code{TRUE}, this assumes that all existing partnerships
+will dissolve between anyone over the upper boundary of the age of sexual cessation. If \code{FALSE},
+no new partnerships will occur within this age group, but existing partnerships are allowed to
+continue through their natural dissolution. This parameter is ignored if there is no upper age
+group of sexually inactive persons.
 }
 \examples{
-epistats <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = TRUE,
-                           age.limits = c(20, 50),
-                           age.breaks = c(20, 30, 40))
-netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
+# Standard model with default age stratification
+epistats <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta")
+netparams <- build_netparams(epistats, smooth.main.dur = TRUE)
+
+# Restricted age stratification
+epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
+                            age.limits = c(20, 50),
+                            age.breaks = c(20, 30, 40))
+netparams2 <- build_netparams(epistats2, smooth.main.dur = TRUE)
+
+# Model with sexual cessation age < age limit
+epistats3 <- build_epistats(geog.lvl = "city",
+                            geog.cat = "Atlanta",
+                            race = TRUE,
+                            age.limits = c(15, 100),
+                            age.breaks = c(25, 35, 45, 55),
+                            age.sexual.cessation = 65)
+netparams3 <- build_netparams(epistats3, smooth.main.dur = TRUE)
+
+# Alternative with cessation not dissolving edges (note duration table)
+netparams4 <- build_netparams(epistats3, smooth.main.dur = TRUE,
+                              cessation.dissolve.edges = FALSE)
 
 }

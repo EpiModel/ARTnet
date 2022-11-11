@@ -1,6 +1,6 @@
 Package: ARTnet
-Version: 2.6.0
-Date: 2022-09-22
+Version: 2.7.0
+Date: 2022-11-11
 Title: Epidemic and Network Model Parameterization with the ARTnet Dataset
 Description: Epidemic and Network Model Parameterization with the ARTnet Dataset.
 Maintainer: Samuel Jenness <samuel.m.jenness@emory.edu>
@@ -12,14 +12,20 @@ BugReports: https://github.com/EpiModel/ARTnet/issues
 Depends:
     R (>= 3.5),
     ARTnetData,
-    EpiModel
+    EpiModel (>= 2.3.2)
 Imports:
     dplyr
 Suggests:
+    EpiModelHIV,
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
 RoxygenNote: 7.2.1
 Encoding: UTF-8
 Remotes:
+   github::EpiModel/EpiModel@main
    github::EpiModel/ARTnetData@main
+   github::EpiModel/EpiModelHIV-p@main
+Roxygen: list(markdown = TRUE)
+Config/testthat/edition: 3

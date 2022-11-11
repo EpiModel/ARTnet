@@ -1,91 +1,76 @@
 
 #' @title Statistical Models for Act Rates, Condom Use, and Starting HIV Prevalence
 #'
-#' @description Builds statistical models governing act rates and probability of
-#'              condom use among main, casual and one-time sexual partnerships, and
-#'              the probability of diagnosed HIV infection, for use in the EpiModelHIV
-#'              workflow.
+#' @description Builds statistical models governing act rates and probability of condom use among
+#' main, casual and one-time sexual partnerships, and the probability of diagnosed HIV infection,
+#' for use in the EpiModelHIV workflow.
 #'
 #' @param geog.lvl Specifies geographic level for ARTnet statistics.
-#' @param geog.cat Specifies one or more geographic strata within the level to base
-#'        ARTnet statistics on. If the vector is of length 2+, data from the strata
-#'        will be combined into one analysis.
-#' @param age.limits Upper and lower limit. Age range to subset ARTnet data by.
-#'        Default is 15 to 65.
-#' @param age.breaks Ages that define the upper age categories. Default is
-#'        \code{c(25, 35, 45, 55, 65)}, which corresponds to (0, 25], (25, 35],
-#'        (35, 45], (45, 55], (55, 65], (65, 100].
-#' @param race Whether to stratify by racial status. Default is TRUE.
-#' @param browser Run function in interactive browser mode. Default is FALSE.
-#' @param init.hiv.prev Initial HIV prevalence of estimated model, vector of size
-#'         three pertaining to prevalence among three racial classes (black,
-#'         Hispanic and white respectively). If \code{init.hiv.prev = NULL},
-#'         ARTnet will handle calculation of prevalence through ARTnet data.
-#'         Note: if `\code{race = FALSE}, prevalence vector must still be supplied.
-#' @param time.unit Specifies time unit for ARTnet statistics. Default is 7 for
-#'         weekly time units. Inputs are by days with a maximum of 30 days.
-#'         Use 1 for daily time units and 30 for monthly time units.
+#' @param geog.cat Specifies one or more geographic strata within the level to base ARTnet
+#'        statistics on. If the vector is of length 2+, data from the strata will be combined into
+#'        one analysis.
+#' @param race If `TRUE`, stratify model estimates by race/ethnic grouping.
+#' @param age.limits Lower and upper limit of age range to include in model. Minimum of 15 and
+#'        maximum of 100 allowed. Lower limit is inclusive boundary and upper boundary is
+#'        exclusive boundary.
+#' @param age.breaks Ages that define the upper closed boundary of the age categories. Default is
+#'        `c(25, 35, 45, 55)`, which corresponds to `(0, 25], (25, 35], (35, 45], (45, 55], (55, 65]`
+#'        with `age.limits = c(15, 65)`.
+#' @param age.sexual.cessation Age of cessation of sexual activity, while aging process continues
+#'        through the upper age limit. Maximum allowed value of 66.
+#' @param init.hiv.prev Initial HIV prevalence to be used in epidemic model estimated model, with a
+#'        numerical vector of size 3 corresponding to starting prevalence in three race/ethnic
+#'        groups (Black, Hispanic, and White/Other, respectively). If `init.hiv.prev = NULL`,
+#'        `build_epistats` will estimate a logistic regression model to predict starting prevalence
+#'        as a function of estimated prevalence in ARTnet as a function of race/ethnicity and age.
+#' @param time.unit Specifies time unit for time-dependent ARTnet statistics. Default is 7,
+#'        corresponding to a weekly time unit. Allowed inputs range from 1 for a daily time unit to
+#'        30 for a monthly time unit.
+#' @param browser If `TRUE`, run `build_epistats` in interactive browser mode.
 #'
 #' @details
-#' \code{build_epistats}, through input of geographic, age and racial
-#' parameters, builds the necessary statistical models predicting sexual activity
-#' and condom use during sexual activity in main, casual and one-off partnerships
-#' among men-who-have-sex-with-men (MSM). Estimation of these linear models is
-#' done using data from the ARTnetData package, a package containing the
-#' results of the online ARTnet survey of HIV-related risk behaviors, testing
-#' and use of preventive services among MSM in the United States. Accepted
-#' values for each input parameter are provided below.
+#' The `build_epistats` function provides a way to input of geographic, age, and racial parameters
+#' necessary to build statistical models predicting sexual activity and condom use in sexual
+#' partnerships among men who have sex with men (MSM). Estimation of these models is performed using
+#' data from the `ARTnetData` package, containing the results of the ARTnet study.
 #'
-#' @section Parameter Values:
-#' \itemize{
-#'   \item \code{geog.lvl}: level of geographic stratification desired. Acceptable
-#'          values are \code{"city"}, \code{"county"}, \code{"state"}, \code{"region"}, and
-#'          \code{"division"} corresponding to the metropolitan statistical area,
-#'          county, state, census region, and census
-#'          division, respectively. Default value is "NULL",
-#'          indicating no geographic stratification.
-#'    \item \code{geog.cat}: given a geographic level above, \code{"geog.cat"}
-#'          is a vector comprising the desired feature(s) of interest. Acceptable values
-#'          are based on the chosen geographic level:
-#'    \itemize{
-#'      \item \code{city}: \code{"Atlanta"}, \code{"Boston"}, \code{"Chicago"},
-#'            \code{"Dallas"}, \code{"Denver"}, \code{"Detroit"}, \code{"Houston"},
-#'            \code{"Los Angeles"}, \code{"Miami"}, \code{"New York City"},
-#'            \code{"Philadelphia"}, \code{"San Diego"}, \code{"San Franciso"},
-#'            \code{"Seattle"}, \code{"Washington DC"}
-#'      \item \code{county}: FIPS codes for the county or county equivalents to
-#'      be included. Be aware that selecting a single county or a set of smaller
-#'      counties may lead to insufficient data being used to estimate the model;
-#'      if the sample lacks sufficient behavioral diversity (e.g. if nobody
-#'      reports 2+ ongoing casual partners), an error may result.
-#'      \item \code{state}: \code{"AK"}, \code{"AL"}, \code{"AR"}, \code{"AZ"},
-#'            \code{"CA"}, \code{"CO"}, \code{"CT"}, \code{"DC"}, \code{"DE"},
-#'            \code{"FL"}, \code{"GA"}, \code{"HI"}, \code{"IA"}, \code{"ID"},
-#'            \code{"IL"}, \code{"IN"}, \code{"KS"}, \code{"KY"}, \code{"LA"},
-#'            \code{"MA"}, \code{"MD"}, \code{"ME"}, \code{"MI"}, \code{"MN"},
-#'            \code{"MO"}, \code{"MS"}, \code{"MT"}, \code{"NC"}, \code{"ND"},
-#'            \code{"NE"}, \code{"NH"}, \code{"NJ"}, \code{"NM"}, \code{"NV"},
-#'            \code{"NY"}, \code{"OH"}, \code{"OK"}, \code{"OR"}, \code{"PA"},
-#'            \code{"RI"}, \code{"SC"}, \code{"SD"}, \code{"TN"}, \code{"TX"},
-#'            \code{"UT"}, \code{"VA"}, \code{"VT"}, \code{"WA"}, \code{"WI"},
-#'            \code{"WV"}, \code{"WY"}
-#'      \item \code{division}: \code{"1"} (New England),
-#'            \code{"2"} (Middle Atlantic), \code{"3"} (East North Central),
-#'            \code{"4"} (West North Central), \code{"5"} (South Atlantic),
-#'            \code{"6"} (East South Central), \code{"7"} (West South Central),
-#'            \code{"8"} (Mountain) \code{"9"} (Pacific)
-#'      \item \code{region}: \code{"1"} (Northeast), \code{"2"} (Midwest),
-#'            \code{"3"} (South), \code{"4"} (North)
-#'    }
-#'    \item \code{race}: whether to introduce modeling by racial stratification.
-#'          \code{TRUE} or \code{FALSE}.
-#'    \item \code{age.limits}: a vector giving the lower and upper limit for
-#'          the age of interest. Set to \code{c(15, 65)} by default.
-#'    \item \code{age.breaks}: a vector giving the upper age breaks to categorize
-#'          data by age. Must be within the bounds specified by \code{age.limits}.
-#'    \item \code{time.unit}: a number between 1 and 30 that specifies time units
-#'          for ARTnet statistics. Set to \code{7} by default.
-#' }
+#' ## Explanation of Parameter Values
+#' * `geog.lvl`: level of geographic stratification desired. Acceptable values are `"city"`,
+#'   `"county"`, `"state"`, `"region"`, and `"division"` corresponding to the metropolitan
+#'   statistical area, county, state, census region, and census division, respectively. Default
+#'   value is `NULL`, indicating no geographic stratification.
+#' * `geog.cat`: given a geographic level above, `"geog.cat"` is a vector comprising the desired
+#'   feature(s) of interest. Acceptable values are based on the chosen geographic level:
+#'     - `city`: `"Atlanta"`, `"Boston"`, `"Chicago"`, `"Dallas"`, `"Denver"`, `"Detroit"`,
+#'       `"Houston"`, `"Los Angeles"`, `"Miami"`, `"New York City"`, `"Philadelphia"`, `"San Diego"`,
+#'       `"San Francisco"`, `"Seattle"`, `"Washington DC"`.
+#'     - `county`: FIPS codes for the county or county equivalents to be included. Selecting a
+#'       single county or a set of smaller counties may lead to insufficient data used to estimate
+#'       the models; an error may result.
+#'     - `state`: Two-letter postal code for each state.
+#'     - `division`: `"1"` (New England), `"2"` (Middle Atlantic), `"3"` (East North Central),
+#'       `"4"` (West North Central), `"5"` (South Atlantic), `"6"` (East South Central),
+#'       `"7"` (West South Central), `"8"` (Mountain) `"9"` (Pacific).
+#'     - `region`: `"1"` (Northeast), `"2"` (Midwest), `"3"` (South), `"4"` (North)
+#' * `race`: whether to introduce modeling by racial stratification. `TRUE` or `FALSE`.
+#' * `age.limits`: a vector giving the lower and upper limit for the age of interest. Set to
+#'   `c(15, 65)` by default. The lower boundary is inclusive, meaning persons may be initialized into
+#'   the model at age 15.0; the upper boundary is exclusive, meaning exit from the population will
+#'   occur on turning 65.0 years. Although the ARTnet data include respondents from age 15 to 65, this
+#'   may be set to restricted values within that range (for example, `c(25, 40)`) for a subsetted
+#'   data analysis. The upper boundary may be set up to age 100 (that is, `c(15, 100)`), which may
+#'   be used in models where sexual activity ceases before mortality.
+#' * `age.breaks`: a vector giving the upper age breaks to categorize data by age. Must be within
+#'   the bounds specified by `age.limits`. These should be the interior age breaks only (that is,
+#'   there is no need to include the age limit boundaries). If an age of sexual cessation is added,
+#'   then this age is also added to the age breaks if it is not explicitly specified.
+#' * `age.sexual.cessation`: a numerical value for the age of cessation of sexual activity. This may
+#'   be by assumption or given data constraints (ARTnet eligibility were through age 65, so the
+#'   maximum value here is 66). This specification is useful for models in which the HIV transmission
+#'   process stops at a certain age but aging and other demographic features should continue through
+#'   natural mortality.
+#' * `time.unit`: a number between 1 and 30 that specifies time units for ARTnet statistics. Set to
+#'   `7` by default.
 #'
 #' @examples
 #' # Age and geographic stratification, for the Atlanta metropolitan statistical area
@@ -99,10 +84,9 @@
 #'
 #' # Default age stratification, multiple states
 #' epistats3 <- build_epistats(geog.lvl = "state", geog.cat = c("ME", "NH", "VT"))
-
+#'
 #' # No race stratification
-#' epistats4 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
-#'                             race = FALSE)
+#' epistats4 <- build_epistats(geog.lvl = "state", geog.cat = "GA", race = FALSE)
 #'
 #' # Age and race stratification, for the municipality (not metro) of New York City
 #' # geog.cat values are FIPS codes for the 5 boroughs of NYC
@@ -111,11 +95,25 @@
 #'                             age.limits = c(20, 50),
 #'                             age.breaks = c(24, 34, 44))
 #'
+#' # Use broader age range (to age 100) but with sexual cessation at age 66
+#' epistats6 <- build_epistats(geog.lvl = "city",
+#'                             geog.cat = "Atlanta",
+#'                             race = TRUE,
+#'                             age.limits = c(15, 100),
+#'                             age.breaks = c(25, 35, 45, 55),
+#'                             age.sexual.cessation = 66)
+#'
 #' @export
 #'
-build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
-                           age.limits = c(15, 65), age.breaks = c(25, 35, 45, 55),
-                           init.hiv.prev = NULL, time.unit = 7, browser = FALSE) {
+build_epistats <- function(geog.lvl = NULL,
+                           geog.cat = NULL,
+                           race = TRUE,
+                           age.limits = c(15, 65),
+                           age.breaks = c(25, 35, 45, 55),
+                           age.sexual.cessation = NULL,
+                           init.hiv.prev = NULL,
+                           time.unit = 7,
+                           browser = FALSE) {
 
   # Fix global binding check errors
   duration.time <- anal.acts.time <- anal.acts.time.cp <- NULL
@@ -203,39 +201,59 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   }
 
 
-
-  # Age Processing
-
-  # Subset data by selected age range
-
-
-  # Warning if age range is out of allowed range
-  flag.ll <- age.limits[1] >= 15 & age.limits[1] <= 65
-  flag.ul <- age.limits[2] >= 15 & age.limits[2] <= 65
-  flag.lim <- flag.ll * flag.ul
-
-  if (flag.lim == 0) {
-    stop("Age range must be between 15 and 65")
+  ## Age Processing ##
+  if (length(age.limits) != 2 || age.limits[1] > age.limits[2]) {
+    stop("age.limits must be a vector of length 2, where age.limits[2] > age.limits[1]")
   }
 
-  age.limits <- c(min(age.limits), max(age.limits))
+  # Warning if age range is out of allowed range
+  flag.ll <- age.limits[1] >= 15 & age.limits[1] <= 100
+  flag.ul <- age.limits[2] >= 15 & age.limits[2] <= 100
+  flag.lim <- flag.ll * flag.ul
+  if (flag.lim == 0) {
+    stop("Age range specified in `age.limits` must be >= 15 and <= 100")
+  }
 
+  # Warning if age breaks fall outside age limits
   flag.bks <- prod(age.breaks < age.limits[2] & age.breaks >= age.limits[1])
-
   if (flag.bks == 0) {
     stop("Age breaks must be between specified age limits")
   }
 
-  age.breaks <- unique(sort(c(age.limits[1], age.breaks, 100)))
+  # Set default age.sexual.cessation and error if > ARTnet data
+  if (is.null(age.sexual.cessation)) {
+    age.sexual.cessation <- age.limits[2]
+  }
+  if (age.sexual.cessation > 66) {
+    stop("Maximum allowed age of sexual cessation is 66, corresponding to the upper age eligilibity
+         criteria of 65 (inclusive) in ARTnet")
+  }
 
-  l <- subset(l, age >= age.limits[1] & age <= age.limits[2])
-  d <- subset(d, age >= age.limits[1] & age <= age.limits[2])
+  # Composite age.breaks are now union of age.limits, age.breaks, and age.sexual.cessation
+  age.breaks <- unique(sort(c(age.limits[1], age.breaks, age.sexual.cessation, age.limits[2])))
 
+  # p_age_imp initialization for lintr
+  p_age_imp <- NULL
+
+  # Subset datasets by lower age limit and age.sexual.cessation
+  # Now applies to both index (respondents) and partners for long dataset
+  l <- subset(l, age >= age.limits[1] & age < age.sexual.cessation &
+                p_age_imp >= age.limits[1] & p_age_imp < age.sexual.cessation)
+  d <- subset(d, age >= age.limits[1] & age < age.sexual.cessation)
+
+  if (age.limits[2] > age.sexual.cessation) {
+    sex.cess.mod <- TRUE
+  } else {
+    sex.cess.mod <- FALSE
+  }
+
+  # Calculate combine age of index and partners
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
 
+
+  ## Race ethnicity ##
   if (race == TRUE) {
-    # Race
     d$race.cat3 <- rep(NA, nrow(d))
     d$race.cat3[d$race.cat == "black"] <- 1
     d$race.cat3[d$race.cat == "hispanic"] <- 2
@@ -274,8 +292,7 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
     l <- select(l, -c(race.cat3, p_race.cat3))
   }
 
-
-  # HIV
+  ## HIV diagnosed status of index and partners ##
   l$p_hiv2 <- ifelse(l$p_hiv == 1, 1, 0)
 
   hiv.combo <- rep(NA, nrow(l))
@@ -287,22 +304,20 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   hiv.combo[l$hiv2 == 1 & l$p_hiv == 2] <- 5
   l$hiv.concord.pos <- ifelse(hiv.combo == 2, 1, 0)
 
-  # PrEP
+  ## PrEP ##
   d$prep <- ifelse(d$artnetPREP_CURRENT == 0 | is.na(d$artnetPREP_CURRENT), 0, 1)
 
   dlim <- select(d, c(AMIS_ID, survey.year, prep))
   l <- left_join(l, dlim, by = "AMIS_ID")
 
-  # Time unit processing
+  ## Time unit processing ##
 
-  ## Set time.unit limits from 1 to 30
-
+  # Set time.unit limits from 1 to 30
   if (time.unit < 1 || time.unit > 30) {
-    stop("Time unit must be between 1 and 30")
+    stop("time.unit must be between 1 and 30")
   }
 
-  ## Create time-based ARTnet statistics using time.unit
-
+  # Scale time-based ARTnet data by time.unit
   l$duration.time <- l$duration * 7 / time.unit
   l$anal.acts.time <- l$anal.acts.week * time.unit / 7
   l$anal.acts.time.cp <- l$anal.acts.week.cp * time.unit / 7
@@ -529,6 +544,8 @@ build_epistats <- function(geog.lvl = NULL, geog.cat = NULL, race = FALSE,
   out$age.limits <- age.limits
   out$age.breaks <- age.breaks
   out$age.grps <- length(age.breaks) - 1
+  out$age.sexual.cessation <- age.sexual.cessation
+  out$sex.cess.mod <- sex.cess.mod
   out$init.hiv.prev <- init.hiv.prev
   out$time.unit <- time.unit
   return(out)

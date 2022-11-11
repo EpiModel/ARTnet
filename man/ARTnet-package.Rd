@@ -7,12 +7,12 @@
 \title{Epidemic and Network Model Parameterization with the ARTnet Dataset}
 \description{
 \tabular{ll}{
-   Package: \tab ARTnet\cr
-   Type: \tab Package\cr
-   Version: \tab 2.6.0\cr
-   Date: \tab 2022-02-17\cr
-   License: \tab GPL-3\cr
-   LazyLoad: \tab yes\cr
+Package: \tab ARTnet\cr
+Type: \tab Package\cr
+Version: \tab 2.7.0\cr
+Date: \tab 2022-11-01\cr
+License: \tab GPL-3\cr
+LazyLoad: \tab yes\cr
 }
 }
 \details{
