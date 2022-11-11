@@ -165,9 +165,9 @@ build_netstats <- function(epistats, netparams,
     trans.asmr.W <- 1 - (1 - asmr.W)^(1 / (364 / time.unit))
 
     # Transformed rates, 85+ rate for ages 85 - 99, total rate for 100
-    vec.asmr.B <- c(trans.asmr.B, rep(tail(trans.asmr.B, n=1), 14), 1)
-    vec.asmr.H <- c(trans.asmr.H, rep(tail(trans.asmr.H, n=1), 14), 1)
-    vec.asmr.W <- c(trans.asmr.W, rep(tail(trans.asmr.W, n=1), 14), 1)
+    vec.asmr.B <- c(trans.asmr.B, rep(tail(trans.asmr.B, n = 1), 14), 1)
+    vec.asmr.H <- c(trans.asmr.H, rep(tail(trans.asmr.H, n = 1), 14), 1)
+    vec.asmr.W <- c(trans.asmr.W, rep(tail(trans.asmr.W, n = 1), 14), 1)
     asmr <- data.frame(age = 1:100, vec.asmr.B, vec.asmr.H, vec.asmr.W)
 
     out$demog$asmr <- asmr
@@ -197,7 +197,7 @@ build_netstats <- function(epistats, netparams,
       stop("Length of age.pyramid vector must be equal to length of unique age values: ", nAges)
     }
   } else {
-    age.pyramid <- rep(1/nAges, nAges)
+    age.pyramid <- rep(1 / nAges, nAges)
   }
 
   attr_age <- sample(x = age.vals, size = num, prob = age.pyramid, replace = TRUE)
@@ -246,7 +246,7 @@ build_netstats <- function(epistats, netparams,
 
   # risk group
   nquants <- length(netparams$inst$nf.risk.grp)
-  attr_risk.grp <- apportion_lr(num, 1:nquants, rep(1/nquants, nquants), shuffled = TRUE)
+  attr_risk.grp <- apportion_lr(num, 1:nquants, rep(1 / nquants, nquants), shuffled = TRUE)
   out$attr$risk.grp <- attr_risk.grp
 
   # role class
@@ -490,25 +490,25 @@ build_netstats <- function(epistats, netparams,
 #' Update mortality rates
 #'
 #' @description Replaces the default age- and sex-specific mortality rates used
-#'              in \code{\link{build_netstats}} with user-specified values.
+#'              in [`build_netstats`] with user-specified values.
 #'
-#' @param netstats Output from \code{\link{build_netstats}}.
+#' @param netstats Output from [`build_netstats`].
 #' @param asmr_df A data frame with three columns (Race, Age, and DeathRate)
 #'                specifying the desired mortality rates per time unit for each
 #'                combination of race (Black, Hispanic, White) and age
 #'                (1, 2, 3, ... 100).
 #'
 #' @details
-#' \code{update_asmr} takes the output from \code{\link{build_netstats}} and
+#' `update_asmr` takes the output from [`build_netstats`] and
 #' updates its mortality rates with the values specified in the input parameter
-#' \code{asmr_df}. Mortality rates should be provided for each combination of
+#' `asmr_df`. Mortality rates should be provided for each combination of
 #' race (Black, Hispanic, White) and age (1, 2, 3, ... 100), for a total of 300
 #' rates. All input mortality rates must be non-NA, numeric, and between 0 and
 #' 1 (inclusive). The maximum mortality rate for each race must be 1,
 #' representing deterministic departure from the network at that age.
-#' \code{update_asmr} does not perform time unit conversions; the input
+#' `update_asmr` does not perform time unit conversions; the input
 #' mortality rates should be pre-converted by the user to match
-#' the \code{time.unit} used in \code{\link{build_netstats}}.
+#' the `time.unit` used in [`build_netstats`].
 #'
 #' @export
 #'
@@ -525,8 +525,8 @@ build_netstats <- function(epistats, netparams,
 update_asmr <- function(netstats, asmr_df) {
 
   #Check that all input mortality rates are reasonable values
-  if (sum(is.na(asmr_df$DeathRate)) > 0 | !is.numeric(asmr_df$DeathRate) |
-      min(asmr_df$DeathRate < 0) | max(asmr_df$DeathRate > 1)) {
+  if (sum(is.na(asmr_df$DeathRate)) > 0 || !is.numeric(asmr_df$DeathRate) ||
+      min(asmr_df$DeathRate < 0) || max(asmr_df$DeathRate > 1)) {
     stop("Ensure all mortality rates are non-NA, numeric, and between 0 and 1.")
   }
 
@@ -535,13 +535,14 @@ update_asmr <- function(netstats, asmr_df) {
   asmr.W <- asmr_df[asmr_df$Race == "White", 2:3]
 
   #Check for appropriate number of input mortality rates
-  if (min(asmr.B$Age) != 1 | min(asmr.H$Age) != 1 | min(asmr.W$Age) != 1 |
-      max(asmr.B$Age) != 100 | max(asmr.H$Age) != 100 | max(asmr.W$Age) != 100 |
-      nrow(asmr.B) != 100 | nrow(asmr.H) != 100 | nrow(asmr.W) != 100) {
+  if (min(asmr.B$Age) != 1 || min(asmr.H$Age) != 1 || min(asmr.W$Age) != 1 ||
+      max(asmr.B$Age) != 100 || max(asmr.H$Age) != 100 ||
+      max(asmr.W$Age) != 100 || nrow(asmr.B) != 100 || nrow(asmr.H) != 100 ||
+      nrow(asmr.W) != 100) {
     stop("Provide mortality rates by race for 1-yr age groups (1 - 100).")
   }
 
-  if (max(asmr.B$DeathRate) != 1 | max(asmr.H$DeathRate) != 1 |
+  if (max(asmr.B$DeathRate) != 1 || max(asmr.H$DeathRate) != 1 ||
       max(asmr.W$DeathRate) != 1) {
     stop("The mortality rate for at least one age group must be total (1).")
   }
