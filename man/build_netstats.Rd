@@ -12,6 +12,7 @@ build_netstats(
   age.pyramid = NULL,
   edges.avg = FALSE,
   race.prop = NULL,
+  young.prop = 0.995,
   browser = FALSE
 )
 }
@@ -26,7 +27,7 @@ build_netstats(
 
 \item{age.pyramid}{Numerical vector of length equal to the length of the age range specified in
 \code{\link{build_epistats}}, containing probability distribution of each year of age, summing to
-one. If \code{NULL}, then a uniform distribution is used.}
+one. If \code{NULL}, then a default distribution based on 2020 NCHS data is used.}
 
 \item{edges.avg}{If \code{TRUE}, calculates the overall edges target statistics as a weighted average
 of the statistics for edges by race/ethnicity group; if \code{FALSE}, takes the raw average.}
@@ -34,6 +35,10 @@ of the statistics for edges by race/ethnicity group; if \code{FALSE}, takes the 
 \item{race.prop}{A numerical vector of length 3, containing the proportion of the population with
 each of the three values for the nodal attribute "race" in order: White/Other, Black,
 and Hispanic).}
+
+\item{young.prop}{The proportion of the population that should be below the age of sexual cessation.
+Default is 0.995. This parameter is only used if the age of sexual cessation is less than
+the upper age bound.}
 
 \item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
 }
