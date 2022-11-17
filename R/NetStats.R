@@ -164,25 +164,26 @@ build_netstats <- function(epistats, netparams,
     trans.asmr.H <- 1 - (1 - asmr.H)^(1 / (364 / time.unit))
     trans.asmr.W <- 1 - (1 - asmr.W)^(1 / (364 / time.unit))
 
-    # Transformed rates, 85+ rate for ages 85 - 99, total rate for 100
-    vec.asmr.B <- c(trans.asmr.B, rep(tail(trans.asmr.B, n=1), 14), 1)
-    vec.asmr.H <- c(trans.asmr.H, rep(tail(trans.asmr.H, n=1), 14), 1)
-    vec.asmr.W <- c(trans.asmr.W, rep(tail(trans.asmr.W, n=1), 14), 1)
+    # Transformed rates, 85+ rate for ages 85 - 100
+    vec.asmr.B <- c(trans.asmr.B, rep(tail(trans.asmr.B, n = 1), 15))
+    vec.asmr.H <- c(trans.asmr.H, rep(tail(trans.asmr.H, n = 1), 15))
+    vec.asmr.W <- c(trans.asmr.W, rep(tail(trans.asmr.W, n = 1), 15))
     asmr <- data.frame(age = 1:100, vec.asmr.B, vec.asmr.H, vec.asmr.W)
-
-    out$demog$asmr <- asmr
   } else {
     asmr.O <- rbind(asmr.B, asmr.H, asmr.W)
     asmr.O <- colMeans(asmr.O)
 
-    # transformed to rates by time unit
     trans.asmr <- 1 - (1 - asmr.O)^(1 / (364 / time.unit))
 
-    # Transformed rates, 85+ rate for ages 85 - 99, total rate for 100
-    vec.asmr <- c(trans.asmr, rep(tail(trans.asmr, n = 1), 14), 1)
+    vec.asmr <- c(trans.asmr, rep(tail(trans.asmr, n = 1), 15))
     asmr <- data.frame(age = 1:100, vec.asmr, vec.asmr, vec.asmr)
-    out$demog$asmr <- asmr
   }
+
+  # Setting deterministic mortality prob = 1 at upper age limit
+  max.age <- age.limits[2]
+  asmr[asmr$age >= max.age, ] <- 1
+  out$demog$asmr <- asmr
+
 
   # Nodal Attribute Initialization ------------------------------------------
 
