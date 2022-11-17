@@ -192,6 +192,7 @@ build_netstats <- function(epistats, netparams,
   # Currently uniform
   nAges <- age.limits[2] - age.limits[1]
   age.vals <- age.limits[1]:(age.limits[2] - 1)
+  out$demog$ages <- age.vals
   if (!is.null(age.pyramid)) {
     if (length(age.pyramid) != nAges) {
       stop("Length of age.pyramid vector must be equal to length of unique age values: ", nAges)
