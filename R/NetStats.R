@@ -18,8 +18,8 @@
 #'        each of the three values for the nodal attribute "race" in order: White/Other, Black,
 #'        and Hispanic).
 #' @param young.prop The proportion of the population that should be below the age of sexual cessation.
-#'        Default is 0.995. This parameter is only used if the age of sexual cessation is less than
-#'        the upper age bound.
+#'        Default is NULL (meaning no re-weighting of the `age.pyramid` parameter is performed).
+#'        This parameter is only used if the age of sexual cessation is less than the upper age bound.
 #' @param browser If `TRUE`, run `build_netparams` in interactive browser mode.
 #'
 #' @details
@@ -55,7 +55,7 @@
 #' netparams2 <- build_netparams(epistats2, smooth.main.dur = TRUE)
 #' netstats2 <- build_netstats(epistats2, netparams2)
 #'
-#' # Model with sexual cessation age < age limit
+#' # Model with sexual cessation age < age limit, without age pyramid reweighting
 #' epistats3 <- build_epistats(geog.lvl = "city",
 #'                             geog.cat = "Atlanta",
 #'                             race = TRUE,
@@ -65,13 +65,23 @@
 #' netparams3 <- build_netparams(epistats3, smooth.main.dur = TRUE)
 #' netstats3 <- build_netstats(epistats3, netparams3)
 #'
+#' # Model with sexual cessation age < age limit, with age pyramid reweighting
+#' epistats4 <- build_epistats(geog.lvl = "city",
+#'                             geog.cat = "Atlanta",
+#'                             race = TRUE,
+#'                             age.limits = c(15, 100),
+#'                             age.breaks = c(25, 35, 45, 55),
+#'                             age.sexual.cessation = 65)
+#' netparams4 <- build_netparams(epistats3, smooth.main.dur = TRUE)
+#' netstats4 <- build_netstats(epistats3, netparams3, young.prop = 0.995)
+#'
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,
                            expect.mort = 0.0001,
                            age.pyramid = NULL,
                            edges.avg = FALSE,
                            race.prop = NULL,
-                           young.prop = 0.995,
+                           young.prop = NULL,
                            browser = FALSE) {
 
   if (browser == TRUE) {
@@ -223,7 +233,7 @@ build_netstats <- function(epistats, netparams,
     age.pyramid <- full.age.pyr[age.vals]
   }
 
-  if (age.sexual.cessation < age.limits[2]){
+  if (age.sexual.cessation < age.limits[2] && !is.null(young.prop)){
     age.break <- age.sexual.cessation - (age.limits[1] - 1)
     age.pyramid <- reweight_age_pyr(age.pyramid, young.prop, age.break)
   }
@@ -612,8 +622,6 @@ update_asmr <- function(netstats, asmr_df) {
 #' @param young.prop The weight that should be applied to the portion of
 #'                   `age.pyramid` that is below `age.break`
 #' @param age.break The index at which the upper group should begin.
-#'
-#' @export
 #'
 #' @examples
 #' unif.age.pyr <- rep(1/100, 100)
