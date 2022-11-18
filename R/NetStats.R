@@ -180,25 +180,27 @@ build_netstats <- function(epistats, netparams,
     trans.asmr.H <- 1 - (1 - asmr.H)^(1 / (364 / time.unit))
     trans.asmr.W <- 1 - (1 - asmr.W)^(1 / (364 / time.unit))
 
-    # Transformed rates, 85+ rate for ages 85 - 99, total rate for 100
-    vec.asmr.B <- c(trans.asmr.B, rep(tail(trans.asmr.B, n = 1), 14), 1)
-    vec.asmr.H <- c(trans.asmr.H, rep(tail(trans.asmr.H, n = 1), 14), 1)
-    vec.asmr.W <- c(trans.asmr.W, rep(tail(trans.asmr.W, n = 1), 14), 1)
-    asmr <- data.frame(age = 1:100, vec.asmr.B, vec.asmr.H, vec.asmr.W)
+    # Transformed rates, 85+ rate for ages 85 - 100
+    vec.asmr.B <- c(trans.asmr.B, rep(tail(trans.asmr.B, n = 1), 15))
+    vec.asmr.H <- c(trans.asmr.H, rep(tail(trans.asmr.H, n = 1), 15))
+    vec.asmr.W <- c(trans.asmr.W, rep(tail(trans.asmr.W, n = 1), 15))
 
-    out$demog$asmr <- asmr
+    asmr <- data.frame(age = 1:100, vec.asmr.B, vec.asmr.H, vec.asmr.W)
   } else {
     asmr.O <- props$Black * asmr.B + props$Hispanic * asmr.H +
       props$White.Other * asmr.W
 
-    # transformed to rates by time unit
     trans.asmr <- 1 - (1 - asmr.O)^(1 / (364 / time.unit))
 
-    # Transformed rates, 85+ rate for ages 85 - 99, total rate for 100
-    vec.asmr <- c(trans.asmr, rep(tail(trans.asmr, n = 1), 14), 1)
+    vec.asmr <- c(trans.asmr, rep(tail(trans.asmr, n = 1), 15))
     asmr <- data.frame(age = 1:100, vec.asmr, vec.asmr, vec.asmr)
-    out$demog$asmr <- asmr
   }
+
+  # Setting deterministic mortality prob = 1 at upper age limit
+  max.age <- age.limits[2]
+  asmr[asmr$age >= max.age, ] <- 1
+  out$demog$asmr <- asmr
+
 
   # Nodal Attribute Initialization ------------------------------------------
 
@@ -208,6 +210,7 @@ build_netstats <- function(epistats, netparams,
   # Currently uniform
   nAges <- age.limits[2] - age.limits[1]
   age.vals <- age.limits[1]:(age.limits[2] - 1)
+  out$demog$ages <- age.vals
   if (!is.null(age.pyramid)) {
     if (length(age.pyramid) != nAges) {
       stop("Length of age.pyramid vector must be equal to length of unique age values: ", nAges)
