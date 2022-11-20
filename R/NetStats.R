@@ -72,8 +72,8 @@
 #'                             age.limits = c(15, 100),
 #'                             age.breaks = c(25, 35, 45, 55),
 #'                             age.sexual.cessation = 65)
-#' netparams4 <- build_netparams(epistats3, smooth.main.dur = TRUE)
-#' netstats4 <- build_netstats(epistats3, netparams3, young.prop = 0.995)
+#' netparams4 <- build_netparams(epistats4, smooth.main.dur = TRUE)
+#' netstats4 <- build_netstats(epistats4, netparams4, young.prop = 0.995)
 #'
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,
