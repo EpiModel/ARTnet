@@ -25,17 +25,12 @@ netparams <- build_netparams(
   cessation.dissolve.edges = TRUE
 )
 
-# Weighted uniform age distribution
-age1 <- rep(1 / length(15:64) * 0.999, length(15:64))
-age2 <- rep(1 / length(65:99) * 0.001, length(65:99))
-age.pyramid <- c(age1, age2)
-
 netstats <- build_netstats(
   epistats,
   netparams,
   expect.mort = 0.000478213,
-  age.pyramid = age.pyramid,
   network.size = networks_size,
+  young.prop = 0.99
 )
 
 table(floor(netstats$attr$age))
@@ -285,7 +280,7 @@ model_inst_dx <- ~edges +
 
 dx_inst <- netdx(
   fit_inst,
-  nsims = 50000,
+  nsims = 10000,
   dynamic = FALSE,
   nwstats.formula = model_inst_dx,
   set.control.ergm = control.simulate.formula(MCMC.burnin = 1e5)
