@@ -568,7 +568,7 @@ build_netstats <- function(epistats, netparams,
 #' # Update mortality rates with 2020 NCHS data
 #' asmr_df   <- read.csv(system.file("2020DeathRates.csv", package =  "ARTnet"))
 #' netstats  <- update_asmr(netstats, asmr_df)
-
+#'
 update_asmr <- function(netstats, asmr_df) {
 
   #Check that all input mortality rates are reasonable values
@@ -611,7 +611,6 @@ update_asmr <- function(netstats, asmr_df) {
 
   netstats$demog$asmr <- asmr
   return(netstats)
-
 }
 
 #' Re-weight age pyramid
@@ -629,7 +628,7 @@ update_asmr <- function(netstats, asmr_df) {
 #' @examples
 #' unif.age.pyr <- rep(1/100, 100)
 #' reweighted.age.pyr <- reweight_age_pyr(unif.age.pyr, 0.995, 65)
-
+#'
 reweight_age_pyr <- function(age.pyramid, young.prop, age.break) {
 
   #Check inputs
@@ -649,5 +648,4 @@ reweight_age_pyr <- function(age.pyramid, young.prop, age.break) {
   new.age.pyramid <- c(age1, age2)
 
   return(new.age.pyramid)
-
 }
