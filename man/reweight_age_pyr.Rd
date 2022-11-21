@@ -23,4 +23,5 @@ population falls below a specified age boundary.
 \examples{
 unif.age.pyr <- rep(1/100, 100)
 reweighted.age.pyr <- reweight_age_pyr(unif.age.pyr, 0.995, 65)
+
 }

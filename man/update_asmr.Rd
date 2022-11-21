@@ -45,4 +45,5 @@ netstats  <- update_asmr(netstats, asmr_df)
 # Update mortality rates with 2020 NCHS data
 asmr_df   <- read.csv(system.file("2020DeathRates.csv", package =  "ARTnet"))
 netstats  <- update_asmr(netstats, asmr_df)
+
 }
