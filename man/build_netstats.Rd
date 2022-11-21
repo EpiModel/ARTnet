@@ -12,6 +12,7 @@ build_netstats(
   age.pyramid = NULL,
   edges.avg = FALSE,
   race.prop = NULL,
+  young.prop = NULL,
   browser = FALSE
 )
 }
@@ -26,7 +27,7 @@ build_netstats(
 
 \item{age.pyramid}{Numerical vector of length equal to the length of the age range specified in
 \code{\link{build_epistats}}, containing probability distribution of each year of age, summing to
-one. If \code{NULL}, then a uniform distribution is used.}
+one. If \code{NULL}, then a default distribution based on 2020 NCHS data is used.}
 
 \item{edges.avg}{If \code{TRUE}, calculates the overall edges target statistics as a weighted average
 of the statistics for edges by race/ethnicity group; if \code{FALSE}, takes the raw average.}
@@ -34,6 +35,10 @@ of the statistics for edges by race/ethnicity group; if \code{FALSE}, takes the 
 \item{race.prop}{A numerical vector of length 3, containing the proportion of the population with
 each of the three values for the nodal attribute "race" in order: White/Other, Black,
 and Hispanic).}
+
+\item{young.prop}{The proportion of the population that should be below the age of sexual cessation.
+Default is NULL (meaning no re-weighting of the \code{age.pyramid} parameter is performed).
+This parameter is only used if the age of sexual cessation is less than the upper age bound.}
 
 \item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
 }
@@ -73,7 +78,7 @@ epistats2 <- build_epistats(geog.lvl = "state", geog.cat = "GA",
 netparams2 <- build_netparams(epistats2, smooth.main.dur = TRUE)
 netstats2 <- build_netstats(epistats2, netparams2)
 
-# Model with sexual cessation age < age limit
+# Model with sexual cessation age < age limit, without age pyramid reweighting
 epistats3 <- build_epistats(geog.lvl = "city",
                             geog.cat = "Atlanta",
                             race = TRUE,
@@ -82,5 +87,15 @@ epistats3 <- build_epistats(geog.lvl = "city",
                             age.sexual.cessation = 65)
 netparams3 <- build_netparams(epistats3, smooth.main.dur = TRUE)
 netstats3 <- build_netstats(epistats3, netparams3)
+
+# Model with sexual cessation age < age limit, with age pyramid reweighting
+epistats4 <- build_epistats(geog.lvl = "city",
+                            geog.cat = "Atlanta",
+                            race = TRUE,
+                            age.limits = c(15, 100),
+                            age.breaks = c(25, 35, 45, 55),
+                            age.sexual.cessation = 65)
+netparams4 <- build_netparams(epistats4, smooth.main.dur = TRUE)
+netstats4 <- build_netstats(epistats4, netparams4, young.prop = 0.995)
 
 }

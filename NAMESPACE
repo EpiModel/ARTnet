@@ -3,6 +3,7 @@
 export(build_epistats)
 export(build_netparams)
 export(build_netstats)
+export(reweight_age_pyr)
 export(update_asmr)
 import(ARTnetData)
 import(EpiModel)

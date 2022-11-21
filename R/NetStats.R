@@ -11,12 +11,15 @@
 #' @param expect.mort Expected average mortality level to pass into [`dissolution_coefs`] function.
 #' @param age.pyramid Numerical vector of length equal to the length of the age range specified in
 #'        [`build_epistats`], containing probability distribution of each year of age, summing to
-#'        one. If `NULL`, then a uniform distribution is used.
+#'        one. If `NULL`, then a default distribution based on 2020 NCHS data is used.
 #' @param edges.avg If `TRUE`, calculates the overall edges target statistics as a weighted average
 #'        of the statistics for edges by race/ethnicity group; if `FALSE`, takes the raw average.
 #' @param race.prop A numerical vector of length 3, containing the proportion of the population with
 #'        each of the three values for the nodal attribute "race" in order: White/Other, Black,
 #'        and Hispanic).
+#' @param young.prop The proportion of the population that should be below the age of sexual cessation.
+#'        Default is NULL (meaning no re-weighting of the `age.pyramid` parameter is performed).
+#'        This parameter is only used if the age of sexual cessation is less than the upper age bound.
 #' @param browser If `TRUE`, run `build_netparams` in interactive browser mode.
 #'
 #' @details
@@ -52,7 +55,7 @@
 #' netparams2 <- build_netparams(epistats2, smooth.main.dur = TRUE)
 #' netstats2 <- build_netstats(epistats2, netparams2)
 #'
-#' # Model with sexual cessation age < age limit
+#' # Model with sexual cessation age < age limit, without age pyramid reweighting
 #' epistats3 <- build_epistats(geog.lvl = "city",
 #'                             geog.cat = "Atlanta",
 #'                             race = TRUE,
@@ -62,12 +65,23 @@
 #' netparams3 <- build_netparams(epistats3, smooth.main.dur = TRUE)
 #' netstats3 <- build_netstats(epistats3, netparams3)
 #'
+#' # Model with sexual cessation age < age limit, with age pyramid reweighting
+#' epistats4 <- build_epistats(geog.lvl = "city",
+#'                             geog.cat = "Atlanta",
+#'                             race = TRUE,
+#'                             age.limits = c(15, 100),
+#'                             age.breaks = c(25, 35, 45, 55),
+#'                             age.sexual.cessation = 65)
+#' netparams4 <- build_netparams(epistats4, smooth.main.dur = TRUE)
+#' netstats4 <- build_netstats(epistats4, netparams4, young.prop = 0.995)
+#'
 build_netstats <- function(epistats, netparams,
                            network.size = 10000,
                            expect.mort = 0.0001,
                            age.pyramid = NULL,
                            edges.avg = FALSE,
                            race.prop = NULL,
+                           young.prop = NULL,
                            browser = FALSE) {
 
   if (browser == TRUE) {
@@ -83,6 +97,7 @@ build_netstats <- function(epistats, netparams,
   sex.cess.mod <- epistats$sex.cess.mod
   race <- epistats$race
   age.limits <- epistats$age.limits
+  age.sexual.cessation <- epistats$age.sexual.cessation
 
   time.unit <- epistats$time.unit
 
@@ -111,6 +126,7 @@ build_netstats <- function(epistats, netparams,
       props <- race.dist[["national"]][, -c(1, 2)] / 100
     }
   }
+  out$demog$props <- props
   num.B <- out$demog$num.B <- round(num * props$Black)
   num.H <- out$demog$num.H <- round(num * props$Hispanic)
   num.W <- out$demog$num.W <- num - num.B - num.H
@@ -168,10 +184,11 @@ build_netstats <- function(epistats, netparams,
     vec.asmr.B <- c(trans.asmr.B, rep(tail(trans.asmr.B, n = 1), 15))
     vec.asmr.H <- c(trans.asmr.H, rep(tail(trans.asmr.H, n = 1), 15))
     vec.asmr.W <- c(trans.asmr.W, rep(tail(trans.asmr.W, n = 1), 15))
+
     asmr <- data.frame(age = 1:100, vec.asmr.B, vec.asmr.H, vec.asmr.W)
   } else {
-    asmr.O <- rbind(asmr.B, asmr.H, asmr.W)
-    asmr.O <- colMeans(asmr.O)
+    asmr.O <- props$Black * asmr.B + props$Hispanic * asmr.H +
+      props$White.Other * asmr.W
 
     trans.asmr <- 1 - (1 - asmr.O)^(1 / (364 / time.unit))
 
@@ -199,7 +216,29 @@ build_netstats <- function(epistats, netparams,
       stop("Length of age.pyramid vector must be equal to length of unique age values: ", nAges)
     }
   } else {
-    age.pyramid <- rep(1/nAges, nAges)
+    full.age.pyr <- c(0.01202, 0.01228, 0.01250, 0.01280, 0.01292, 0.01289,
+                      0.01284, 0.01286, 0.01301, 0.01297, 0.01296, 0.01337,
+                      0.01344, 0.01334, 0.01329, 0.01332, 0.01325, 0.01323,
+                      0.01360, 0.01385, 0.01365, 0.01368, 0.01373, 0.01389,
+                      0.01424, 0.01454, 0.01480, 0.01514, 0.01533, 0.01525,
+                      0.01463, 0.01426, 0.01400, 0.01401, 0.01404, 0.01352,
+                      0.01366, 0.01360, 0.01339, 0.01367, 0.01274, 0.01246,
+                      0.01227, 0.01190, 0.01226, 0.01181, 0.01192, 0.01245,
+                      0.01312, 0.01331, 0.01255, 0.01225, 0.01219, 0.01239,
+                      0.01308, 0.01321, 0.01313, 0.01303, 0.01311, 0.01320,
+                      0.01264, 0.01247, 0.01223, 0.01169, 0.01152, 0.01092,
+                      0.01042, 0.00994, 0.00954, 0.00926, 0.00890, 0.00872,
+                      0.00899, 0.00650, 0.00630, 0.00600, 0.00601, 0.00509,
+                      0.00451, 0.00414, 0.00377, 0.00346, 0.00304, 0.00275,
+                      0.00235, 0.00202, 0.00173, 0.00148, 0.00127, 0.00109,
+                      0.00093, 0.00080, 0.00068, 0.00059, 0.00050, 0.00043,
+                      0.00037, 0.00032, 0.00027, 0.00023)
+    age.pyramid <- full.age.pyr[age.vals]
+  }
+
+  if (age.sexual.cessation < age.limits[2] && !is.null(young.prop)){
+    age.break <- age.sexual.cessation - (age.limits[1] - 1)
+    age.pyramid <- reweight_age_pyr(age.pyramid, young.prop, age.break)
   }
 
   attr_age <- sample(x = age.vals, size = num, prob = age.pyramid, replace = TRUE)
@@ -248,7 +287,7 @@ build_netstats <- function(epistats, netparams,
 
   # risk group
   nquants <- length(netparams$inst$nf.risk.grp)
-  attr_risk.grp <- apportion_lr(num, 1:nquants, rep(1/nquants, nquants), shuffled = TRUE)
+  attr_risk.grp <- apportion_lr(num, 1:nquants, rep(1 / nquants, nquants), shuffled = TRUE)
   out$attr$risk.grp <- attr_risk.grp
 
   # role class
@@ -492,25 +531,25 @@ build_netstats <- function(epistats, netparams,
 #' Update mortality rates
 #'
 #' @description Replaces the default age- and sex-specific mortality rates used
-#'              in \code{\link{build_netstats}} with user-specified values.
+#'              in [`build_netstats`] with user-specified values.
 #'
-#' @param netstats Output from \code{\link{build_netstats}}.
+#' @param netstats Output from [`build_netstats`].
 #' @param asmr_df A data frame with three columns (Race, Age, and DeathRate)
 #'                specifying the desired mortality rates per time unit for each
 #'                combination of race (Black, Hispanic, White) and age
 #'                (1, 2, 3, ... 100).
 #'
 #' @details
-#' \code{update_asmr} takes the output from \code{\link{build_netstats}} and
+#' `update_asmr` takes the output from [`build_netstats`] and
 #' updates its mortality rates with the values specified in the input parameter
-#' \code{asmr_df}. Mortality rates should be provided for each combination of
+#' `asmr_df`. Mortality rates should be provided for each combination of
 #' race (Black, Hispanic, White) and age (1, 2, 3, ... 100), for a total of 300
 #' rates. All input mortality rates must be non-NA, numeric, and between 0 and
 #' 1 (inclusive). The maximum mortality rate for each race must be 1,
 #' representing deterministic departure from the network at that age.
-#' \code{update_asmr} does not perform time unit conversions; the input
+#' `update_asmr` does not perform time unit conversions; the input
 #' mortality rates should be pre-converted by the user to match
-#' the \code{time.unit} used in \code{\link{build_netstats}}.
+#' the `time.unit` used in [`build_netstats`].
 #'
 #' @export
 #'
@@ -519,16 +558,22 @@ build_netstats <- function(epistats, netparams,
 #'                             race = TRUE)
 #' netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
 #' netstats  <- build_netstats(epistats, netparams)
+#'
+#' # Update mortality rates with random values
 #' asmr_df   <- data.frame(Race = rep(c("Black", "Hispanic", "White"),
 #'                                    each = 100), Age = rep(1:100,3),
 #'                         DeathRate = rep(c(runif(99), 1), 3))
 #' netstats  <- update_asmr(netstats, asmr_df)
-
+#'
+#' # Update mortality rates with 2020 NCHS data
+#' asmr_df   <- read.csv(system.file("2020DeathRates.csv", package =  "ARTnet"))
+#' netstats  <- update_asmr(netstats, asmr_df)
+#'
 update_asmr <- function(netstats, asmr_df) {
 
   #Check that all input mortality rates are reasonable values
-  if (sum(is.na(asmr_df$DeathRate)) > 0 | !is.numeric(asmr_df$DeathRate) |
-      min(asmr_df$DeathRate < 0) | max(asmr_df$DeathRate > 1)) {
+  if (sum(is.na(asmr_df$DeathRate)) > 0 || !is.numeric(asmr_df$DeathRate) ||
+      min(asmr_df$DeathRate) < 0 || max(asmr_df$DeathRate) > 1) {
     stop("Ensure all mortality rates are non-NA, numeric, and between 0 and 1.")
   }
 
@@ -537,13 +582,14 @@ update_asmr <- function(netstats, asmr_df) {
   asmr.W <- asmr_df[asmr_df$Race == "White", 2:3]
 
   #Check for appropriate number of input mortality rates
-  if (min(asmr.B$Age) != 1 | min(asmr.H$Age) != 1 | min(asmr.W$Age) != 1 |
-      max(asmr.B$Age) != 100 | max(asmr.H$Age) != 100 | max(asmr.W$Age) != 100 |
-      nrow(asmr.B) != 100 | nrow(asmr.H) != 100 | nrow(asmr.W) != 100) {
+  if (min(asmr.B$Age) != 1 || min(asmr.H$Age) != 1 || min(asmr.W$Age) != 1 ||
+      max(asmr.B$Age) != 100 || max(asmr.H$Age) != 100 ||
+      max(asmr.W$Age) != 100 || nrow(asmr.B) != 100 || nrow(asmr.H) != 100 ||
+      nrow(asmr.W) != 100) {
     stop("Provide mortality rates by race for 1-yr age groups (1 - 100).")
   }
 
-  if (max(asmr.B$DeathRate) != 1 | max(asmr.H$DeathRate) != 1 |
+  if (max(asmr.B$DeathRate) != 1 || max(asmr.H$DeathRate) != 1 ||
       max(asmr.W$DeathRate) != 1) {
     stop("The mortality rate for at least one age group must be total (1).")
   }
@@ -552,8 +598,10 @@ update_asmr <- function(netstats, asmr_df) {
     asmr <- data.frame(age = 1:100, asmr.B$DeathRate,
                        asmr.H$DeathRate, asmr.W$DeathRate)
   } else {
-    asmr.O <-  rbind(asmr.B$DeathRate, asmr.H$DeathRate, asmr.W$DeathRate)
-    asmr.O <- colMeans(asmr.O, na.rm = TRUE)
+    props <- netstats$demog$props
+    asmr.O <- props$Black * asmr.B$DeathRate +
+      props$Hispanic * asmr.H$DeathRate +
+      props$White.Other * asmr.W$DeathRate
     asmr <- data.frame(age = 1:100, asmr.O, asmr.O, asmr.O)
   }
 
@@ -563,5 +611,43 @@ update_asmr <- function(netstats, asmr_df) {
 
   netstats$demog$asmr <- asmr
   return(netstats)
+}
 
+#' Re-weight age pyramid
+#'
+#' @description This function re-weights a given age pyramid (i.e., a vector
+#' with one element per year in an age range that specifies what proportion of
+#' the population should be  that age) so that the desired fraction of the
+#' population falls below a specified age boundary.
+#'
+#' @param age.pyramid A vector of proportions.
+#' @param young.prop The weight that should be applied to the portion of
+#'                   `age.pyramid` that is below `age.break`
+#' @param age.break The index at which the upper group should begin.
+#'
+#' @export
+#'
+#' @examples
+#' unif.age.pyr <- rep(1/100, 100)
+#' reweighted.age.pyr <- reweight_age_pyr(unif.age.pyr, 0.995, 65)
+#'
+reweight_age_pyr <- function(age.pyramid, young.prop, age.break) {
+
+  #Check inputs
+  if (age.break > length(age.pyramid) || young.prop > 1 || young.prop < 0 ||
+      sum(is.na(age.pyramid)) > 0 || !is.numeric(age.pyramid) ||
+      min(age.pyramid) < 0 || max(age.pyramid) > 1) {
+    stop("Ensure that all input values are non-NA, numeric, and in range.")
+  }
+
+  #Re-weighting
+  age1 <- age.pyramid[1:(age.break - 1)]
+  age1 <- age1 / sum(age1) * young.prop
+
+  age2 <- age.pyramid[age.break:length(age.pyramid)]
+  age2 <- age2 / sum(age2) * (1-young.prop)
+
+  new.age.pyramid <- c(age1, age2)
+
+  return(new.age.pyramid)
 }
