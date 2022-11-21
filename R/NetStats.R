@@ -625,6 +625,8 @@ update_asmr <- function(netstats, asmr_df) {
 #'                   `age.pyramid` that is below `age.break`
 #' @param age.break The index at which the upper group should begin.
 #'
+#' @export
+#'
 #' @examples
 #' unif.age.pyr <- rep(1/100, 100)
 #' reweighted.age.pyr <- reweight_age_pyr(unif.age.pyr, 0.995, 65)
