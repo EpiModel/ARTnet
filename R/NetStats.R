@@ -236,7 +236,7 @@ build_netstats <- function(epistats, netparams,
     age.pyramid <- full.age.pyr[age.vals]
   }
 
-  if (age.sexual.cessation < age.limits[2] && !is.null(young.prop)){
+  if (age.sexual.cessation < age.limits[2] && !is.null(young.prop)) {
     age.break <- age.sexual.cessation - (age.limits[1] - 1)
     age.pyramid <- reweight_age_pyr(age.pyramid, young.prop, age.break)
   }
@@ -645,7 +645,7 @@ reweight_age_pyr <- function(age.pyramid, young.prop, age.break) {
   age1 <- age1 / sum(age1) * young.prop
 
   age2 <- age.pyramid[age.break:length(age.pyramid)]
-  age2 <- age2 / sum(age2) * (1-young.prop)
+  age2 <- age2 / sum(age2) * (1 - young.prop)
 
   new.age.pyramid <- c(age1, age2)
 
