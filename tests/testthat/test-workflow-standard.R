@@ -196,7 +196,7 @@ dx_main <- netdx(
   fit_main,
   nsims = nsims,
   ncores = ncores,
-  nsteps = nsteps * 2,
+  nsteps = nsteps,
   nwstats.formula = model_main_dx,
   set.control.ergm = control.simulate.formula(MCMC.burnin = 1e5),
   set.control.tergm = control.simulate.formula.tergm(MCMC.burnin.min = 2e5)
