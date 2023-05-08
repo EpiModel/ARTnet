@@ -514,16 +514,11 @@ build_netparams <- function(epistats,
     }
   }
 
-  # if dissolve edges, then setting dissolution rates for highest age group to 1
+  # If sexual cessation model, then set diss coef for age grp above boundary to 1
   if (sex.cess.mod == TRUE) {
     index.age.grp <- max(out$main$durs.main.byage$index.age.grp) + 1
-    if (cessation.dissolve.edges == TRUE) {
-      df <- data.frame(index.age.grp = index.age.grp, mean.dur = 1, median.dur = 1,
-                       rates.main.adj = 1, mean.dur.adj = 1)
-    } else {
-      df <- tail(out$main$durs.main.byage, 1)
-      df$index.age.grp <- index.age.grp
-    }
+    df <- data.frame(index.age.grp = index.age.grp, mean.dur = 1, median.dur = 1,
+                     rates.main.adj = 1, mean.dur.adj = 1)
     out$main$durs.main.byage <- rbind(out$main$durs.main.byage, df)
   }
 
@@ -840,16 +835,11 @@ build_netparams <- function(epistats,
   durs.casl.all <- durs.casl.all[, c(3, 1, 2, 4, 5)]
   out$casl$durs.casl.byage <- durs.casl.all
 
-  # if dissolve edges, then setting dissolution rates for highest age group to 0
+  # If sexual cessation model, then set diss coef for age grp above boundary to 1
   if (sex.cess.mod == TRUE) {
     index.age.grp <- max(out$casl$durs.casl.byage$index.age.grp) + 1
-    if (cessation.dissolve.edges == TRUE) {
-      df <- data.frame(index.age.grp = index.age.grp, mean.dur = 1, median.dur = 1,
-                       rates.casl.adj = 1, mean.dur.adj = 1)
-    } else {
-      df <- tail(out$casl$durs.casl.byage, 1)
-      df$index.age.grp <- index.age.grp
-    }
+    df <- data.frame(index.age.grp = index.age.grp, mean.dur = 1, median.dur = 1,
+                     rates.casl.adj = 1, mean.dur.adj = 1)
     out$casl$durs.casl.byage <- rbind(out$casl$durs.casl.byage, df)
   }
 
