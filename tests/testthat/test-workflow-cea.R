@@ -1,7 +1,9 @@
 
 ## testing ARTnet workflow on full-scale MSM model with max age 65
 
-## should work on EpiModelHIV-p@main
+## Script must work on EpiModelHIV-p@main and CRAN versions of all packages
+## install.packages(c("statnet.common", "ergm", "tergm", "network", "networkDynamic",
+##                    "EpiModel", "ergm.ego", "egor", "ergm.multi"))
 
 # Setup  -----------------------------------------------------------------------
 library("EpiModelHIV")
@@ -22,7 +24,6 @@ epistats <- build_epistats(
 netparams <- build_netparams(
   epistats = epistats,
   smooth.main.dur = TRUE,
-  cessation.dissolve.edges = TRUE
 )
 
 netstats <- build_netstats(
@@ -36,6 +37,8 @@ netstats <- build_netstats(
 table(floor(netstats$attr$age))
 sum(netstats$attr$age >= 65)
 hist(netstats$attr$age)
+
+table(netstats$attr$age.grp)
 
 netstats$main$nodefactor_age.grp
 sum(netstats$main$nodefactor_age.grp) / 2
@@ -95,6 +98,7 @@ fit_main <- netest(
   verbose = FALSE
 )
 fit_main <- trim_netest(fit_main)
+
 
 # 2. Casual Model ---------------------------------------------------------
 

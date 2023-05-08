@@ -7,7 +7,6 @@
 build_netparams(
   epistats,
   smooth.main.dur = FALSE,
-  cessation.dissolve.edges = TRUE,
   oo.nquants = 5,
   browser = FALSE
 )
@@ -17,9 +16,6 @@ build_netparams(
 
 \item{smooth.main.dur}{If \code{TRUE}, function averages the main sexual partnership durations for
 oldest and second oldest age groups.}
-
-\item{cessation.dissolve.edges}{If \code{TRUE}, immediate dissolution model parameters added for the
-oldest age group representing persons after sexual cessation.}
 
 \item{oo.nquants}{Number of quantiles to split the one-off partnership risk distribution (count
 of one-off partners per unit time).}
@@ -41,12 +37,6 @@ groups (as specified by \code{age.breaks} in \code{\link{build_epistats}}). Subs
 done if there are three or more age categories specified. Note, this does not affect calculations
 if an age group after sexual cessation is included; durations averaged only in the oldest two
 age groups within the bounds of the sexual cessation age.
-
-If the parameter \code{cessation.dissolve.edges} is \code{TRUE}, this assumes that all existing partnerships
-will dissolve between anyone over the upper boundary of the age of sexual cessation. If \code{FALSE},
-no new partnerships will occur within this age group, but existing partnerships are allowed to
-continue through their natural dissolution. This parameter is ignored if there is no upper age
-group of sexually inactive persons.
 }
 \examples{
 # Standard model with default age stratification
@@ -67,9 +57,5 @@ epistats3 <- build_epistats(geog.lvl = "city",
                             age.breaks = c(25, 35, 45, 55),
                             age.sexual.cessation = 65)
 netparams3 <- build_netparams(epistats3, smooth.main.dur = TRUE)
-
-# Alternative with cessation not dissolving edges (note duration table)
-netparams4 <- build_netparams(epistats3, smooth.main.dur = TRUE,
-                              cessation.dissolve.edges = FALSE)
 
 }
