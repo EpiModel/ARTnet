@@ -651,3 +651,23 @@ reweight_age_pyr <- function(age.pyramid, young.prop, age.break) {
 
   return(new.age.pyramid)
 }
+
+#' Reduces the Size of the Netstats Object by Removing the Networks it Contains
+#'
+#' Once `netest` has been built, the network object stored in `netstats` are
+#' never used again and take up a lot of space. This function removes them to
+#' reduce the stored size of `netstats`. Roughly 10MiB are saved for 100k nodes
+#' networks.
+#'
+#' @param netstats the `netstats` object to be trimmed
+#'
+#' @return a trimmed `netstats`
+#'
+#' @export
+#'
+trim_netstats <- function(netstats) {
+  netstats$main <- NULL
+  netstats$casl <- NULL
+  netstats$inst <- NULL
+  return(netstats)
+}
