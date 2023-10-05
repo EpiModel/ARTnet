@@ -550,3 +550,41 @@ build_epistats <- function(geog.lvl = NULL,
   out$time.unit <- time.unit
   return(out)
 }
+
+# strip a `glm` object from all its components, leaving only what is required
+# for predicting from new data
+strip_glm <- function(cm) {
+  root_elts <- c("y", "model", "residuals", "fitted.values", "effects",
+                 "linear.predictors", "weights", "prior.weights", "data")
+  for (elt in root_elts) cm[[elt]] <- c()
+
+  family_elts <- c("variance", "dev.resids", "aic", "validmu", "simulate")
+  for (elt in family_elts) cm$family[[elt]] <- c()
+
+  cm$qr$qr <- c()
+  attr(cm$terms, ".Environment") <- c()
+  attr(cm$formula, ".Environment") <- c()
+
+  return(cm)
+}
+
+#' Reduces the Size of the Epistats Object by Trimming its Models
+#'
+#' The `epistats` object contains 3 GLM models. These R object take up a lot of
+#' space and only a small subset of their functionalities is used by
+#' EpiModelHIV. This function trims these models to save up space without
+#' compromising EpiModelHIV functionalities.
+#'
+#' @param epistats the `epistats` object to be trimmed
+#'
+#' @return a trimmed `epistats`
+#'
+#' @export
+#'
+trim_epistats <- function(epistats) {
+  epistats$acts.mod <- strip_glm(epistats$acts.mod)
+  epistats$cond.mc.mod <- strip_glm(epistats$cond.mc.mod)
+  epistats$cond.oo.mod <- strip_glm(epistats$cond.oo.mod)
+  return(epistats)
+}
+
