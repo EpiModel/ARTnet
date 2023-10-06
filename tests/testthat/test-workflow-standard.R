@@ -7,16 +7,18 @@
 library("EpiModelHIV")
 library("ARTnet")
 
-ncores <- 1
-networks_size <- 10000
+# Settings ---------------------------------------------------------------------
+networks_size   <- 5 * 1e3
+estimation_method <- "Stochastic-Approximation"
+estimation_ncores <- 1
 
 # 0. Initialize Network --------------------------------------------------------
 epistats <- build_epistats(
   geog.lvl = "city",
   geog.cat = "Atlanta",
   init.hiv.prev = c(0.33, 0.137, 0.084),
-  time.unit = 7,
-  age.limits = c(15, 65)
+  race = TRUE,
+  time.unit = 7
 )
 
 netparams <- build_netparams(
@@ -75,12 +77,13 @@ fit_main <- netest(
   target.stats = netstats_main,
   coef.diss = netstats$main$diss.byage,
   set.control.ergm = control.ergm(
+    main.method = estimation_method,
     MCMLE.maxit = 500,
     SAN.maxit = 3,
     SAN.nsteps.times = 4,
     MCMC.samplesize = 1e4,
     MCMC.interval = 5e3,
-    parallel = ncores
+    parallel = estimation_ncores
   ),
   verbose = FALSE
 )
@@ -91,7 +94,7 @@ fit_main <- trim_netest(fit_main)
 # Formula
 model_casl <- ~ edges +
   nodematch("age.grp", diff = TRUE) +
-  nodefactor("age.grp", levels = c(-1, -5)) +
+  nodefactor("age.grp", levels = -5) +
   nodematch("race", diff = FALSE) +
   nodefactor("race", levels = -1) +
   nodefactor("deg.main", levels = -3) +
@@ -103,7 +106,7 @@ model_casl <- ~ edges +
 netstats_casl <- c(
   edges                = netstats$casl$edges,
   nodematch_age.grp    = netstats$casl$nodematch_age.grp,
-  nodefactor_age.grp   = netstats$casl$nodefactor_age.grp[-c(1, 5)],
+  nodefactor_age.grp   = netstats$casl$nodefactor_age.grp[-5],
   nodematch_race       = netstats$casl$nodematch_race_diffF,
   nodefactor_race      = netstats$casl$nodefactor_race[-1],
   nodefactor_deg.main  = netstats$casl$nodefactor_deg.main[-3],
@@ -120,12 +123,13 @@ fit_casl <- netest(
   target.stats = netstats_casl,
   coef.diss = netstats$casl$diss.byage,
   set.control.ergm = control.ergm(
+    main.method = estimation_method,
     MCMLE.maxit = 500,
     SAN.maxit = 3,
     SAN.nsteps.times = 4,
     MCMC.samplesize = 1e4,
     MCMC.interval = 5e3,
-    parallel = ncores
+    parallel = estimation_ncores
   ),
   verbose = FALSE
 )
@@ -163,28 +167,28 @@ fit_inst <- netest(
   target.stats = netstats_inst,
   coef.diss = dissolution_coefs(~ offset(edges), 1),
   set.control.ergm = control.ergm(
+    main.method = estimation_method,
     MCMLE.maxit = 500,
     SAN.maxit = 3,
     SAN.nsteps.times = 4,
     MCMC.samplesize = 1e4,
     MCMC.interval = 5e3,
-    parallel = ncores
+    parallel = estimation_ncores
   ),
   verbose = FALSE
 )
 fit_inst <- trim_netest(fit_inst)
 
-
 # 4. Run Diagnostics --------------------------------------------------------------------------
 
-nsims <- 10
-ncores <- 10
-nsteps <- 1000
+ncores <- 2
+nsims  <- 2
+nsteps <- 100
 
 model_main_dx <- ~edges +
   nodematch("age.grp", diff = TRUE) +
   nodefactor("age.grp", levels = TRUE) +
-  nodematch("race", diff = FALSE) +
+  nodematch("race", diff = TRUE) +
   nodefactor("race", levels = TRUE) +
   nodefactor("deg.casl", levels = TRUE) +
   degrange(from = 3) +
@@ -222,7 +226,7 @@ plot(dx_main_static, sim.lines = TRUE, sim.lwd = 0.1, mean.lwd = 0.5)
 model_casl_dx <- ~edges +
   nodematch("age.grp", diff = TRUE) +
   nodefactor("age.grp", levels = TRUE) +
-  nodematch("race", diff = FALSE) +
+  nodematch("race", diff = TRUE) +
   nodefactor("race", levels = TRUE) +
   nodefactor("deg.main", levels = TRUE) +
   degrange(from = 4) +
@@ -245,6 +249,7 @@ dx_casl_static <- netdx(
   dynamic = FALSE,
   nsims = 10000,
   nwstats.formula = model_casl_dx,
+  skip.dissolution = TRUE,
   set.control.ergm = control.simulate.formula(MCMC.burnin = 1e5)
 )
 
@@ -261,7 +266,7 @@ plot(dx_casl_static, sim.lines = TRUE, sim.lwd = 0.1, mean.lwd = 0.5)
 model_inst_dx <- ~edges +
   nodematch("age.grp", diff = FALSE) +
   nodefactor("age.grp", levels = TRUE) +
-  nodematch("race", diff = FALSE) +
+  nodematch("race", diff = TRUE) +
   nodefactor("race", levels = TRUE) +
   nodefactor("risk.grp", levels = TRUE) +
   nodefactor("deg.tot", levels = TRUE) +
@@ -270,7 +275,7 @@ model_inst_dx <- ~edges +
 
 dx_inst <- netdx(
   fit_inst,
-  nsims = 50000,
+  nsims = 10000,
   dynamic = FALSE,
   nwstats.formula = model_inst_dx,
   set.control.ergm = control.simulate.formula(MCMC.burnin = 1e5)

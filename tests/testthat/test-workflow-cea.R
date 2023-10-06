@@ -9,13 +9,16 @@
 library("EpiModelHIV")
 library("ARTnet")
 
-networks_size <- 10000
+networks_size   <- 5 * 1e3
+estimation_method <- "Stochastic-Approximation"
+estimation_ncores <- 1
 
 # 0. Initialize Network --------------------------------------------------------
 epistats <- build_epistats(
   geog.lvl = "city",
   geog.cat = "Atlanta",
   init.hiv.prev = c(0.33, 0.137, 0.084),
+  race = TRUE,
   time.unit = 7,
   age.limits = c(15, 100),
   age.sexual.cessation = 65
@@ -88,12 +91,13 @@ fit_main <- netest(
   target.stats = netstats_main,
   coef.diss = netstats$main$diss.byage,
   set.control.ergm = control.ergm(
+    main.method = estimation_method,
     MCMLE.maxit = 500,
     SAN.maxit = 3,
     SAN.nsteps.times = 4,
     MCMC.samplesize = 1e4,
     MCMC.interval = 5e3,
-    parallel = 1
+    parallel = estimation_ncores
   ),
   verbose = FALSE
 )
@@ -134,12 +138,13 @@ fit_casl <- netest(
   target.stats = netstats_casl,
   coef.diss = netstats$casl$diss.byage,
   set.control.ergm = control.ergm(
+    main.method = estimation_method,
     MCMLE.maxit = 500,
     SAN.maxit = 3,
     SAN.nsteps.times = 4,
     MCMC.samplesize = 1e4,
     MCMC.interval = 5e3,
-    parallel = 1
+    parallel = estimation_ncores
   ),
   verbose = FALSE
 )
@@ -177,12 +182,13 @@ fit_inst <- netest(
   target.stats = netstats_inst,
   coef.diss = dissolution_coefs(~ offset(edges), 1),
   set.control.ergm = control.ergm(
+    main.method = estimation_method,
     MCMLE.maxit = 500,
     SAN.maxit = 3,
     SAN.nsteps.times = 4,
     MCMC.samplesize = 1e4,
     MCMC.interval = 5e3,
-    parallel = 1
+    parallel = estimation_ncores
   ),
   verbose = FALSE
 )
@@ -191,9 +197,9 @@ fit_inst <- trim_netest(fit_inst)
 
 # 4. Run Diagnostics --------------------------------------------------------------------------
 
-nsims <- 10
-ncores <- 10
-nsteps <- 1000
+ncores <- 2
+nsims  <- 2
+nsteps <- 100
 
 model_main_dx <- ~edges +
   nodematch("age.grp", diff = TRUE) +
@@ -259,6 +265,7 @@ dx_casl_static <- netdx(
   dynamic = FALSE,
   nsims = 10000,
   nwstats.formula = model_casl_dx,
+  skip.dissolution = TRUE,
   set.control.ergm = control.simulate.formula(MCMC.burnin = 1e5)
 )
 
