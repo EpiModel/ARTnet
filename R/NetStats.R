@@ -15,8 +15,8 @@
 #' @param edges.avg If `TRUE`, calculates the overall edges target statistics as a weighted average
 #'        of the statistics for edges by race/ethnicity group; if `FALSE`, takes the raw average.
 #' @param race.prop A numerical vector of length 3, containing the proportion of the population with
-#'        each of the three values for the nodal attribute "race" in order: White/Other, Black,
-#'        and Hispanic).
+#'        each of the three values for the nodal attribute "race" in order: Black,
+#'        Hispanic, and White/Other).
 #' @param young.prop The proportion of the population that should be below the age of sexual cessation.
 #'        Default is NULL (meaning no re-weighting of the `age.pyramid` parameter is performed).
 #'        This parameter is only used if the age of sexual cessation is less than the upper age bound.
@@ -117,6 +117,8 @@ build_netstats <- function(epistats, netparams,
   # race.dist.3cat
 
   if (!is.null(race.prop)) {
+    # reorder for consistency with the else case
+    race.prop <- race.prop[c(3, 1, 2)]
     props <- as.data.frame(t(race.prop))
     colnames(props) <- c("White.Other", "Black", "Hispanic")
   } else {
