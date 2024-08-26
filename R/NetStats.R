@@ -84,7 +84,7 @@ build_netstats <- function(epistats, netparams,
                            young.prop = NULL,
                            browser = FALSE) {
   # Ensures that ARTnetData is installed
-  assert_artnetdata()
+  if (!assert_artnetdata()) return(NULL)
 
   if (browser == TRUE) {
     browser()
