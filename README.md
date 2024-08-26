@@ -1,17 +1,21 @@
 ## ARTnet: Model Parameterization with the ARTnet Study Data
 
-ARTnet is an anonymous cross-sectional web-based survey conducted from 2017 to 2019 of HIV-related risk behaviors, testing, and use of prevention services among men who have sex with men (MSM) in the United States. It recruited MSM who have completed the American Men’s Internet Survey (AMIS) study, and therefore, the dataset contains variables merged from that study as well. Full access to the dataset from ARTnet will allow the researchers to conduct analyses and disseminate results using the data. 
+ARTnet is an anonymous cross-sectional web-based survey conducted from 2017 to 2019 of HIV-related risk behaviors, testing, and use of prevention services among men who have sex with men (MSM) in the United States. It recruited MSM who have completed the American Men’s Internet Survey (AMIS) study, and therefore, the dataset contains variables merged from that study as well. Full access to the dataset from ARTnet will allow the researchers to conduct analyses and disseminate results using the data.
 
 For further details on the ARTnet Study, you can read the descriptive paper ["Egocentric Sexual Networks of Men Who Have Sex with Men in the United States: Results from the ARTnet Study"](https://www.sciencedirect.com/science/article/pii/S1755436519301409?via%3Dihub) by Weiss et al. in _Epidemics._ See the **ARTnet Scientific Publications** section below for further details.
 
 ### Data Use Agreement
+
 Access to the data requires a Memorandum of Understanding (MOU) that outlines the personnel analyzing the data and purposes of the data analyses. This dataset may not be shared without the consent of the ARTnet Study PI (Samuel Jenness, Emory University) as outlined in an MOU. Please contact the PI by email (mailto:samuel.m.jenness@emory.edu) to request access. A template MOU will be sent; after review access to the ARTnet dataset will be provided via Github.
 
 ### ARTnetData Dependency
 
-The ARTnet package depends on the [ARTnetData package](https://github.com/EpiModel/ARTnetData), which contains the limited use public dataset. Because of the restrictions of the dataset, the ARTnetData package must be installed separately, before installing the ARTnet package, using the following directions.
+The ARTnet package depends on the [ARTnetData package](https://github.com/EpiModel/ARTnetData), which contains the limited use public dataset. Because of the restrictions of the dataset, the ARTnetData package must be installed separately, to fully utilize the ARTnet package, using the following directions.
+
+A set of pre-built analyses are available within the package as well to experiment before gaining access to the full data-set. See below.
 
 #### Installation
+
 The suggested method for accessing the dataset is to directly install the `ARTnetData` package in R, using the `remotes` package. First, because this repository is private, installing this package requires a [Github Personal Access Token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/).
 
 You can use the `usethis` package to create a new PAT for use in R, like this:
@@ -44,7 +48,7 @@ d <- ARTnet.wide
 l <- ARTnet.long
 ```
 
-The built-in dataset names for the two datasets are `ARTnet.wide` and `ARTnet.long`, and they are "lazy loaded" into global memory when the `ARTnetData` package is loaded. To use or modify the datasets, you might start by assigning those datasets short-hand names. Then any R operations may be performed. 
+The built-in dataset names for the two datasets are `ARTnet.wide` and `ARTnet.long`, and they are "lazy loaded" into global memory when the `ARTnetData` package is loaded. To use or modify the datasets, you might start by assigning those datasets short-hand names. Then any R operations may be performed.
 
 ```r
 str(d)
@@ -64,25 +68,67 @@ remotes::install_github("EpiModel/ARTnet", build_vignettes = TRUE)
 Some of the example uses are then as follows:
 
 ```r
-# 1. Epistats: Specify geographic features, as well as race stratification 
+# 1. Epistats: Specify geographic features, as well as race stratification
 #              and total age range
-epistats <- build_epistats(geog.lvl = "city", 
-                           geog.cat = "Atlanta", 
+epistats <- build_epistats(geog.lvl = "city",
+                           geog.cat = "Atlanta",
                            race = TRUE, age.limits = c(30, 50),
                            age.breaks = c(35, 45))
 
-# 2. Netparams: Specify age categories if needed, or let ARTnet determine 
+# 2. Netparams: Specify age categories if needed, or let ARTnet determine
                 age categories by number of categories desired
 netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
 
-# 3. Netstats: Finalize network setup 
-netstats <- build_netstats(epistats, netparams, expect.mort = 0.0005, 
+# 3. Netstats: Finalize network setup
+netstats <- build_netstats(epistats, netparams, expect.mort = 0.0005,
                            network.size = 1000, edges.avg = TRUE)
 ```
 
 More details of which may be found in the package vignette:
 ```r
 vignette(package = "ARTnet")
+```
+
+### Using the Built-In Models
+
+For `EpiModelHIV` models, the `epistats` and `netstats` object are required. To
+experiment with it without access to `ARTnetData`, `ARTnet` provides an example
+for each. They are the result of the following calls:
+
+```r
+epistats <- build_epistats(
+  geog.lvl = "city",
+  geog.cat = "Atlanta",
+  init.hiv.prev = c(0.33, 0.137, 0.084),
+  race = TRUE,
+  time.unit = 7
+)
+
+netparams <- build_netparams(
+  epistats = epistats,
+  smooth.main.dur = TRUE
+)
+
+netstats <- build_netstats(
+  epistats,
+  netparams,
+  expect.mort = 0.000478213,
+  network.size = 1e3
+)
+```
+
+They can be accessed copied locally with:
+
+```r
+file.copy(
+  system.file("netstats-example.rds", package = "ARTnet"),
+  "netstats.rds"
+)
+
+file.copy(
+  system.file("epistats-example.rds", package = "ARTnet"),
+  "epistats.rds"
+)
 ```
 
 ### ARTnet Scientific Publications
@@ -97,9 +143,9 @@ vignette(package = "ARTnet")
 
 4. Chandra CL, Weiss KM, Kelley CF, Marcus JL, Jenness SM. Gaps in Screening of Sexually Transmitted Infections among Men Who Have Sex with Men during PrEP Care in the United States. _Clinical Infectious Diseases._ 2021; 73(7): e2261–69. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/32702116/)
 
-5. Goodreau SM, Maloney KM, Sanchez TH, Morris M, Janulis P, Jenness SM. A Behavioral Cascade of HIV Seroadapation among US Men Who Have Sex with Men in the Era of PrEP and U=U. _AIDS & Behavior._ 2021; 25(12): 3933-3943. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/33884510/) 
+5. Goodreau SM, Maloney KM, Sanchez TH, Morris M, Janulis P, Jenness SM. A Behavioral Cascade of HIV Seroadapation among US Men Who Have Sex with Men in the Era of PrEP and U=U. _AIDS & Behavior._ 2021; 25(12): 3933-3943. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/33884510/)
 
-6. Anderson EJ, Weiss KM, Morris M, Sanchez TH, Prasad P, Jenness SM. HIV and Sexually Transmitted Infection Epidemic Potential of Networks of Men Who Have Sex with Men in Two Cities. _Epidemiology._ 2021; 32(5): 681-689. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/34172692/) 
+6. Anderson EJ, Weiss KM, Morris M, Sanchez TH, Prasad P, Jenness SM. HIV and Sexually Transmitted Infection Epidemic Potential of Networks of Men Who Have Sex with Men in Two Cities. _Epidemiology._ 2021; 32(5): 681-689. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/34172692/)
 
 7. Weiss KM, Prasad P, Sanchez T, Goodreau SM, Jenness SM. Association Between HIV PrEP Indications and Use in a National Sexual Network Study of Men Who Have Sex with Men. _Journal of the International AIDS Society._ 2021; 24(10): e25826. [[PubMed]](https://pubmed.ncbi.nlm.nih.gov/34605174/)
 
