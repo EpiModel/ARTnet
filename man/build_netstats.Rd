@@ -33,8 +33,8 @@ one. If \code{NULL}, then a default distribution based on 2020 NCHS data is used
 of the statistics for edges by race/ethnicity group; if \code{FALSE}, takes the raw average.}
 
 \item{race.prop}{A numerical vector of length 3, containing the proportion of the population with
-each of the three values for the nodal attribute "race" in order: White/Other, Black,
-and Hispanic).}
+each of the three values for the nodal attribute "race" in order: Black,
+Hispanic, and White/Other).}
 
 \item{young.prop}{The proportion of the population that should be below the age of sexual cessation.
 Default is NULL (meaning no re-weighting of the \code{age.pyramid} parameter is performed).
@@ -61,7 +61,7 @@ different race denominator sizes). The \code{edges.avg = TRUE} setting calculate
 the sum of mean degrees in each race/ethnicity group (divided by 2) times the size of each group.
 
 The \code{race.prop} argument only needs to be specified if the built-in race/ethnicity distribution
-data in \code{\link[ARTnetData:race.dist]{ARTnetData::race.dist}} is not used. This may be the case \code{geog.lvl = "county"} or if
+data in \code{ARTnetData::race.dist} is not used. This may be the case \code{geog.lvl = "county"} or if
 \code{geog.cat} has length >1; otherwise, the values can be obtained automatically. If \code{race.prop} is
 not supplied in either of these cases, national US values will be used..
 }

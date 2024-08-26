@@ -48,6 +48,8 @@ build_netparams <- function(epistats,
                             smooth.main.dur = FALSE,
                             oo.nquants = 5,
                             browser = FALSE) {
+  # Ensures that ARTnetData is installed
+  assert_artnetdata()
 
   if (browser == TRUE) {
     browser()
@@ -71,8 +73,8 @@ build_netparams <- function(epistats,
   ## Age Processing ##
 
   ## Data ##
-  d <- ARTnet.wide
-  l <- ARTnet.long
+  d <- ARTnetData::ARTnet.wide
+  l <- ARTnetData::ARTnet.long
 
   # p_age_imp initialization for lintr
   p_age_imp <- NULL

@@ -20,4 +20,16 @@ The ARTnet package provides a suite of functions for the parameterization of epi
 models using data from the ARTnet cross-sectional survey of men who have sex with men (MSM) in
 the United States.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{http://github.com/EpiModel/ARTnet}
+  \item Report bugs at \url{https://github.com/EpiModel/ARTnet/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Samuel Jenness \email{samuel.m.jenness@emory.edu}
+
+}
 \keyword{package}

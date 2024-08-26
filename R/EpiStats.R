@@ -114,6 +114,8 @@ build_epistats <- function(geog.lvl = NULL,
                            init.hiv.prev = NULL,
                            time.unit = 7,
                            browser = FALSE) {
+  # Ensures that ARTnetData is installed
+  assert_artnetdata()
 
   # Fix global binding check errors
   duration.time <- anal.acts.time <- anal.acts.time.cp <- NULL

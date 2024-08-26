@@ -1,8 +1,6 @@
 #' @import utils
 
-utils::globalVariables(c("ARTnet.wide",
-                         "ARTnet.long",
-                         "age",
+utils::globalVariables(c( "age",
                          "race.cat3",
                          "p_race.cat3",
                          "AMIS_ID",
