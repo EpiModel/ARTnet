@@ -115,7 +115,7 @@ build_epistats <- function(geog.lvl = NULL,
                            time.unit = 7,
                            browser = FALSE) {
   # Ensures that ARTnetData is installed
-  if (!assert_artnetdata()) return(NULL)
+  if (system.file(package = "ARTnetData") == "") stop(missing_data_msg)
 
   # Fix global binding check errors
   duration.time <- anal.acts.time <- anal.acts.time.cp <- NULL

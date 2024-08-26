@@ -49,7 +49,7 @@ build_netparams <- function(epistats,
                             oo.nquants = 5,
                             browser = FALSE) {
   # Ensures that ARTnetData is installed
-  if (!assert_artnetdata()) return(NULL)
+  if (system.file(package = "ARTnetData") == "") stop(missing_data_msg)
 
   if (browser == TRUE) {
     browser()
