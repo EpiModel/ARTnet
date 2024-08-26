@@ -12,7 +12,7 @@ Access to the data requires a Memorandum of Understanding (MOU) that outlines th
 
 The ARTnet package depends on the [ARTnetData package](https://github.com/EpiModel/ARTnetData), which contains the limited use public dataset. Because of the restrictions of the dataset, the ARTnetData package must be installed separately, to fully utilize the ARTnet package, using the following directions.
 
-A set of pre-built analyses are available within the package as well to experiment before gaining access to the full data-set. See below.
+A set of built-in analyses are available within the package as well to experiment before gaining access to the full data-set. See below.
 
 #### Installation
 
