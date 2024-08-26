@@ -25,7 +25,7 @@ RoxygenNote: 7.3.2
 Encoding: UTF-8
 Remotes:
    github::EpiModel/ARTnetData@main,
-   github::EpiModel/EpiModel@main
+   github::EpiModel/EpiModel@main,
    github::EpiModel/EpiModelHIV-p@main
 Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3
