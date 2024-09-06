@@ -1,3 +1,8 @@
+## ARTnet v2.9.0
+
+* `ARTnetData` is now a suggested package and example `EpiStats` and `Netstats`
+are provided. This allows experimenting with `EpiModelHIV` without being part
+of the EpiModel organisation.
 
 ## ARTnet v2.8.0
 

@@ -36,7 +36,7 @@
 #' the sum of mean degrees in each race/ethnicity group (divided by 2) times the size of each group.
 #'
 #' The `race.prop` argument only needs to be specified if the built-in race/ethnicity distribution
-#' data in [`ARTnetData::race.dist`] is not used. This may be the case `geog.lvl = "county"` or if
+#' data in `ARTnetData::race.dist` is not used. This may be the case `geog.lvl = "county"` or if
 #' `geog.cat` has length >1; otherwise, the values can be obtained automatically. If `race.prop` is
 #' not supplied in either of these cases, national US values will be used..
 #'
@@ -83,6 +83,8 @@ build_netstats <- function(epistats, netparams,
                            race.prop = NULL,
                            young.prop = NULL,
                            browser = FALSE) {
+  # Ensures that ARTnetData is installed
+  if (system.file(package = "ARTnetData") == "") stop(missing_data_msg)
 
   if (browser == TRUE) {
     browser()

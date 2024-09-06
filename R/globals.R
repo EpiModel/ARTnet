@@ -1,8 +1,6 @@
 #' @import utils
 
-utils::globalVariables(c("ARTnet.wide",
-                         "ARTnet.long",
-                         "age",
+utils::globalVariables(c( "age",
                          "race.cat3",
                          "p_race.cat3",
                          "AMIS_ID",
@@ -31,3 +29,9 @@ utils::globalVariables(c("ARTnet.wide",
                          "race.dist.census.region",
                          "survey.year",
                          "ongoing2"))
+
+missing_data_msg <- paste0(
+  "This function requires the `ARTnetData` package to be installed.\n",
+  "Follow the instructions at the link below to get access to it.\n",
+  "https://github.com/EpiModel/ARTnet/tree/main?tab=readme-ov-file#artnetdata-dependency\n"
+)
