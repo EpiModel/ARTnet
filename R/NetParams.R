@@ -151,7 +151,7 @@ build_netparams <- function(epistats,
   d$count.oo.part.trunc <- ifelse(d$count.oo.part > 100, 100, d$count.oo.part)
 
 
-  if (race == TRUE) {
+  if (race == TRUE & race.level == 3) {
     # Race Ethnicity
     d$race.cat3 <- rep(NA, nrow(d))
     d$race.cat3[d$race.cat == "black"] <- 1
@@ -178,6 +178,42 @@ build_netparams <- function(epistats,
 
     imp_white <- which(is.na(l$p_race.cat3) & l$race.cat3 == 3)
     l$p_race.cat3[imp_white] <- sample(1:3, length(imp_white), TRUE, probs[3, ])
+
+  }
+
+  if (race == TRUE & race.level == 4) {
+    # Race Ethnicity
+    d$race.cat3 <- rep(NA, nrow(d))
+    d$race.cat3[d$race.cat == "black"] <- 1
+    d$race.cat3[d$race.cat == "hispanic"] <- 2
+    d$race.cat3[d$race.cat == "white"] <- 3
+    d$race.cat3[d$race.cat == "other"] <- 4
+
+    l$race.cat3[l$race.cat == "black"] <- 1
+    l$race.cat3[l$race.cat == "hispanic"] <- 2
+    l$race.cat3[l$race.cat == "white"] <- 3
+    l$race.cat3[l$race.cat == "other"] <- 4
+
+    l$p_race.cat3 <- rep(NA, nrow(l))
+    l$p_race.cat3[l$p_race.cat == "black"] <- 1
+    l$p_race.cat3[l$p_race.cat == "hispanic"] <- 2
+    l$p_race.cat3[l$p_race.cat == "white"] <- 3
+    l$p_race.cat3[l$p_race.cat == "other"] <- 4
+
+    # redistribute NAs in proportion to non-missing partner races
+    probs <- prop.table(table(l$race.cat3, l$p_race.cat3), 1)
+
+    imp_black <- which(is.na(l$p_race.cat3) & l$race.cat3 == 1)
+    l$p_race.cat3[imp_black] <- sample(1:3, length(imp_black), TRUE, probs[1, ])
+
+    imp_hisp <- which(is.na(l$p_race.cat3) & l$race.cat3 == 2)
+    l$p_race.cat3[imp_hisp] <- sample(1:3, length(imp_hisp), TRUE, probs[2, ])
+
+    imp_white <- which(is.na(l$p_race.cat3) & l$race.cat3 == 3)
+    l$p_race.cat3[imp_white] <- sample(1:3, length(imp_white), TRUE, probs[3, ])
+
+    imp_other <- which(is.na(l$p_race.cat3) & l$race.cat3 == 4)
+    l$p_race.cat3[imp_other] <- sample(1:4, length(imp_white), TRUE, probs[4, ])
 
   }
 
