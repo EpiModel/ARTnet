@@ -71,6 +71,9 @@
 #'   natural mortality.
 #' * `time.unit`: a number between 1 and 30 that specifies time units for ARTnet statistics. Set to
 #'   `7` by default.
+#' * `race.level`: the number of racial and ethnic categories that the model stratifies by. Default is
+#'    `3` for Black, Hispanic, and White/Other. `4` stratifies racial and ethnic group for Black, Hispanic,
+#'    White, and Other.
 #'
 #' @examples
 #' # Age and geographic stratification, for the Atlanta metropolitan statistical area
@@ -108,6 +111,7 @@
 build_epistats <- function(geog.lvl = NULL,
                            geog.cat = NULL,
                            race = TRUE,
+                           race.level = 4,
                            age.limits = c(15, 65),
                            age.breaks = c(25, 35, 45, 55),
                            age.sexual.cessation = NULL,
@@ -255,7 +259,7 @@ build_epistats <- function(geog.lvl = NULL,
 
 
   ## Race ethnicity ##
-  if (race == TRUE) {
+  if (race == TRUE & race.level == 3) {
     d$race.cat3 <- rep(NA, nrow(d))
     d$race.cat3[d$race.cat == "black"] <- 1
     d$race.cat3[d$race.cat == "hispanic"] <- 2
@@ -290,6 +294,53 @@ build_epistats <- function(geog.lvl = NULL,
     l$race.combo[l$race.cat3 == 2 & l$p_race.cat3 == 2] <- 4
     l$race.combo[l$race.cat3 == 3 & l$p_race.cat3 %in% 1:2] <- 5
     l$race.combo[l$race.cat3 == 3 & l$p_race.cat3 == 3] <- 6
+
+    l <- select(l, -c(race.cat3, p_race.cat3))
+  }
+
+  if (race == TRUE & race.level == 4) {
+    d$race.cat3 <- rep(NA, nrow(d))
+    d$race.cat3[d$race.cat == "black"] <- 1
+    d$race.cat3[d$race.cat == "hispanic"] <- 2
+    d$race.cat3[d$race.cat == "white"] <- 3
+    d$race.cat3[d$race.cat == "other"] <- 4
+
+    l$race.cat3 <- rep(NA, nrow(l))
+    l$race.cat3[l$race.cat == "black"] <- 1
+    l$race.cat3[l$race.cat == "hispanic"] <- 2
+    l$race.cat3[l$race.cat == "white"] <- 3
+    l$race.cat3[l$race.cat == "other"] <- 4
+
+    l$p_race.cat3 <- rep(NA, nrow(l))
+    l$p_race.cat3[l$p_race.cat == "black"] <- 1
+    l$p_race.cat3[l$p_race.cat == "hispanic"] <- 2
+    l$p_race.cat3[l$p_race.cat == "white"] <- 3
+    l$p_race.cat3[l$p_race.cat == "other"] <- 4
+
+    # redistribute NAs in proportion to non-missing partner races
+    probs <- prop.table(table(l$race.cat3, l$p_race.cat3), 1)
+
+    imp_black <- which(is.na(l$p_race.cat3) & l$race.cat3 == 1)
+    l$p_race.cat3[imp_black] <- sample(1:4, length(imp_black), TRUE, probs[1, ])
+
+    imp_hisp <- which(is.na(l$p_race.cat3) & l$race.cat3 == 2)
+    l$p_race.cat3[imp_hisp] <- sample(1:4, length(imp_hisp), TRUE, probs[2, ])
+
+    imp_white <- which(is.na(l$p_race.cat3) & l$race.cat3 == 3)
+    l$p_race.cat3[imp_white] <- sample(1:4, length(imp_white), TRUE, probs[3, ])
+
+    imp_other <- which(is.na(l$p_race.cat3) & l$race.cat3 == 4)
+    l$p_race.cat3[imp_other] <- sample(1:4, length(imp_white), TRUE, probs[4, ])
+
+    l$race.combo <- rep(NA, nrow(l))
+    l$race.combo[l$race.cat3 == 1 & l$p_race.cat3 == 1] <- 1 # Black-Black
+    l$race.combo[l$race.cat3 == 1 & l$p_race.cat3 %in% 2:4] <- 2 # Black-Hispanic/White/Other
+    l$race.combo[l$race.cat3 == 2 & l$p_race.cat3 %in% c(1, 3:4)] <- 3 # Hispanic-Black/White/Other
+    l$race.combo[l$race.cat3 == 2 & l$p_race.cat3 == 2] <- 4 # Hispanic-Hispanic
+    l$race.combo[l$race.cat3 == 3 & l$p_race.cat3 %in% c(1:2, 4)] <- 5 # White-Black/Hispanic/Other
+    l$race.combo[l$race.cat3 == 3 & l$p_race.cat3 == 3] <- 6 # White-White
+    l$race.combo[l$race.cat3 == 4 & l$p_race.cat3 == 4] <- 7 # Other-Other
+    l$race.combo[l$race.cat3 == 4 & l$p_race.cat3 %in% 1:3] <- 8 # Other-Black/Hispanic/White
 
     l <- select(l, -c(race.cat3, p_race.cat3))
   }
