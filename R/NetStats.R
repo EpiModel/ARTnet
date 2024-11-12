@@ -301,7 +301,7 @@ build_netstats <- function(epistats, netparams,
   # diag status
   if (is.null(epistats$init.hiv.prev)) {
     if (race == TRUE) {
-      xs <- data.frame(age = attr_age, race.cat3 = attr_race, geogYN = 1)
+      xs <- data.frame(age = attr_age, race.cat = attr_race, geogYN = 1)
       preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
       attr_diag.status <- rbinom(num, 1, preds)
       out$attr$diag.status <- attr_diag.status

@@ -260,89 +260,87 @@ build_epistats <- function(geog.lvl = NULL,
 
   ## Race ethnicity ##
   if (race == TRUE & race.level == 3) {
-    d$race.cat3 <- rep(NA, nrow(d))
-    d$race.cat3[d$race.cat == "black"] <- 1
-    d$race.cat3[d$race.cat == "hispanic"] <- 2
-    d$race.cat3[d$race.cat %in% c("white", "other")] <- 3
+    d$race.cat <- rep(NA, nrow(d))
+    d$race.cat[d$race.cat == "black"] <- 1
+    d$race.cat[d$race.cat == "hispanic"] <- 2
+    d$race.cat[d$race.cat %in% c("white", "other")] <- 3
 
-    l$race.cat3 <- rep(NA, nrow(l))
-    l$race.cat3[l$race.cat == "black"] <- 1
-    l$race.cat3[l$race.cat == "hispanic"] <- 2
-    l$race.cat3[l$race.cat %in% c("white", "other")] <- 3
+    l$race.cat <- rep(NA, nrow(l))
+    l$race.cat[l$race.cat == "black"] <- 1
+    l$race.cat[l$race.cat == "hispanic"] <- 2
+    l$race.cat[l$race.cat %in% c("white", "other")] <- 3
 
-    l$p_race.cat3 <- rep(NA, nrow(l))
-    l$p_race.cat3[l$p_race.cat == "black"] <- 1
-    l$p_race.cat3[l$p_race.cat == "hispanic"] <- 2
-    l$p_race.cat3[l$p_race.cat %in% c("white", "other")] <- 3
+    l$p_race.cat <- rep(NA, nrow(l))
+    l$p_race.cat[l$p_race.cat == "black"] <- 1
+    l$p_race.cat[l$p_race.cat == "hispanic"] <- 2
+    l$p_race.cat[l$p_race.cat %in% c("white", "other")] <- 3
 
     # redistribute NAs in proportion to non-missing partner races
-    probs <- prop.table(table(l$race.cat3, l$p_race.cat3), 1)
+    probs <- prop.table(table(l$race.cat, l$p_race.cat), 1)
 
-    imp_black <- which(is.na(l$p_race.cat3) & l$race.cat3 == 1)
-    l$p_race.cat3[imp_black] <- sample(1:3, length(imp_black), TRUE, probs[1, ])
+    imp_black <- which(is.na(l$p_race.cat) & l$race.cat == 1)
+    l$p_race.cat[imp_black] <- sample(1:3, length(imp_black), TRUE, probs[1, ])
 
-    imp_hisp <- which(is.na(l$p_race.cat3) & l$race.cat3 == 2)
-    l$p_race.cat3[imp_hisp] <- sample(1:3, length(imp_hisp), TRUE, probs[2, ])
+    imp_hisp <- which(is.na(l$p_race.cat) & l$race.cat == 2)
+    l$p_race.cat[imp_hisp] <- sample(1:3, length(imp_hisp), TRUE, probs[2, ])
 
-    imp_white <- which(is.na(l$p_race.cat3) & l$race.cat3 == 3)
-    l$p_race.cat3[imp_white] <- sample(1:3, length(imp_white), TRUE, probs[3, ])
+    imp_white <- which(is.na(l$p_race.cat) & l$race.cat == 3)
+    l$p_race.cat[imp_white] <- sample(1:3, length(imp_white), TRUE, probs[3, ])
 
     l$race.combo <- rep(NA, nrow(l))
-    l$race.combo[l$race.cat3 == 1 & l$p_race.cat3 == 1] <- 1
-    l$race.combo[l$race.cat3 == 1 & l$p_race.cat3 %in% 2:3] <- 2
-    l$race.combo[l$race.cat3 == 2 & l$p_race.cat3 %in% c(1, 3)] <- 3
-    l$race.combo[l$race.cat3 == 2 & l$p_race.cat3 == 2] <- 4
-    l$race.combo[l$race.cat3 == 3 & l$p_race.cat3 %in% 1:2] <- 5
-    l$race.combo[l$race.cat3 == 3 & l$p_race.cat3 == 3] <- 6
+    l$race.combo[l$race.cat == 1 & l$p_race.cat == 1] <- 1
+    l$race.combo[l$race.cat == 1 & l$p_race.cat %in% 2:3] <- 2
+    l$race.combo[l$race.cat == 2 & l$p_race.cat %in% c(1, 3)] <- 3
+    l$race.combo[l$race.cat == 2 & l$p_race.cat == 2] <- 4
+    l$race.combo[l$race.cat == 3 & l$p_race.cat %in% 1:2] <- 5
+    l$race.combo[l$race.cat == 3 & l$p_race.cat == 3] <- 6
 
-    l <- select(l, -c(race.cat3, p_race.cat3))
+    l <- select(l, -c(race.cat, p_race.cat))
   }
 
   if (race == TRUE & race.level == 4) {
-    d$race.cat3 <- rep(NA, nrow(d))
-    d$race.cat3[d$race.cat == "black"] <- 1
-    d$race.cat3[d$race.cat == "hispanic"] <- 2
-    d$race.cat3[d$race.cat == "white"] <- 3
-    d$race.cat3[d$race.cat == "other"] <- 4
+    d$race.cat <- rep(NA, nrow(d))
+    d$race.cat[d$race.cat == "black"] <- 1
+    d$race.cat[d$race.cat == "hispanic"] <- 2
+    d$race.cat[d$race.cat == "white"] <- 3
+    d$race.cat[d$race.cat == "other"] <- 4
 
-    l$race.cat3 <- rep(NA, nrow(l))
-    l$race.cat3[l$race.cat == "black"] <- 1
-    l$race.cat3[l$race.cat == "hispanic"] <- 2
-    l$race.cat3[l$race.cat == "white"] <- 3
-    l$race.cat3[l$race.cat == "other"] <- 4
+    l$race.cat <- rep(NA, nrow(l))
+    l$race.cat[l$race.cat == "black"] <- 1
+    l$race.cat[l$race.cat == "hispanic"] <- 2
+    l$race.cat[l$race.cat == "white"] <- 3
+    l$race.cat[l$race.cat == "other"] <- 4
 
-    l$p_race.cat3 <- rep(NA, nrow(l))
-    l$p_race.cat3[l$p_race.cat == "black"] <- 1
-    l$p_race.cat3[l$p_race.cat == "hispanic"] <- 2
-    l$p_race.cat3[l$p_race.cat == "white"] <- 3
-    l$p_race.cat3[l$p_race.cat == "other"] <- 4
+    l$p_race.cat <- rep(NA, nrow(l))
+    l$p_race.cat[l$p_race.cat == "black"] <- 1
+    l$p_race.cat[l$p_race.cat == "hispanic"] <- 2
+    l$p_race.cat[l$p_race.cat == "white"] <- 3
+    l$p_race.cat[l$p_race.cat == "other"] <- 4
 
     # redistribute NAs in proportion to non-missing partner races
-    probs <- prop.table(table(l$race.cat3, l$p_race.cat3), 1)
+    probs <- prop.table(table(l$race.cat, l$p_race.cat), 1)
 
-    imp_black <- which(is.na(l$p_race.cat3) & l$race.cat3 == 1)
-    l$p_race.cat3[imp_black] <- sample(1:4, length(imp_black), TRUE, probs[1, ])
+    imp_black <- which(is.na(l$p_race.cat) & l$race.cat == 1)
+    l$p_race.cat[imp_black] <- sample(1:4, length(imp_black), TRUE, probs[1, ])
 
-    imp_hisp <- which(is.na(l$p_race.cat3) & l$race.cat3 == 2)
-    l$p_race.cat3[imp_hisp] <- sample(1:4, length(imp_hisp), TRUE, probs[2, ])
+    imp_hisp <- which(is.na(l$p_race.cat) & l$race.cat == 2)
+    l$p_race.cat[imp_hisp] <- sample(1:4, length(imp_hisp), TRUE, probs[2, ])
 
-    imp_white <- which(is.na(l$p_race.cat3) & l$race.cat3 == 3)
-    l$p_race.cat3[imp_white] <- sample(1:4, length(imp_white), TRUE, probs[3, ])
+    imp_white <- which(is.na(l$p_race.cat) & l$race.cat == 3)
+    l$p_race.cat[imp_white] <- sample(1:4, length(imp_white), TRUE, probs[3, ])
 
-    imp_other <- which(is.na(l$p_race.cat3) & l$race.cat3 == 4)
-    l$p_race.cat3[imp_other] <- sample(1:4, length(imp_white), TRUE, probs[4, ])
+    imp_other <- which(is.na(l$p_race.cat) & l$race.cat == 4)
+    l$p_race.cat[imp_other] <- sample(1:4, length(imp_white), TRUE, probs[4, ])
 
     l$race.combo <- rep(NA, nrow(l))
-    l$race.combo[l$race.cat3 == 1 & l$p_race.cat3 == 1] <- 1 # Black-Black
-    l$race.combo[l$race.cat3 == 1 & l$p_race.cat3 %in% 2:4] <- 2 # Black-Hispanic/White/Other
-    l$race.combo[l$race.cat3 == 2 & l$p_race.cat3 %in% c(1, 3:4)] <- 3 # Hispanic-Black/White/Other
-    l$race.combo[l$race.cat3 == 2 & l$p_race.cat3 == 2] <- 4 # Hispanic-Hispanic
-    l$race.combo[l$race.cat3 == 3 & l$p_race.cat3 %in% c(1:2, 4)] <- 5 # White-Black/Hispanic/Other
-    l$race.combo[l$race.cat3 == 3 & l$p_race.cat3 == 3] <- 6 # White-White
-    l$race.combo[l$race.cat3 == 4 & l$p_race.cat3 == 4] <- 7 # Other-Other
-    l$race.combo[l$race.cat3 == 4 & l$p_race.cat3 %in% 1:3] <- 8 # Other-Black/Hispanic/White
+    l$race.combo[l$race.cat == 1 & l$p_race.cat == 1] <- 1 # Black-Black
+    l$race.combo[l$race.cat == 1 & l$p_race.cat %in% 2:4] <- 2 # Black-Hispanic/White/Other
+    l$race.combo[l$race.cat == 2 & l$p_race.cat %in% c(1, 3:4)] <- 3 # Hispanic-Black/White/Other
+    l$race.combo[l$race.cat == 2 & l$p_race.cat == 2] <- 4 # Hispanic-Hispanic
+    l$race.combo[l$race.cat == 3 & l$p_race.cat %in% c(1:2, 4)] <- 5 # White-Black/Hispanic/Other
+    l$race.combo[l$race.cat == 3 & l$p_race.cat == 3] <- 6 # White-White
 
-    l <- select(l, -c(race.cat3, p_race.cat3))
+    l <- select(l, -c(race.cat, p_race.cat))
   }
 
   ## HIV diagnosed status of index and partners ##
@@ -546,13 +544,13 @@ build_epistats <- function(geog.lvl = NULL,
   if (is.null(init.hiv.prev)) {
     if (race == TRUE) {
       if (is.null(geog.lvl)) {
-        d1 <- select(d, race.cat3, age, hiv2)
+        d1 <- select(d, race.cat, age, hiv2)
 
-        hiv.mod <- glm(hiv2 ~ age + as.factor(race.cat3),
+        hiv.mod <- glm(hiv2 ~ age + as.factor(race.cat),
                        data = d1, family = binomial())
       } else {
-        d1 <- select(d, race.cat3, geogYN, age, hiv2)
-        hiv.mod <- glm(hiv2 ~ age + geogYN + as.factor(race.cat3) + geogYN * as.factor(race.cat3),
+        d1 <- select(d, race.cat, geogYN, age, hiv2)
+        hiv.mod <- glm(hiv2 ~ age + geogYN + as.factor(race.cat) + geogYN * as.factor(race.cat),
                        data = d1, family = binomial())
       }
     } else {

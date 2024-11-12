@@ -153,67 +153,67 @@ build_netparams <- function(epistats,
 
   if (race == TRUE & race.level == 3) {
     # Race Ethnicity
-    d$race.cat3 <- rep(NA, nrow(d))
-    d$race.cat3[d$race.cat == "black"] <- 1
-    d$race.cat3[d$race.cat == "hispanic"] <- 2
-    d$race.cat3[d$race.cat %in% c("white", "other")] <- 3
+    d$race.cat <- rep(NA, nrow(d))
+    d$race.cat[d$race.cat == "black"] <- 1
+    d$race.cat[d$race.cat == "hispanic"] <- 2
+    d$race.cat[d$race.cat %in% c("white", "other")] <- 3
 
-    l$race.cat3[l$race.cat == "black"] <- 1
-    l$race.cat3[l$race.cat == "hispanic"] <- 2
-    l$race.cat3[l$race.cat %in% c("white", "other")] <- 3
+    l$race.cat[l$race.cat == "black"] <- 1
+    l$race.cat[l$race.cat == "hispanic"] <- 2
+    l$race.cat[l$race.cat %in% c("white", "other")] <- 3
 
-    l$p_race.cat3 <- rep(NA, nrow(l))
-    l$p_race.cat3[l$p_race.cat == "black"] <- 1
-    l$p_race.cat3[l$p_race.cat == "hispanic"] <- 2
-    l$p_race.cat3[l$p_race.cat %in% c("white", "other")] <- 3
+    l$p_race.cat <- rep(NA, nrow(l))
+    l$p_race.cat[l$p_race.cat == "black"] <- 1
+    l$p_race.cat[l$p_race.cat == "hispanic"] <- 2
+    l$p_race.cat[l$p_race.cat %in% c("white", "other")] <- 3
 
     # redistribute NAs in proportion to non-missing partner races
-    probs <- prop.table(table(l$race.cat3, l$p_race.cat3), 1)
+    probs <- prop.table(table(l$race.cat, l$p_race.cat), 1)
 
-    imp_black <- which(is.na(l$p_race.cat3) & l$race.cat3 == 1)
-    l$p_race.cat3[imp_black] <- sample(1:3, length(imp_black), TRUE, probs[1, ])
+    imp_black <- which(is.na(l$p_race.cat) & l$race.cat == 1)
+    l$p_race.cat[imp_black] <- sample(1:3, length(imp_black), TRUE, probs[1, ])
 
-    imp_hisp <- which(is.na(l$p_race.cat3) & l$race.cat3 == 2)
-    l$p_race.cat3[imp_hisp] <- sample(1:3, length(imp_hisp), TRUE, probs[2, ])
+    imp_hisp <- which(is.na(l$p_race.cat) & l$race.cat == 2)
+    l$p_race.cat[imp_hisp] <- sample(1:3, length(imp_hisp), TRUE, probs[2, ])
 
-    imp_white <- which(is.na(l$p_race.cat3) & l$race.cat3 == 3)
-    l$p_race.cat3[imp_white] <- sample(1:3, length(imp_white), TRUE, probs[3, ])
+    imp_white <- which(is.na(l$p_race.cat) & l$race.cat == 3)
+    l$p_race.cat[imp_white] <- sample(1:3, length(imp_white), TRUE, probs[3, ])
 
   }
 
   if (race == TRUE & race.level == 4) {
     # Race Ethnicity
-    d$race.cat3 <- rep(NA, nrow(d))
-    d$race.cat3[d$race.cat == "black"] <- 1
-    d$race.cat3[d$race.cat == "hispanic"] <- 2
-    d$race.cat3[d$race.cat == "white"] <- 3
-    d$race.cat3[d$race.cat == "other"] <- 4
+    d$race.cat <- rep(NA, nrow(d))
+    d$race.cat[d$race.cat == "black"] <- 1
+    d$race.cat[d$race.cat == "hispanic"] <- 2
+    d$race.cat[d$race.cat == "white"] <- 3
+    d$race.cat[d$race.cat == "other"] <- 4
 
-    l$race.cat3[l$race.cat == "black"] <- 1
-    l$race.cat3[l$race.cat == "hispanic"] <- 2
-    l$race.cat3[l$race.cat == "white"] <- 3
-    l$race.cat3[l$race.cat == "other"] <- 4
+    l$race.cat[l$race.cat == "black"] <- 1
+    l$race.cat[l$race.cat == "hispanic"] <- 2
+    l$race.cat[l$race.cat == "white"] <- 3
+    l$race.cat[l$race.cat == "other"] <- 4
 
-    l$p_race.cat3 <- rep(NA, nrow(l))
-    l$p_race.cat3[l$p_race.cat == "black"] <- 1
-    l$p_race.cat3[l$p_race.cat == "hispanic"] <- 2
-    l$p_race.cat3[l$p_race.cat == "white"] <- 3
-    l$p_race.cat3[l$p_race.cat == "other"] <- 4
+    l$p_race.cat <- rep(NA, nrow(l))
+    l$p_race.cat[l$p_race.cat == "black"] <- 1
+    l$p_race.cat[l$p_race.cat == "hispanic"] <- 2
+    l$p_race.cat[l$p_race.cat == "white"] <- 3
+    l$p_race.cat[l$p_race.cat == "other"] <- 4
 
     # redistribute NAs in proportion to non-missing partner races
-    probs <- prop.table(table(l$race.cat3, l$p_race.cat3), 1)
+    probs <- prop.table(table(l$race.cat, l$p_race.cat), 1)
 
-    imp_black <- which(is.na(l$p_race.cat3) & l$race.cat3 == 1)
-    l$p_race.cat3[imp_black] <- sample(1:3, length(imp_black), TRUE, probs[1, ])
+    imp_black <- which(is.na(l$p_race.cat) & l$race.cat == 1)
+    l$p_race.cat[imp_black] <- sample(1:3, length(imp_black), TRUE, probs[1, ])
 
-    imp_hisp <- which(is.na(l$p_race.cat3) & l$race.cat3 == 2)
-    l$p_race.cat3[imp_hisp] <- sample(1:3, length(imp_hisp), TRUE, probs[2, ])
+    imp_hisp <- which(is.na(l$p_race.cat) & l$race.cat == 2)
+    l$p_race.cat[imp_hisp] <- sample(1:3, length(imp_hisp), TRUE, probs[2, ])
 
-    imp_white <- which(is.na(l$p_race.cat3) & l$race.cat3 == 3)
-    l$p_race.cat3[imp_white] <- sample(1:3, length(imp_white), TRUE, probs[3, ])
+    imp_white <- which(is.na(l$p_race.cat) & l$race.cat == 3)
+    l$p_race.cat[imp_white] <- sample(1:3, length(imp_white), TRUE, probs[3, ])
 
-    imp_other <- which(is.na(l$p_race.cat3) & l$race.cat3 == 4)
-    l$p_race.cat3[imp_other] <- sample(1:4, length(imp_white), TRUE, probs[4, ])
+    imp_other <- which(is.na(l$p_race.cat) & l$race.cat == 4)
+    l$p_race.cat[imp_other] <- sample(1:4, length(imp_white), TRUE, probs[4, ])
 
   }
 
@@ -354,21 +354,21 @@ build_netparams <- function(epistats,
   ## nodematch("race", diff = TRUE) ----
 
   if (race == TRUE) {
-    lmain$same.race <- ifelse(lmain$race.cat3 == lmain$p_race.cat3, 1, 0)
+    lmain$same.race <- ifelse(lmain$race.cat == lmain$p_race.cat, 1, 0)
 
     if (is.null(geog.lvl)) {
-      mod <- glm(same.race ~ as.factor(race.cat3),
+      mod <- glm(same.race ~ as.factor(race.cat),
                  data = lmain, family = binomial())
 
-      dat <- data.frame(race.cat3 = 1:3)
+      dat <- data.frame(race.cat = 1:length(unique(race.cat))) ## generalize these
       pred <- predict(mod, newdata = dat, type = "response")
 
       out$main$nm.race <- as.numeric(pred)
     } else {
-      mod <- glm(same.race ~ geogYN + as.factor(race.cat3),
+      mod <- glm(same.race ~ geogYN + as.factor(race.cat),
                  data = lmain, family = binomial())
 
-      dat <- data.frame(geogYN = 1, race.cat3 = 1:3)
+      dat <- data.frame(geogYN = 1, race.cat = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
 
       out$main$nm.race <- as.numeric(pred)
@@ -394,18 +394,18 @@ build_netparams <- function(epistats,
     }
 
     if (is.null(geog.lvl)) {
-      mod <- glm(deg.main ~ as.factor(race.cat3),
+      mod <- glm(deg.main ~ as.factor(race.cat),
                  data = d, family = poisson())
 
-      dat <- data.frame(race.cat3 = 1:3)
+      dat <- data.frame(race.cat = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
 
       out$main$nf.race <- as.numeric(pred)
     } else {
-      mod <- glm(deg.main ~ geogYN + as.factor(race.cat3),
+      mod <- glm(deg.main ~ geogYN + as.factor(race.cat),
                  data = d, family = poisson())
 
-      dat <- data.frame(geogYN = 1, race.cat3 = 1:3)
+      dat <- data.frame(geogYN = 1, race.cat = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
 
       out$main$nf.race <- as.numeric(pred)
@@ -678,21 +678,21 @@ build_netparams <- function(epistats,
 
     ## nodematch("race") ----
 
-    lcasl$same.race <- ifelse(lcasl$race.cat3 == lcasl$p_race.cat3, 1, 0)
+    lcasl$same.race <- ifelse(lcasl$race.cat == lcasl$p_race.cat, 1, 0)
 
     if (is.null(geog.lvl)) {
-      mod <- glm(same.race ~ as.factor(race.cat3),
+      mod <- glm(same.race ~ as.factor(race.cat),
                  data = lcasl, family = binomial())
 
-      dat <- data.frame(race.cat3 = 1:3)
+      dat <- data.frame(race.cat = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
 
       out$casl$nm.race <- as.numeric(pred)
     } else {
-      mod <- glm(same.race ~ geogYN + as.factor(race.cat3),
+      mod <- glm(same.race ~ geogYN + as.factor(race.cat),
                  data = lcasl, family = binomial())
 
-      dat <- data.frame(geogYN = 1, race.cat3 = 1:3)
+      dat <- data.frame(geogYN = 1, race.cat = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
 
       out$casl$nm.race <- as.numeric(pred)
@@ -722,18 +722,18 @@ build_netparams <- function(epistats,
 
     if (is.null(geog.lvl)) {
 
-      mod <- glm(deg.casl ~ as.factor(race.cat3),
+      mod <- glm(deg.casl ~ as.factor(race.cat),
                  data = d, family = poisson())
 
-      dat <- data.frame(race.cat3 = 1:3)
+      dat <- data.frame(race.cat = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
 
       out$casl$nf.race <- as.numeric(pred)
     } else {
-      mod <- glm(deg.casl ~ geogYN + as.factor(race.cat3),
+      mod <- glm(deg.casl ~ geogYN + as.factor(race.cat),
                  data = d, family = poisson())
 
-      dat <- data.frame(geogYN = 1, race.cat3 = 1:3)
+      dat <- data.frame(geogYN = 1, race.cat = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
 
       out$casl$nf.race <- as.numeric(pred)
@@ -1007,21 +1007,21 @@ build_netparams <- function(epistats,
 
     ## nodematch("race", diff = TRUE) ----
 
-    linst$same.race <- ifelse(linst$race.cat3 == linst$p_race.cat3, 1, 0)
+    linst$same.race <- ifelse(linst$race.cat == linst$p_race.cat, 1, 0)
 
     if (is.null(geog.lvl)) {
-      mod <- glm(same.race ~ as.factor(race.cat3),
+      mod <- glm(same.race ~ as.factor(race.cat),
                  data = linst, family = binomial())
 
-      dat <- data.frame(race.cat3 = 1:3)
+      dat <- data.frame(race.cat = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
 
       out$inst$nm.race <- as.numeric(pred)
     } else {
-      mod <- glm(same.race ~ geogYN + as.factor(race.cat3),
+      mod <- glm(same.race ~ geogYN + as.factor(race.cat),
                  data = linst, family = binomial())
 
-      dat <- data.frame(geogYN = 1, race.cat3 = 1:3)
+      dat <- data.frame(geogYN = 1, race.cat = 1:3)
       pred <- predict(mod, newdata = dat, type = "response")
 
       out$inst$nm.race <- as.numeric(pred)
@@ -1051,18 +1051,18 @@ build_netparams <- function(epistats,
     ## nodefactor("race") ----
 
     if (is.null(geog.lvl)) {
-      mod <- glm(count.oo.part ~ as.factor(race.cat3),
+      mod <- glm(count.oo.part ~ as.factor(race.cat),
                  data = d, family = poisson())
 
-      dat <- data.frame(race.cat3 = 1:3)
+      dat <- data.frame(race.cat = 1:3)
       pred <- predict(mod, newdata = dat, type = "response") / (364 / time.unit)
 
       out$inst$nf.race <- as.numeric(pred)
     } else {
-      mod <- glm(count.oo.part ~ geogYN + as.factor(race.cat3),
+      mod <- glm(count.oo.part ~ geogYN + as.factor(race.cat),
                  data = d, family = poisson())
 
-      dat <- data.frame(geogYN = 1, race.cat3 = 1:3)
+      dat <- data.frame(geogYN = 1, race.cat = 1:3)
       pred <- predict(mod, newdata = dat, type = "response") / (364 / time.unit)
 
       out$inst$nf.race <- as.numeric(pred)
