@@ -117,9 +117,6 @@ build_netstats <- function(epistats, netparams,
   num <- out$demog$num <- network.size
 
   # Population size by race group
-  # race.dist.3cat
-
-
 
   if (!is.null(race.prop)) {
     flattened_race_level <- sapply(race.level, function(x) {
@@ -225,7 +222,7 @@ build_netstats <- function(epistats, netparams,
 
   # Setting deterministic mortality prob = 1 at upper age limit
   max.age <- age.limits[2]
-  asmr[asmr$age >= max.age, ] <- 1
+  asmr[asmr$age >= max.age, -1] <- 1
   out$demog$asmr <- asmr
 
 
