@@ -122,7 +122,10 @@ build_netstats <- function(epistats, netparams,
 
 
   if (!is.null(race.prop)) {
-    flattened_race_level <- sapply(race.level, function(x) paste(x, collapse = "."))
+    flattened_race_level <- sapply(race.level, function(x) {
+      x_cap <- sapply(x, function(y) paste0(toupper(substr(y, 1, 1)), tolower(substr(y, 2, nchar(y)))))
+      paste(x_cap, collapse = ".")
+    })
     props <- as.data.frame(t(race.prop))
     colnames(props) <- flattened_race_level
   } else {
@@ -137,7 +140,7 @@ build_netstats <- function(epistats, netparams,
   total_remaining <- num
   for (i in seq_len(length(flattened_race_level) - 1)) {
     race_name <- flattened_race_level[i]
-    race_num_var <- paste0("num.", toupper(substr(race_name, 1, 1)))
+    race_num_var <- paste0("num.", substr(race_name, 1, 1))
     race_num_value <- round(num * props[[race_name]])
     out$demog[[race_num_var]] <- race_num_value
     race.num.vars[[race_name]] <- race_num_value
@@ -146,12 +149,12 @@ build_netstats <- function(epistats, netparams,
 
   # Assign the residual race group
   residual_race <- flattened_race_level[length(flattened_race_level)]
-  residual_num_var <- paste0("num.", toupper(substr(residual_race, 1, 1)))
+  residual_num_var <- paste0("num.", substr(residual_race, 1, 1))
   out$demog[[residual_num_var]] <- total_remaining
   race.num.vars[[residual_race]] <- total_remaining
 
   for (race_name in names(race.num.vars)) {
-    race_num_var <- paste0("num.", toupper(substr(race_name, 1, 1)))
+    race_num_var <- paste0("num.", substr(race_name, 1, 1))
     assign(race_num_var, race.num.vars[[race_name]])
   }
 
