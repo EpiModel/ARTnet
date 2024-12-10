@@ -533,9 +533,9 @@ build_epistats <- function(geog.lvl = NULL,
     # Output
     out$hiv.mod <- hiv.mod
   } else {
-    if (length(init.hiv.prev) != 3) {
-      stop("Input parameter init.prev.hiv must be a vector of size three")
-    }
+    #if (length(init.hiv.prev) != 3) {
+    #  stop("Input parameter init.prev.hiv must be a vector of size three")
+    #}
     if (prod(init.hiv.prev < 1) == 0  || prod(init.hiv.prev > 0) == 0) {
       stop("All elements of init.hiv.prev must be between 0 and 1 non-inclusive")
     }
