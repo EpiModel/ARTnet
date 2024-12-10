@@ -596,45 +596,58 @@ build_netstats <- function(epistats, netparams,
 #' netstats  <- update_asmr(netstats, asmr_df)
 #'
 update_asmr <- function(netstats, asmr_df) {
-
-  #Check that all input mortality rates are reasonable values
+  # Check that all input mortality rates are reasonable values
   if (sum(is.na(asmr_df$DeathRate)) > 0 || !is.numeric(asmr_df$DeathRate) ||
       min(asmr_df$DeathRate) < 0 || max(asmr_df$DeathRate) > 1) {
     stop("Ensure all mortality rates are non-NA, numeric, and between 0 and 1.")
   }
 
-  asmr.B <- asmr_df[asmr_df$Race == "Black", 2:3]
-  asmr.H <- asmr_df[asmr_df$Race == "Hispanic", 2:3]
-  asmr.W <- asmr_df[asmr_df$Race == "White", 2:3]
+  # Get unique races
+  unique_races <- unique(asmr_df$Race)
 
-  #Check for appropriate number of input mortality rates
-  if (min(asmr.B$Age) != 1 || min(asmr.H$Age) != 1 || min(asmr.W$Age) != 1 ||
-      max(asmr.B$Age) != 100 || max(asmr.H$Age) != 100 ||
-      max(asmr.W$Age) != 100 || nrow(asmr.B) != 100 || nrow(asmr.H) != 100 ||
-      nrow(asmr.W) != 100) {
-    stop("Provide mortality rates by race for 1-yr age groups (1 - 100).")
+  # Initialize a list to store mortality rates by race
+  asmr_list <- list()
+
+  # Validate mortality rates for each race
+  for (race in unique_races) {
+    race_data <- asmr_df[asmr_df$Race == race, 2:3]
+    if (min(race_data$Age) != 1 || max(race_data$Age) != 100 || nrow(race_data) != 100) {
+      stop(paste0("Provide mortality rates by race for 1-yr age groups (1 - 100) for race: ", race))
+    }
+    if (max(race_data$DeathRate) != 1) {
+      stop(paste0("The mortality rate for at least one age group must be total (1) for race: ", race))
+    }
+    asmr_list[[race]] <- race_data$DeathRate
   }
 
-  if (max(asmr.B$DeathRate) != 1 || max(asmr.H$DeathRate) != 1 ||
-      max(asmr.W$DeathRate) != 1) {
-    stop("The mortality rate for at least one age group must be total (1).")
-  }
-
+  # If race-specific mortality rates should be included
   if (netstats$race == TRUE) {
-    asmr <- data.frame(age = 1:100, asmr.B$DeathRate,
-                       asmr.H$DeathRate, asmr.W$DeathRate)
+    # Combine mortality rates for all races into a data frame
+    asmr <- data.frame(
+      age = 1:100,
+      setNames(do.call(cbind, asmr_list), paste0("asmr.", unique_races))
+    )
   } else {
+    # Calculate combined mortality rates using demographic proportions
     props <- netstats$demog$props
-    asmr.O <- props$Black * asmr.B$DeathRate +
-      props$Hispanic * asmr.H$DeathRate +
-      props$White.Other * asmr.W$DeathRate
-    asmr <- data.frame(age = 1:100, asmr.O, asmr.O, asmr.O)
+    asmr_combined <- rep(0, 100)
+    for (race in unique_races) {
+      if (!race %in% names(props)) {
+        stop(paste0("Demographic proportions for race: ", race, " are missing in netstats$demog$props."))
+      }
+      asmr_combined <- asmr_combined + props[[race]] * asmr_list[[race]]
+    }
+    # Create a combined mortality data frame
+    asmr <- data.frame(age = 1:100, asmr_combined, asmr_combined, asmr_combined)
+    colnames(asmr)[-1] <- c("asmr.O1", "asmr.O2", "asmr.O3")
   }
 
+  # Display time unit consistency message
   message(paste0("The time unit used in build_netstats() was ",
                  netstats$time.unit,
                  ". Please ensure that that is consistent with your inputs."))
 
+  # Assign the resulting asmr to netstats
   netstats$demog$asmr <- asmr
   return(netstats)
 }
