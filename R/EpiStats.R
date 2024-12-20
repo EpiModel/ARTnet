@@ -71,7 +71,9 @@
 #'   natural mortality.
 #' * `time.unit`: a number between 1 and 30 that specifies time units for ARTnet statistics. Set to
 #'   `7` by default.
-#' * `race.level`:
+#' * `race.level`: a list of race and ethnicity categories from ARTnet that can be used for race stratification
+#'    in EpiModel. Values must match those in ARTnet, so options include "black", "hispanic", "white", "other",
+#'    "asian", "ai/an", "mult", "nh/pi". Race categories may be combined (for example, c("white", "other")).
 #'
 #' @examples
 #' # Age and geographic stratification, for the Atlanta metropolitan statistical area
