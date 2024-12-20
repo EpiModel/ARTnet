@@ -71,6 +71,7 @@
 #'   natural mortality.
 #' * `time.unit`: a number between 1 and 30 that specifies time units for ARTnet statistics. Set to
 #'   `7` by default.
+#' * `race.level`:
 #'
 #' @examples
 #' # Age and geographic stratification, for the Atlanta metropolitan statistical area
@@ -262,9 +263,13 @@ build_epistats <- function(geog.lvl = NULL,
 
     # Determine which variables to use in ARTnet
     if (any(flat_race.level %in% mult_race_cat)) {
-      l <- merge(l, d[, c("AMIS_ID", "race")], by = "AMIS_ID", all.x = TRUE)
-      p_race_var <- "p_race2"
-      race_var <- "race"
+
+      d$race.eth <- ifelse(d$hispan == 1, "hispanic", d$race)
+      l <- merge(l, d[, c("AMIS_ID", "race.eth")], by = "AMIS_ID", all.x = TRUE)
+      l$p_race.eth <- ifelse(l$p_hispan == 1, "hispanic", l$p_race2)
+
+      p_race_var <- "p_race.eth"
+      race_var <- "race.eth"
     } else {
       p_race_var <- "p_race.cat"
       race_var <- "race.cat"
