@@ -119,10 +119,13 @@ build_netstats <- function(epistats, netparams,
   # Population size by race group
 
   if (!is.null(race.prop)) {
-    flattened_race_level <- sapply(race.level, function(x) {
-      x_cap <- sapply(x, function(y) paste0(toupper(substr(y, 1, 1)), tolower(substr(y, 2, nchar(y)))))
-      paste(x_cap, collapse = ".")
-    })
+    # Capitalize each race and join multiple with a `.`
+    # c("white", "other") => "White.Other"
+    flattened_race_level <- vapply(
+      race.level,
+      \(x) gsub("\\b(\\w)", "\\U\\1", paste0(x, collapse = "."), perl = TRUE),
+      character(1)
+    )
     props <- as.data.frame(t(race.prop))
     colnames(props) <- flattened_race_level
   } else {
