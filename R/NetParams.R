@@ -197,7 +197,7 @@ build_netparams <- function(epistats,
 
   ## HIV status
 
-  l$p_hiv2 <- ifelse(l$p_hiv == 1, 1, 0)
+  l$p_hiv2 <- as.integer(l$p_hiv == 1)
   table(l$p_hiv, l$p_hiv2, useNA = "always")
 
   hiv.combo <- rep(NA, nrow(l))
@@ -208,7 +208,7 @@ build_netparams <- function(epistats,
   hiv.combo[l$hiv2 == 0 & l$p_hiv == 2] <- 4
   hiv.combo[l$hiv2 == 1 & l$p_hiv == 2] <- 5
 
-  l$hiv.concord.pos <- ifelse(hiv.combo == 2, 1, 0)
+  l$hiv.concord.pos <- as.integer(hiv.combo == 2)
 
   ## Setup output list ##
 
@@ -245,7 +245,7 @@ build_netparams <- function(epistats,
   lmain$part.age.grp <- cut(as.numeric(lmain$p_age_imp), age.breaks, labels = FALSE,
                             right = FALSE, include.lowest = FALSE)
 
-  lmain$same.age.grp <- ifelse(lmain$index.age.grp == lmain$part.age.grp, 1, 0)
+  lmain$same.age.grp <- as.integer(lmain$index.age.grp == lmain$part.age.grp)
 
   if (is.null(geog.lvl)) {
     mod <- glm(same.age.grp ~ index.age.grp,
@@ -568,7 +568,7 @@ build_netparams <- function(epistats,
   lcasl$part.age.grp <- cut(as.numeric(lcasl$p_age_imp), age.breaks,
                             right = FALSE, labels = FALSE, include.lowest = FALSE)
 
-  lcasl$same.age.grp <- ifelse(lcasl$index.age.grp == lcasl$part.age.grp, 1, 0)
+  lcasl$same.age.grp <- as.integer(lcasl$index.age.grp == lcasl$part.age.grp)
 
   if (is.null(geog.lvl)) {
     mod <- glm(same.age.grp ~ index.age.grp,
@@ -656,7 +656,7 @@ build_netparams <- function(epistats,
 
     ## nodematch("race") ----
 
-    lcasl$same.race <- ifelse(lcasl$race.cat.num == lcasl$p_race.cat.num, 1, 0)
+    lcasl$same.race <- as.integer(lcasl$race.cat.num == lcasl$p_race.cat.num)
 
     if (is.null(geog.lvl)) {
       mod <- glm(same.race ~ as.factor(race.cat.num),
@@ -897,7 +897,7 @@ build_netparams <- function(epistats,
   linst$part.age.grp <- cut(as.numeric(linst$p_age_imp), age.breaks, labels = FALSE,
                             right = FALSE, include.lowest = FALSE)
 
-  linst$same.age.grp <- ifelse(linst$index.age.grp == linst$part.age.grp, 1, 0)
+  linst$same.age.grp <- as.integer(linst$index.age.grp == linst$part.age.grp)
 
   if (is.null(geog.lvl)) {
     mod <- glm(same.age.grp ~ index.age.grp,
@@ -985,7 +985,7 @@ build_netparams <- function(epistats,
 
     ## nodematch("race", diff = TRUE) ----
 
-    linst$same.race <- ifelse(linst$race.cat.num == linst$p_race.cat.num, 1, 0)
+    linst$same.race <- as.integer(linst$race.cat.num == linst$p_race.cat.num)
 
     if (is.null(geog.lvl)) {
       mod <- glm(same.race ~ as.factor(race.cat.num),
