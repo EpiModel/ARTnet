@@ -140,7 +140,7 @@ build_netstats <- function(epistats, netparams,
   total_remaining <- num
   for (i in seq_len(length(flattened_race_level) - 1)) {
     race_name <- flattened_race_level[i]
-    race_num_var <- paste0("num.", substr(race_name, 1, 1))
+    race_num_var <- paste0("num.", race_name)
     race_num_value <- round(num * props[[race_name]])
     out$demog[[race_num_var]] <- race_num_value
     race.num.vars[[race_name]] <- race_num_value
@@ -149,7 +149,7 @@ build_netstats <- function(epistats, netparams,
 
   # Assign the residual race group
   residual_race <- flattened_race_level[length(flattened_race_level)]
-  residual_num_var <- paste0("num.", substr(residual_race, 1, 1))
+  residual_num_var <- paste0("num.", residual_race)
   out$demog[[residual_num_var]] <- total_remaining
   race.num.vars[[residual_race]] <- total_remaining
 
