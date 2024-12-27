@@ -190,18 +190,8 @@ build_netparams <- function(epistats,
       }
     }
 
-    # Initialize race.combo and assign combinations dynamically
-    l$race.combo <- rep(NA, nrow(l))
-    combo_index <- 1
-    for (i in race.categories) {
-      # Case 1: Same race as one combination
-      l$race.combo[l$race.cat.num == i & l$p_race.cat.num == i] <- combo_index
-      combo_index <- combo_index + 1
-
-      # Case 2: Race compared with all other race groups
-      l$race.combo[l$race.cat.num == i & l$p_race.cat.num %in% setdiff(race.categories, i)] <- combo_index
-      combo_index <- combo_index + 1
-    }
+    # Assign race.combo
+    l$race.combo <- make_race_combo(l$race.cat.num, l$p_race.cat.num)
 
   }
 

@@ -300,7 +300,7 @@ build_epistats <- function(geog.lvl = NULL,
       }
     }
 
-    # Initialize race.combo
+    # Assign race.combo
     l$race.combo <- make_race_combo(l$race.cat.num, l$p_race.cat.num)
 
   }
