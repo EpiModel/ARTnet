@@ -300,18 +300,9 @@ build_epistats <- function(geog.lvl = NULL,
       }
     }
 
-    # Initialize race.combo and assign combinations dynamically
-    l$race.combo <- rep(NA, nrow(l))
-    combo_index <- 1
-    for (i in race.categories) {
-      # Case 1: Same race as one combination
-      l$race.combo[l$race.cat.num == i & l$p_race.cat.num == i] <- combo_index
-      combo_index <- combo_index + 1
+    # Initialize race.combo
+    l$race.combo <- make_race_combo(l$race.cat.num, l$p_race.cat.num)
 
-      # Case 2: Race compared with all other race groups
-      l$race.combo[l$race.cat.num == i & l$p_race.cat.num %in% setdiff(race.categories, i)] <- combo_index
-      combo_index <- combo_index + 1
-    }
   }
 
   ## HIV diagnosed status of index and partners ##
@@ -572,6 +563,16 @@ build_epistats <- function(geog.lvl = NULL,
   out$init.hiv.prev <- init.hiv.prev
   out$time.unit <- time.unit
   return(out)
+}
+
+#' for a race `n` the combo for `race1 == race2 ==n` the combo is is `2n - 1`
+#' for `race1 == n && race2 != n` the combo is `2n`
+#' @param race1 a vector of race index for the index
+#' @param race2 a vector of race index for the partners
+#' @return a vector of the same size with the race combos
+make_race_combo <- function(race1, race2) {
+  race_combo <- ifelse(race1 == race2, 2 * race1 - 1, 2 * race1)
+  return(race_combo)
 }
 
 # strip a `glm` object from all its components, leaving only what is required
