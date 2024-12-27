@@ -288,10 +288,14 @@ build_netstats <- function(epistats, netparams,
   out$attr$active.sex <- attr_active.sex
 
   # race attribute
-  race_numbers <- sapply(flattened_race_level, function(race) {
-    race_num_var <- paste0("num.", toupper(substr(race, 1, 1)))
-    out$demog[[race_num_var]]
-  })
+  race_numbers <- vapply(
+    flattened_race_level,
+    function(race) {
+      race_num_var <- paste0("num.", race)
+      out$demog[[race_num_var]]
+      },
+    numeric(1)
+    )
 
   race_proportions <- race_numbers / num
   group_ids <- seq_along(flattened_race_level)
