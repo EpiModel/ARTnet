@@ -332,7 +332,7 @@ build_netparams <- function(epistats,
   ## nodematch("race", diff = TRUE) ----
 
   if (race == TRUE) {
-    lmain$same.race <- ifelse(lmain$race.cat.num == lmain$p_race.cat.num, 1, 0)
+    lmain$same.race <- as.integer(lmain$race.cat.num == lmain$p_race.cat.num)
 
     if (is.null(geog.lvl)) {
       mod <- glm(same.race ~ as.factor(race.cat.num),
