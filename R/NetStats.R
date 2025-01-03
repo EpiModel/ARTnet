@@ -350,6 +350,7 @@ build_netstats <- function(epistats, netparams,
       init.hiv.prev <- epistats$init.hiv.prev
       attr_diag.status <- rep(0, network.size)
 
+      # Randomly applies HIV diagnosis based on race
       for (i in seq_along(flattened_race_level)) {
         samp <- which(attr_race == i)
         exp <- ceiling(length(samp) * init.hiv.prev[i])
@@ -632,8 +633,11 @@ update_asmr <- function(netstats, asmr_df) {
     # Combine mortality rates for all races into a data frame
     asmr <- data.frame(
       age = 1:100,
-      setNames(do.call(cbind, asmr_list), paste0("asmr.", unique_races))
+      do.call(cbind, asmr_list)
     )
+
+    colnames(asmr)[-1] <- paste0("asmr.", names(asmr_list))
+
   } else {
     # Calculate combined mortality rates using demographic proportions
     props <- netstats$demog$props
