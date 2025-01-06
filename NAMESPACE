@@ -3,6 +3,7 @@
 export(build_epistats)
 export(build_netparams)
 export(build_netstats)
+export(make_race_combo)
 export(reweight_age_pyr)
 export(trim_epistats)
 export(trim_netstats)

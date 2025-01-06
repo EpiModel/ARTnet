@@ -570,6 +570,9 @@ build_epistats <- function(geog.lvl = NULL,
 #' @param race1 a vector of race index for the index
 #' @param race2 a vector of race index for the partners
 #' @return a vector of the same size with the race combos
+#'
+#' @export
+#'
 make_race_combo <- function(race1, race2) {
   race_combo <- ifelse(race1 == race2, 2 * race1 - 1, 2 * race1)
   return(race_combo)
