@@ -98,6 +98,7 @@ build_netstats <- function(epistats, netparams,
   geog.lvl <- epistats$geog.lvl
   sex.cess.mod <- epistats$sex.cess.mod
   race <- epistats$race
+  race.level <- epistats$race.level
   age.limits <- epistats$age.limits
   age.sexual.cessation <- epistats$age.sexual.cessation
 
@@ -116,13 +117,17 @@ build_netstats <- function(epistats, netparams,
   num <- out$demog$num <- network.size
 
   # Population size by race group
-  # race.dist.3cat
 
   if (!is.null(race.prop)) {
-    # reorder for consistency with the else case
-    race.prop <- race.prop[c(3, 1, 2)]
+    # Capitalize each race and join multiple with a `.`
+    # c("white", "other") => "White.Other"
+    flattened_race_level <- vapply(
+      race.level,
+      \(x) gsub("\\b(\\w)", "\\U\\1", paste0(x, collapse = "."), perl = TRUE),
+      character(1)
+    )
     props <- as.data.frame(t(race.prop))
-    colnames(props) <- c("White.Other", "Black", "Hispanic")
+    colnames(props) <- flattened_race_level
   } else {
     if (!is.null(geog.lvl) && geog.lvl != "county" && length(geog.cat) == 1) {
       props <- race.dist[[geog.lvl]][which(race.dist[[geog.lvl]]$Geog == geog.cat), -c(1, 2)] / 100
@@ -131,9 +136,27 @@ build_netstats <- function(epistats, netparams,
     }
   }
   out$demog$props <- props
-  num.B <- out$demog$num.B <- round(num * props$Black)
-  num.H <- out$demog$num.H <- round(num * props$Hispanic)
-  num.W <- out$demog$num.W <- num - num.B - num.H
+  race.num.vars <- list()
+  total_remaining <- num
+  for (i in seq_len(length(flattened_race_level) - 1)) {
+    race_name <- flattened_race_level[i]
+    race_num_var <- paste0("num.", race_name)
+    race_num_value <- round(num * props[[race_name]])
+    out$demog[[race_num_var]] <- race_num_value
+    race.num.vars[[race_name]] <- race_num_value
+    total_remaining <- total_remaining - race_num_value
+  }
+
+  # Assign the residual race group
+  residual_race <- flattened_race_level[length(flattened_race_level)]
+  residual_num_var <- paste0("num.", residual_race)
+  out$demog[[residual_num_var]] <- total_remaining
+  race.num.vars[[residual_race]] <- total_remaining
+
+  for (race_name in names(race.num.vars)) {
+    race_num_var <- paste0("num.", substr(race_name, 1, 1))
+    assign(race_num_var, race.num.vars[[race_name]])
+  }
 
   ## Age-sex-specific mortality rates (B, H, W)
   #  in 1-year age decrements starting with age 1
@@ -202,7 +225,7 @@ build_netstats <- function(epistats, netparams,
 
   # Setting deterministic mortality prob = 1 at upper age limit
   max.age <- age.limits[2]
-  asmr[asmr$age >= max.age, ] <- 1
+  asmr[asmr$age >= max.age, -1] <- 1
   out$demog$asmr <- asmr
 
 
@@ -265,7 +288,18 @@ build_netstats <- function(epistats, netparams,
   out$attr$active.sex <- attr_active.sex
 
   # race attribute
-  attr_race <- apportion_lr(num, 1:3, c(num.B / num, num.H / num, num.W / num), shuffled = TRUE)
+  race_numbers <- vapply(
+    flattened_race_level,
+    function(race) {
+      race_num_var <- paste0("num.", race)
+      out$demog[[race_num_var]]
+      },
+    numeric(1)
+    )
+
+  race_proportions <- race_numbers / num
+  group_ids <- seq_along(flattened_race_level)
+  attr_race <- apportion_lr(num, group_ids, race_proportions, shuffled = TRUE)
   out$attr$race <- attr_race
 
   # deg.casl attribute
@@ -301,7 +335,7 @@ build_netstats <- function(epistats, netparams,
   # diag status
   if (is.null(epistats$init.hiv.prev)) {
     if (race == TRUE) {
-      xs <- data.frame(age = attr_age, race.cat3 = attr_race, geogYN = 1)
+      xs <- data.frame(age = attr_age, race.cat.num = attr_race, geogYN = 1)
       preds <- predict(epistats$hiv.mod, newdata = xs, type = "response")
       attr_diag.status <- rbinom(num, 1, preds)
       out$attr$diag.status <- attr_diag.status
@@ -314,18 +348,14 @@ build_netstats <- function(epistats, netparams,
   } else {
     if (race == TRUE) {
       init.hiv.prev <- epistats$init.hiv.prev
-      samp.B <- which(attr_race == 1)
-      exp.B <- ceiling(length(samp.B) * init.hiv.prev[1])
-      samp.H <- which(attr_race == 2)
-      exp.H <- ceiling(length(samp.H) * init.hiv.prev[2])
-      samp.W <- which(attr_race == 3)
-      exp.W <- ceiling(length(samp.W) * init.hiv.prev[3])
-
       attr_diag.status <- rep(0, network.size)
 
-      attr_diag.status[sample(samp.B, exp.B)] <- 1
-      attr_diag.status[sample(samp.H, exp.H)] <- 1
-      attr_diag.status[sample(samp.W, exp.W)] <- 1
+      # Randomly applies HIV diagnosis based on race
+      for (i in seq_along(flattened_race_level)) {
+        samp <- which(attr_race == i)
+        exp <- ceiling(length(samp) * init.hiv.prev[i])
+        attr_diag.status[sample(samp, exp)] <- 1
+      }
 
       out$attr$diag.status <- attr_diag.status
 
@@ -574,45 +604,61 @@ build_netstats <- function(epistats, netparams,
 #' netstats  <- update_asmr(netstats, asmr_df)
 #'
 update_asmr <- function(netstats, asmr_df) {
-
-  #Check that all input mortality rates are reasonable values
+  # Check that all input mortality rates are reasonable values
   if (sum(is.na(asmr_df$DeathRate)) > 0 || !is.numeric(asmr_df$DeathRate) ||
       min(asmr_df$DeathRate) < 0 || max(asmr_df$DeathRate) > 1) {
     stop("Ensure all mortality rates are non-NA, numeric, and between 0 and 1.")
   }
 
-  asmr.B <- asmr_df[asmr_df$Race == "Black", 2:3]
-  asmr.H <- asmr_df[asmr_df$Race == "Hispanic", 2:3]
-  asmr.W <- asmr_df[asmr_df$Race == "White", 2:3]
+  # Get unique races
+  unique_races <- unique(asmr_df$Race)
 
-  #Check for appropriate number of input mortality rates
-  if (min(asmr.B$Age) != 1 || min(asmr.H$Age) != 1 || min(asmr.W$Age) != 1 ||
-      max(asmr.B$Age) != 100 || max(asmr.H$Age) != 100 ||
-      max(asmr.W$Age) != 100 || nrow(asmr.B) != 100 || nrow(asmr.H) != 100 ||
-      nrow(asmr.W) != 100) {
-    stop("Provide mortality rates by race for 1-yr age groups (1 - 100).")
+  # Initialize a list to store mortality rates by race
+  asmr_list <- list()
+
+  # Validate mortality rates for each race
+  for (race in unique_races) {
+    race_data <- asmr_df[asmr_df$Race == race, 2:3]
+    if (min(race_data$Age) != 1 || max(race_data$Age) != 100 || nrow(race_data) != 100) {
+      stop(paste0("Provide mortality rates by race for 1-yr age groups (1 - 100) for race: ", race))
+    }
+    if (max(race_data$DeathRate) != 1) {
+      stop(paste0("The mortality rate for at least one age group must be total (1) for race: ", race))
+    }
+    asmr_list[[race]] <- race_data$DeathRate
   }
 
-  if (max(asmr.B$DeathRate) != 1 || max(asmr.H$DeathRate) != 1 ||
-      max(asmr.W$DeathRate) != 1) {
-    stop("The mortality rate for at least one age group must be total (1).")
-  }
-
+  # If race-specific mortality rates should be included
   if (netstats$race == TRUE) {
-    asmr <- data.frame(age = 1:100, asmr.B$DeathRate,
-                       asmr.H$DeathRate, asmr.W$DeathRate)
+    # Combine mortality rates for all races into a data frame
+    asmr <- data.frame(
+      age = 1:100,
+      do.call(cbind, asmr_list)
+    )
+
+    colnames(asmr)[-1] <- paste0("asmr.", names(asmr_list))
+
   } else {
+    # Calculate combined mortality rates using demographic proportions
     props <- netstats$demog$props
-    asmr.O <- props$Black * asmr.B$DeathRate +
-      props$Hispanic * asmr.H$DeathRate +
-      props$White.Other * asmr.W$DeathRate
-    asmr <- data.frame(age = 1:100, asmr.O, asmr.O, asmr.O)
+    asmr_combined <- rep(0, 100)
+    for (race in unique_races) {
+      if (!race %in% names(props)) {
+        stop(paste0("Demographic proportions for race: ", race, " are missing in netstats$demog$props."))
+      }
+      asmr_combined <- asmr_combined + props[[race]] * asmr_list[[race]]
+    }
+    # Create a combined mortality data frame
+    asmr <- data.frame(age = 1:100, asmr_combined, asmr_combined, asmr_combined)
+    colnames(asmr)[-1] <- c("asmr.O1", "asmr.O2", "asmr.O3")
   }
 
+  # Display time unit consistency message
   message(paste0("The time unit used in build_netstats() was ",
                  netstats$time.unit,
                  ". Please ensure that that is consistent with your inputs."))
 
+  # Assign the resulting asmr to netstats
   netstats$demog$asmr <- asmr
   return(netstats)
 }

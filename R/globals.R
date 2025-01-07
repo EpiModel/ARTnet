@@ -1,8 +1,8 @@
 #' @import utils
 
 utils::globalVariables(c( "age",
-                         "race.cat3",
-                         "p_race.cat3",
+                         "race.cat",
+                         "p_race.cat",
                          "AMIS_ID",
                          "survey_year",
                          "prep",

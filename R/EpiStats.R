@@ -71,6 +71,9 @@
 #'   natural mortality.
 #' * `time.unit`: a number between 1 and 30 that specifies time units for ARTnet statistics. Set to
 #'   `7` by default.
+#' * `race.level`: a list of race and ethnicity categories from ARTnet that can be used for race stratification
+#'    in EpiModel. Values must match those in ARTnet, so options include "black", "hispanic", "white", "other",
+#'    "asian", "ai/an", "mult", "nh/pi". Race categories may be combined (for example, c("white", "other")).
 #'
 #' @examples
 #' # Age and geographic stratification, for the Atlanta metropolitan statistical area
@@ -108,6 +111,7 @@
 build_epistats <- function(geog.lvl = NULL,
                            geog.cat = NULL,
                            race = TRUE,
+                           race.level = list("black", "hispanic", c("white", "other")),
                            age.limits = c(15, 65),
                            age.breaks = c(25, 35, 45, 55),
                            age.sexual.cessation = NULL,
@@ -253,45 +257,52 @@ build_epistats <- function(geog.lvl = NULL,
   l$comb.age <- l$age + l$p_age_imp
   l$diff.age <- abs(l$age - l$p_age_imp)
 
-
   ## Race ethnicity ##
+
   if (race == TRUE) {
-    d$race.cat3 <- rep(NA, nrow(d))
-    d$race.cat3[d$race.cat == "black"] <- 1
-    d$race.cat3[d$race.cat == "hispanic"] <- 2
-    d$race.cat3[d$race.cat %in% c("white", "other")] <- 3
+    mult_race_cat <- c("asian", "ai/an", "mult", "nh/pi")
+    flat_race.level <- unlist(race.level)
 
-    l$race.cat3 <- rep(NA, nrow(l))
-    l$race.cat3[l$race.cat == "black"] <- 1
-    l$race.cat3[l$race.cat == "hispanic"] <- 2
-    l$race.cat3[l$race.cat %in% c("white", "other")] <- 3
+    # Determine which variables to use in ARTnet
+    if (any(flat_race.level %in% mult_race_cat)) {
 
-    l$p_race.cat3 <- rep(NA, nrow(l))
-    l$p_race.cat3[l$p_race.cat == "black"] <- 1
-    l$p_race.cat3[l$p_race.cat == "hispanic"] <- 2
-    l$p_race.cat3[l$p_race.cat %in% c("white", "other")] <- 3
+      d$race.eth <- ifelse(d$hispan == 1, "hispanic", d$race)
+      l <- merge(l, d[, c("AMIS_ID", "race.eth")], by = "AMIS_ID", all.x = TRUE)
+      l$p_race.eth <- ifelse(l$p_hispan == 1, "hispanic", l$p_race2)
 
-    # redistribute NAs in proportion to non-missing partner races
-    probs <- prop.table(table(l$race.cat3, l$p_race.cat3), 1)
+      p_race_var <- "p_race.eth"
+      race_var <- "race.eth"
+    } else {
+      p_race_var <- "p_race.cat"
+      race_var <- "race.cat"
+    }
 
-    imp_black <- which(is.na(l$p_race.cat3) & l$race.cat3 == 1)
-    l$p_race.cat3[imp_black] <- sample(1:3, length(imp_black), TRUE, probs[1, ])
+    # Assign race categories based on race.level
+    race.categories <- seq_along(race.level)
 
-    imp_hisp <- which(is.na(l$p_race.cat3) & l$race.cat3 == 2)
-    l$p_race.cat3[imp_hisp] <- sample(1:3, length(imp_hisp), TRUE, probs[2, ])
+    d$race.cat.num <- rep(NA, nrow(d))
+    l$race.cat.num <- rep(NA, nrow(l))
+    l$p_race.cat.num <- rep(NA, nrow(l))
 
-    imp_white <- which(is.na(l$p_race.cat3) & l$race.cat3 == 3)
-    l$p_race.cat3[imp_white] <- sample(1:3, length(imp_white), TRUE, probs[3, ])
+    for (i in seq_along(race.level)) {
+      d$race.cat.num[d[[race_var]] %in% race.level[[i]]] <- race.categories[i]
+      l$race.cat.num[l[[race_var]] %in% race.level[[i]]] <- race.categories[i]
+      l$p_race.cat.num[l[[p_race_var]] %in% race.level[[i]]] <- race.categories[i]
+    }
 
-    l$race.combo <- rep(NA, nrow(l))
-    l$race.combo[l$race.cat3 == 1 & l$p_race.cat3 == 1] <- 1
-    l$race.combo[l$race.cat3 == 1 & l$p_race.cat3 %in% 2:3] <- 2
-    l$race.combo[l$race.cat3 == 2 & l$p_race.cat3 %in% c(1, 3)] <- 3
-    l$race.combo[l$race.cat3 == 2 & l$p_race.cat3 == 2] <- 4
-    l$race.combo[l$race.cat3 == 3 & l$p_race.cat3 %in% 1:2] <- 5
-    l$race.combo[l$race.cat3 == 3 & l$p_race.cat3 == 3] <- 6
+    # Redistribute NAs in proportion to non-missing partner races
+    probs <- prop.table(table(l$race.cat.num, l$p_race.cat.num), 1)
 
-    l <- select(l, -c(race.cat3, p_race.cat3))
+    for (i in race.categories) {
+      imp_indices <- which(is.na(l$p_race.cat.num) & l$race.cat.num == i)
+      if (length(imp_indices) > 0) {
+        l$p_race.cat.num[imp_indices] <- sample(race.categories, length(imp_indices), TRUE, probs[i, ])
+      }
+    }
+
+    # Assign race.combo
+    l$race.combo <- make_race_combo(l$race.cat.num, l$p_race.cat.num)
+
   }
 
   ## HIV diagnosed status of index and partners ##
@@ -495,13 +506,13 @@ build_epistats <- function(geog.lvl = NULL,
   if (is.null(init.hiv.prev)) {
     if (race == TRUE) {
       if (is.null(geog.lvl)) {
-        d1 <- select(d, race.cat3, age, hiv2)
+        d1 <- select(d, race.cat.num, age, hiv2)
 
-        hiv.mod <- glm(hiv2 ~ age + as.factor(race.cat3),
+        hiv.mod <- glm(hiv2 ~ age + as.factor(race.cat.num),
                        data = d1, family = binomial())
       } else {
-        d1 <- select(d, race.cat3, geogYN, age, hiv2)
-        hiv.mod <- glm(hiv2 ~ age + geogYN + as.factor(race.cat3) + geogYN * as.factor(race.cat3),
+        d1 <- select(d, race.cat.num, geogYN, age, hiv2)
+        hiv.mod <- glm(hiv2 ~ age + geogYN + as.factor(race.cat.num) + geogYN * as.factor(race.cat.num),
                        data = d1, family = binomial())
       }
     } else {
@@ -520,9 +531,9 @@ build_epistats <- function(geog.lvl = NULL,
     # Output
     out$hiv.mod <- hiv.mod
   } else {
-    if (length(init.hiv.prev) != 3) {
-      stop("Input parameter init.prev.hiv must be a vector of size three")
-    }
+    #if (length(init.hiv.prev) != 3) {
+    #  stop("Input parameter init.prev.hiv must be a vector of size three")
+    #}
     if (prod(init.hiv.prev < 1) == 0  || prod(init.hiv.prev > 0) == 0) {
       stop("All elements of init.hiv.prev must be between 0 and 1 non-inclusive")
     }
@@ -538,6 +549,7 @@ build_epistats <- function(geog.lvl = NULL,
 
   out$geog.lvl <- geog.lvl
   out$race <- race
+  out$race.level <- race.level
   out$acts.mod <- acts.mod
   out$cond.mc.mod <- cond.mc.mod
   out$cond.oo.mod <- cond.oo.mod
@@ -551,6 +563,19 @@ build_epistats <- function(geog.lvl = NULL,
   out$init.hiv.prev <- init.hiv.prev
   out$time.unit <- time.unit
   return(out)
+}
+
+#' for a race `n` the combo for `race1 == race2 ==n` the combo is is `2n - 1`
+#' for `race1 == n && race2 != n` the combo is `2n`
+#' @param race1 a vector of race index for the index
+#' @param race2 a vector of race index for the partners
+#' @return a vector of the same size with the race combos
+#'
+#' @export
+#'
+make_race_combo <- function(race1, race2) {
+  race_combo <- ifelse(race1 == race2, 2 * race1 - 1, 2 * race1)
+  return(race_combo)
 }
 
 # strip a `glm` object from all its components, leaving only what is required

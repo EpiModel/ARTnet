@@ -8,6 +8,7 @@ build_epistats(
   geog.lvl = NULL,
   geog.cat = NULL,
   race = TRUE,
+  race.level = list("black", "hispanic", c("white", "other")),
   age.limits = c(15, 65),
   age.breaks = c(25, 35, 45, 55),
   age.sexual.cessation = NULL,
@@ -98,6 +99,9 @@ process stops at a certain age but aging and other demographic features should c
 natural mortality.
 \item \code{time.unit}: a number between 1 and 30 that specifies time units for ARTnet statistics. Set to
 \code{7} by default.
+\item \code{race.level}: a list of race and ethnicity categories from ARTnet that can be used for race stratification
+in EpiModel. Values must match those in ARTnet, so options include "black", "hispanic", "white", "other",
+"asian", "ai/an", "mult", "nh/pi". Race categories may be combined (for example, c("white", "other")).
 }
 }
 }
