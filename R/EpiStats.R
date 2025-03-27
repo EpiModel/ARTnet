@@ -574,7 +574,8 @@ build_epistats <- function(geog.lvl = NULL,
 #' @export
 #'
 make_race_combo <- function(race1, race2) {
-  race_combo <- ifelse(race1 == race2, 2 * race1 - 1, 2 * race1)
+  race_combo <- 2 * race1
+  race_combo[race1 == race2] <- race_combo[race1 == race2] - 1
   return(race_combo)
 }
 
@@ -614,4 +615,3 @@ trim_epistats <- function(epistats) {
   epistats$cond.oo.mod <- strip_glm(epistats$cond.oo.mod)
   return(epistats)
 }
-
