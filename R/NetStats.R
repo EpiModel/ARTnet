@@ -281,9 +281,9 @@ build_netstats <- function(epistats, netparams,
   out$attr$age.grp <- attr_age.grp
 
   # sexually active attribute
-  attr_active.sex <- rep(1, num)
+  attr_active.sex <- rep(1L, num)
   if (sex.cess.mod == TRUE) {
-    attr_active.sex[attr_age.grp == max(attr_age.grp)] <- 0
+    attr_active.sex[attr_age.grp == max(attr_age.grp)] <- 0L
   }
   out$attr$active.sex <- attr_active.sex
 
@@ -367,6 +367,7 @@ build_netstats <- function(epistats, netparams,
       out$attr$diag.status[attr_diag.status] <- 1
     }
   }
+  out$attr$diag.status <- as.integer(out$attr$diag.status)
 
 
   # Main Model -----------------------------------------------------------
