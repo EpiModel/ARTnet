@@ -8,6 +8,7 @@ build_netparams(
   epistats,
   smooth.main.dur = FALSE,
   oo.nquants = 5,
+  method = c("existing", "joint"),
   browser = FALSE
 )
 }
@@ -19,6 +20,15 @@ oldest and second oldest age groups.}
 
 \item{oo.nquants}{Number of quantiles to split the one-off partnership risk distribution (count
 of one-off partners per unit time).}
+
+\item{method}{Character. Either \code{"existing"} (default) or \code{"joint"}. \code{"existing"} reproduces
+the pre-refactor behavior byte-for-byte: a separate univariate Poisson/binomial GLM is
+fit for each ERGM target statistic. \code{"joint"} leaves all of those outputs intact \strong{and}
+additionally fits one joint Poisson GLM per layer (main/casual/one-off) predicting
+degree (or one-off partner count) from all attributes simultaneously, with AIC-based
+interaction selection. The fitted objects are returned at \verb{$main$joint_model},
+\verb{$casl$joint_model}, and \verb{$inst$joint_model} and form the basis of the g-computation
+refactor planned for \code{\link{build_netstats}} in a later release.}
 
 \item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
 }
@@ -57,5 +67,9 @@ epistats3 <- build_epistats(geog.lvl = "city",
                             age.breaks = c(25, 35, 45, 55),
                             age.sexual.cessation = 65)
 netparams3 <- build_netparams(epistats3, smooth.main.dur = TRUE)
+
+# Fit joint Poisson GLMs in addition to the univariate marginals
+netparams4 <- build_netparams(epistats, smooth.main.dur = TRUE, method = "joint")
+summary(netparams4$main$joint_model)
 
 }
