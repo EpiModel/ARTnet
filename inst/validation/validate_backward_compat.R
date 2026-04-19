@@ -92,9 +92,11 @@ PARAM_SETS <- list(
   netparams
 }
 
-# Run one parameter set end-to-end. `netparams_extra` lets the caller pass
-# e.g. method = "existing" post-refactor without affecting the pre-capture.
-.run_one <- function(set, netparams_extra = list()) {
+# Run one parameter set end-to-end. `netparams_extra` and `netstats_extra`
+# let the caller pass e.g. method = "existing" post-refactor without
+# affecting the pre-capture. The convenience `method` arg threads a single
+# value to both functions (the common case).
+.run_one <- function(set, netparams_extra = list(), netstats_extra = list()) {
   set.seed(.VALIDATION_SEED)
   epistats <- do.call(ARTnet::build_epistats, set$epistats)
 
@@ -102,7 +104,7 @@ PARAM_SETS <- list(
   netparams <- do.call(ARTnet::build_netparams, netparams_args)
 
   netstats_args <- c(list(epistats = epistats, netparams = netparams),
-                     set$netstats)
+                     set$netstats, netstats_extra)
   netstats <- do.call(ARTnet::build_netstats, netstats_args)
 
   list(netparams = netparams, netstats = netstats)
@@ -142,15 +144,25 @@ capture_snapshot <- function(overwrite = FALSE) {
 #' joint g-comp refactor should pass this with zero diffs when the legacy
 #' code path is selected (e.g. `method = "existing"`).
 #'
-#' @param ... Passed as additional args to `build_netparams()`. For the
-#'   refactor branch this will typically be `method = "existing"` once the
-#'   arg exists; on the pre-refactor branch leave empty.
+#' @param method If non-NULL, a single value passed as `method = <val>` to
+#'   **both** `build_netparams()` and `build_netstats()`. This is the common
+#'   case (symmetric method) — pass `method = "existing"` to compare legacy
+#'   behavior against snapshots. For asymmetric testing, use the low-level
+#'   `netparams_extra` / `netstats_extra` args.
+#' @param netparams_extra,netstats_extra Named lists of extra args forwarded
+#'   to the respective functions.
 #' @param tolerance Numeric tolerance for `all.equal()`. Default 0 (exact).
 #' @return Invisibly: TRUE iff all sets match; FALSE otherwise.
-compare_to_snapshot <- function(..., tolerance = 0) {
+compare_to_snapshot <- function(method = NULL,
+                                netparams_extra = list(),
+                                netstats_extra = list(),
+                                tolerance = 0) {
   .require_artnetdata()
   dir <- .snapshot_dir()
-  netparams_extra <- list(...)
+  if (!is.null(method)) {
+    netparams_extra$method <- method
+    netstats_extra$method  <- method
+  }
 
   overall_ok <- TRUE
   for (set in PARAM_SETS) {
@@ -163,7 +175,8 @@ compare_to_snapshot <- function(..., tolerance = 0) {
     }
     message("COMPARE: ", set$name)
     ref <- readRDS(path)
-    cur <- .run_one(set, netparams_extra = netparams_extra)
+    cur <- .run_one(set, netparams_extra = netparams_extra,
+                    netstats_extra = netstats_extra)
 
     np_ref <- .strip_additive(ref$netparams)
     np_cur <- .strip_additive(cur$netparams)

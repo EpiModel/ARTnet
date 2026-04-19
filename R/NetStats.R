@@ -20,6 +20,20 @@
 #' @param young.prop The proportion of the population that should be below the age of sexual cessation.
 #'        Default is NULL (meaning no re-weighting of the `age.pyramid` parameter is performed).
 #'        This parameter is only used if the age of sexual cessation is less than the upper age bound.
+#' @param method Character. Either `"existing"` (default) or `"joint"`. `"existing"` reproduces
+#'        the pre-refactor behavior byte-for-byte: target statistics for edges, nodefactor, and
+#'        concurrent are computed layer-by-layer from the univariate marginal fits stored on
+#'        `netparams`. `"joint"` uses the joint Poisson GLM fit at `netparams$<layer>$joint_model`
+#'        (set by `build_netparams(..., method = "joint")`) to predict expected degree for each
+#'        synthetic-population node and aggregates via g-computation:
+#'        `edges = sum(pred) / 2` and `nodefactor_<attr>[level] = sum(pred[attr == level])`.
+#'        Under `"joint"`, edges and all nodefactor target stats are internally consistent by
+#'        construction (`sum(nodefactor_<attr>) = 2 * edges`), so `edges.avg` has no effect.
+#'        `nodematch_*`, `absdiff_*`, dissolution coefficients, `concurrent`, and
+#'        `nodefactor_risk.grp` continue to use the univariate marginals — those are scoped for
+#'        later issues (#63–#64). `concurrent` in particular is retained from the univariate
+#'        binomial fit because the joint Poisson's implied `P(deg > 1)` is biased by the
+#'        truncation of `deg.main` and `deg.casl` in the training data.
 #' @param browser If `TRUE`, run `build_netparams` in interactive browser mode.
 #'
 #' @details
@@ -82,9 +96,24 @@ build_netstats <- function(epistats, netparams,
                            edges.avg = FALSE,
                            race.prop = NULL,
                            young.prop = NULL,
+                           method = c("existing", "joint"),
                            browser = FALSE) {
+  method <- match.arg(method)
+
   # Ensures that ARTnetData is installed
   if (system.file(package = "ARTnetData") == "") stop(missing_data_msg)
+
+  if (method == "joint") {
+    missing_joint <- vapply(c("main", "casl", "inst"),
+      function(layer) is.null(netparams[[layer]]$joint_model),
+      logical(1))
+    if (any(missing_joint)) {
+      stop("method = 'joint' requires netparams fit with method = 'joint'. ",
+           "No joint_model on layer(s): ",
+           paste(names(missing_joint)[missing_joint], collapse = ", "), ". ",
+           "Re-run build_netparams(..., method = 'joint').")
+    }
+  }
 
   if (browser == TRUE) {
     browser()
@@ -370,62 +399,143 @@ build_netstats <- function(epistats, netparams,
   out$attr$diag.status <- as.integer(out$attr$diag.status)
 
 
+  # Joint g-computation predictions (method = "joint" only) -----------------
+  # Predict per-synthetic-node expected degree from the joint Poisson GLMs
+  # fit in build_netparams(..., method = "joint"). Aggregating these per-node
+  # predictions gives target statistics that are internally consistent by
+  # construction (sum(nodefactor_<attr>) == 2 * edges). Inactive-age nodes
+  # (sex.cess.mod) are zeroed out so they contribute nothing to any layer's
+  # edges or nodefactor counts.
+  if (method == "joint") {
+    synth <- data.frame(
+      age.grp      = out$attr$age.grp,
+      race.cat.num = out$attr$race,
+      deg.main     = out$attr$deg.main,
+      deg.casl     = out$attr$deg.casl,
+      hiv2         = out$attr$diag.status,
+      geogYN       = 1L
+    )
+    synth$deg.tot3 <- pmin(out$attr$deg.tot, 3)
+
+    pred_deg_main   <- predict(netparams$main$joint_model, newdata = synth, type = "response")
+    pred_deg_casl   <- predict(netparams$casl$joint_model, newdata = synth, type = "response")
+    pred_count_inst <- predict(netparams$inst$joint_model, newdata = synth, type = "response")
+    pred_deg_inst   <- pred_count_inst / (364 / time.unit)
+
+    if (sex.cess.mod == TRUE) {
+      inactive <- out$attr$active.sex == 0L
+      pred_deg_main[inactive] <- 0
+      pred_deg_casl[inactive] <- 0
+      pred_deg_inst[inactive] <- 0
+    }
+  }
+
+
   # Main Model -----------------------------------------------------------
 
   out$main <- list()
 
-  # edges ---
-  if (race == TRUE) {
-    if (edges.avg == FALSE) {
-      out$main$edges <- (netparams$main$md.main * num) / 2
+  if (method == "existing") {
+
+    # edges ---
+    if (race == TRUE) {
+      if (edges.avg == FALSE) {
+        out$main$edges <- (netparams$main$md.main * num) / 2
+      } else {
+        out$main$edges <- sum(unname(table(out$attr$race)) * netparams$main$nf.race) / 2
+      }
+      # nodefactor("race") ---
+      nodefactor_race <- table(out$attr$race) * netparams$main$nf.race
+      out$main$nodefactor_race <- unname(nodefactor_race)
+
+      # nodematch("race") ---
+      nodematch_race <- nodefactor_race / 2 * netparams$main$nm.race
+      out$main$nodematch_race <- unname(nodematch_race)
+
+      # nodematch("race", diff = FALSE) ---
+      nodematch_race <- out$main$edges * netparams$main$nm.race_diffF
+      out$main$nodematch_race_diffF <- unname(nodematch_race)
     } else {
-      out$main$edges <- sum(unname(table(out$attr$race)) * netparams$main$nf.race) / 2
+      out$main$edges <- (netparams$main$md.main * num) / 2
     }
-    # nodefactor("race") ---
-    nodefactor_race <- table(out$attr$race) * netparams$main$nf.race
-    out$main$nodefactor_race <- unname(nodefactor_race)
 
-    # nodematch("race") ---
-    nodematch_race <- nodefactor_race / 2 * netparams$main$nm.race
-    out$main$nodematch_race <- unname(nodematch_race)
+    # nodefactor("age.grp") ---
+    nodefactor_age.grp <- table(out$attr$age.grp) * netparams$main$nf.age.grp
+    if (sex.cess.mod == TRUE) {
+      nodefactor_age.grp[length(nodefactor_age.grp)] <- 0
+    }
+    out$main$nodefactor_age.grp <- unname(nodefactor_age.grp)
 
-    # nodematch("race", diff = FALSE) ---
-    nodematch_race <- out$main$edges * netparams$main$nm.race_diffF
-    out$main$nodematch_race_diffF <- unname(nodematch_race)
-  } else {
-    out$main$edges <- (netparams$main$md.main * num) / 2
+    # nodematch("age.grp") ---
+    nodematch_age.grp <- nodefactor_age.grp / 2 * netparams$main$nm.age.grp
+    out$main$nodematch_age.grp <- unname(nodematch_age.grp)
+
+    # absdiff("age") ---
+    absdiff_age <- out$main$edges * netparams$main$absdiff.age
+    out$main$absdiff_age <- absdiff_age
+
+    # absdiff("sqrt.age") ---
+    absdiff_sqrt.age <- out$main$edges * netparams$main$absdiff.sqrt.age
+    out$main$absdiff_sqrt.age <- absdiff_sqrt.age
+
+    # nodefactor("deg.casl") ---
+    out$main$nodefactor_deg.casl <- num * netparams$main$deg.casl.dist * netparams$main$nf.deg.casl
+
+    # concurrent ---
+    out$main$concurrent <- num * netparams$main$concurrent
+
+    # nodefactor("diag.status") ---
+    nodefactor_diag.status <- table(out$attr$diag.status) * netparams$main$nf.diag.status
+    out$main$nodefactor_diag.status <- unname(nodefactor_diag.status)
+
+  } else {  # method == "joint"
+
+    # edges from summed per-node predictions --------------------------------
+    out$main$edges <- sum(pred_deg_main) / 2
+
+    # nodefactor + derived nodematch terms ----------------------------------
+    if (race == TRUE) {
+      n_race <- length(netparams$main$nf.race)
+      out$main$nodefactor_race <- vapply(seq_len(n_race),
+        function(r) sum(pred_deg_main[out$attr$race == r]), numeric(1))
+      out$main$nodematch_race <- unname(
+        out$main$nodefactor_race / 2 * netparams$main$nm.race)
+      out$main$nodematch_race_diffF <- unname(
+        out$main$edges * netparams$main$nm.race_diffF)
+    }
+
+    # nodefactor("age.grp") -------------------------------------------------
+    n_age <- length(netparams$main$nf.age.grp)
+    out$main$nodefactor_age.grp <- vapply(seq_len(n_age),
+      function(k) sum(pred_deg_main[out$attr$age.grp == k]), numeric(1))
+
+    # nodematch("age.grp") -- reuse univariate nm ratio on new nodefactor
+    out$main$nodematch_age.grp <- unname(
+      out$main$nodefactor_age.grp / 2 * netparams$main$nm.age.grp)
+
+    # absdiff stats scale with new edges ------------------------------------
+    out$main$absdiff_age <- out$main$edges * netparams$main$absdiff.age
+    out$main$absdiff_sqrt.age <- out$main$edges * netparams$main$absdiff.sqrt.age
+
+    # nodefactor("deg.casl") ------------------------------------------------
+    out$main$nodefactor_deg.casl <- vapply(0:3,
+      function(d) sum(pred_deg_main[out$attr$deg.casl == d]), numeric(1))
+
+    # concurrent -- keep the univariate binomial unchanged. The Poisson
+    # joint model's implied P(deg > 1) = 1 - exp(-lambda)(1+lambda) would
+    # inflate this ~5x because deg.main is truncated at 2 in the training
+    # data, so the fitted lambda approximates E[min(deg, 2)] rather than
+    # the true Poisson rate. The binomial logistic fit is the right model
+    # for the probability of concurrency; joint-modeling it is scoped to
+    # a separate issue.
+    out$main$concurrent <- num * netparams$main$concurrent
+
+    # nodefactor("diag.status") ---------------------------------------------
+    out$main$nodefactor_diag.status <- vapply(0:1,
+      function(h) sum(pred_deg_main[out$attr$diag.status == h]), numeric(1))
   }
 
-  # nodefactor("age.grp") ---
-  nodefactor_age.grp <- table(out$attr$age.grp) * netparams$main$nf.age.grp
-  if (sex.cess.mod == TRUE) {
-    nodefactor_age.grp[length(nodefactor_age.grp)] <- 0
-  }
-  out$main$nodefactor_age.grp <- unname(nodefactor_age.grp)
-
-  # nodematch("age.grp") ---
-  nodematch_age.grp <- nodefactor_age.grp / 2 * netparams$main$nm.age.grp
-  out$main$nodematch_age.grp <- unname(nodematch_age.grp)
-
-  # absdiff("age") ---
-  absdiff_age <- out$main$edges * netparams$main$absdiff.age
-  out$main$absdiff_age <- absdiff_age
-
-  # absdiff("sqrt.age") ---
-  absdiff_sqrt.age <- out$main$edges * netparams$main$absdiff.sqrt.age
-  out$main$absdiff_sqrt.age <- absdiff_sqrt.age
-
-  # nodefactor("deg.casl") ---
-  out$main$nodefactor_deg.casl <- num * netparams$main$deg.casl.dist * netparams$main$nf.deg.casl
-
-  # concurrent ---
-  out$main$concurrent <- num * netparams$main$concurrent
-
-  # nodefactor("diag.status") ---
-  nodefactor_diag.status <- table(out$attr$diag.status) * netparams$main$nf.diag.status
-  out$main$nodefactor_diag.status <- unname(nodefactor_diag.status)
-
-  # Dissolution ---
+  # Dissolution (identical under both methods) -----------------------------
   out$main$diss.homog <- dissolution_coefs(dissolution = ~offset(edges),
                                            duration = netparams$main$durs.main.homog$mean.dur.adj,
                                            d.rate = expect.mort)
@@ -440,58 +550,97 @@ build_netstats <- function(epistats, netparams,
 
   out$casl <- list()
 
-  # edges ---
-  if (race == TRUE) {
-    if (edges.avg == FALSE) {
-      out$casl$edges <- (netparams$casl$md.casl * num) / 2
+  if (method == "existing") {
+
+    # edges ---
+    if (race == TRUE) {
+      if (edges.avg == FALSE) {
+        out$casl$edges <- (netparams$casl$md.casl * num) / 2
+      } else {
+        out$casl$edges <- sum(unname(table(out$attr$race)) * netparams$casl$nf.race) / 2
+      }
+      # nodefactor("race") ---
+      nodefactor_race <- table(out$attr$race) * netparams$casl$nf.race
+      out$casl$nodefactor_race <- unname(nodefactor_race)
+
+      # nodematch("race") ---
+      nodematch_race <- nodefactor_race / 2 * netparams$casl$nm.race
+      out$casl$nodematch_race <- unname(nodematch_race)
+
+      # nodematch("race", diff = FALSE) ---
+      nodematch_race <- out$casl$edges * netparams$casl$nm.race_diffF
+      out$casl$nodematch_race_diffF <- unname(nodematch_race)
     } else {
-      out$casl$edges <- sum(unname(table(out$attr$race)) * netparams$casl$nf.race) / 2
+      out$casl$edges <- (netparams$casl$md.casl * num) / 2
     }
-    # nodefactor("race") ---
-    nodefactor_race <- table(out$attr$race) * netparams$casl$nf.race
-    out$casl$nodefactor_race <- unname(nodefactor_race)
 
-    # nodematch("race") ---
-    nodematch_race <- nodefactor_race / 2 * netparams$casl$nm.race
-    out$casl$nodematch_race <- unname(nodematch_race)
+    # nodefactor("age.grp") ---
+    nodefactor_age.grp <- table(out$attr$age.grp) * netparams$casl$nf.age.grp
+    if (sex.cess.mod == TRUE) {
+      nodefactor_age.grp[length(nodefactor_age.grp)] <- 0
+    }
+    out$casl$nodefactor_age.grp <- unname(nodefactor_age.grp)
 
-    # nodematch("race", diff = FALSE) ---
-    nodematch_race <- out$casl$edges * netparams$casl$nm.race_diffF
-    out$casl$nodematch_race_diffF <- unname(nodematch_race)
-  } else {
-    out$casl$edges <- (netparams$casl$md.casl * num) / 2
+    # nodematch("age.grp") ---
+    nodematch_age.grp <- nodefactor_age.grp / 2 * netparams$casl$nm.age.grp
+    out$casl$nodematch_age.grp <- unname(nodematch_age.grp)
+
+    # absdiff("age") ---
+    absdiff_age <- out$casl$edges * netparams$casl$absdiff.age
+    out$casl$absdiff_age <- absdiff_age
+
+    # absdiff("sqrt.age") ---
+    absdiff_sqrt.age <- out$casl$edges * netparams$casl$absdiff.sqrt.age
+    out$casl$absdiff_sqrt.age <- absdiff_sqrt.age
+
+    # nodefactor("deg.main") ---
+    out$casl$nodefactor_deg.main <- num * netparams$casl$deg.main.dist * netparams$casl$nf.deg.main
+
+    # concurrent ---
+    out$casl$concurrent <- num * netparams$casl$concurrent
+
+    # nodefactor("diag.status") ---
+    nodefactor_diag.status <- table(out$attr$diag.status) * netparams$casl$nf.diag.status
+    out$casl$nodefactor_diag.status <- unname(nodefactor_diag.status)
+
+  } else {  # method == "joint"
+
+    out$casl$edges <- sum(pred_deg_casl) / 2
+
+    if (race == TRUE) {
+      n_race <- length(netparams$casl$nf.race)
+      out$casl$nodefactor_race <- vapply(seq_len(n_race),
+        function(r) sum(pred_deg_casl[out$attr$race == r]), numeric(1))
+      out$casl$nodematch_race <- unname(
+        out$casl$nodefactor_race / 2 * netparams$casl$nm.race)
+      out$casl$nodematch_race_diffF <- unname(
+        out$casl$edges * netparams$casl$nm.race_diffF)
+    }
+
+    n_age <- length(netparams$casl$nf.age.grp)
+    out$casl$nodefactor_age.grp <- vapply(seq_len(n_age),
+      function(k) sum(pred_deg_casl[out$attr$age.grp == k]), numeric(1))
+
+    out$casl$nodematch_age.grp <- unname(
+      out$casl$nodefactor_age.grp / 2 * netparams$casl$nm.age.grp)
+
+    out$casl$absdiff_age <- out$casl$edges * netparams$casl$absdiff.age
+    out$casl$absdiff_sqrt.age <- out$casl$edges * netparams$casl$absdiff.sqrt.age
+
+    # nodefactor("deg.main") -- truncated at 2 in build_netparams
+    out$casl$nodefactor_deg.main <- vapply(0:2,
+      function(d) sum(pred_deg_casl[out$attr$deg.main == d]), numeric(1))
+
+    # concurrent -- see note in main layer block. Truncation of deg.casl
+    # at 3 in the training data makes Poisson-implied P(deg > 1)
+    # unreliable; retain the univariate binomial fit.
+    out$casl$concurrent <- num * netparams$casl$concurrent
+
+    out$casl$nodefactor_diag.status <- vapply(0:1,
+      function(h) sum(pred_deg_casl[out$attr$diag.status == h]), numeric(1))
   }
 
-  # nodefactor("age.grp") ---
-  nodefactor_age.grp <- table(out$attr$age.grp) * netparams$casl$nf.age.grp
-  if (sex.cess.mod == TRUE) {
-    nodefactor_age.grp[length(nodefactor_age.grp)] <- 0
-  }
-  out$casl$nodefactor_age.grp <- unname(nodefactor_age.grp)
-
-  # nodematch("age.grp") ---
-  nodematch_age.grp <- nodefactor_age.grp / 2 * netparams$casl$nm.age.grp
-  out$casl$nodematch_age.grp <- unname(nodematch_age.grp)
-
-  # absdiff("age") ---
-  absdiff_age <- out$casl$edges * netparams$casl$absdiff.age
-  out$casl$absdiff_age <- absdiff_age
-
-  # absdiff("sqrt.age") ---
-  absdiff_sqrt.age <- out$casl$edges * netparams$casl$absdiff.sqrt.age
-  out$casl$absdiff_sqrt.age <- absdiff_sqrt.age
-
-  # nodefactor("deg.main") ---
-  out$casl$nodefactor_deg.main <- num * netparams$casl$deg.main.dist * netparams$casl$nf.deg.main
-
-  # concurrent ---
-  out$casl$concurrent <- num * netparams$casl$concurrent
-
-  # nodefactor("diag.status") ---
-  nodefactor_diag.status <- table(out$attr$diag.status) * netparams$casl$nf.diag.status
-  out$casl$nodefactor_diag.status <- unname(nodefactor_diag.status)
-
-  # Dissolution
+  # Dissolution (identical under both methods)
   out$casl$diss.homog <- dissolution_coefs(dissolution = ~offset(edges),
                                            duration = netparams$casl$durs.casl.homog$mean.dur.adj,
                                            d.rate = expect.mort)
@@ -505,58 +654,96 @@ build_netstats <- function(epistats, netparams,
 
   out$inst <- list()
 
-  # edges ---
-  if (race == TRUE) {
-    if (edges.avg == FALSE) {
-      out$inst$edges <- (netparams$inst$md.inst * num) / 2
+  if (method == "existing") {
+
+    # edges ---
+    if (race == TRUE) {
+      if (edges.avg == FALSE) {
+        out$inst$edges <- (netparams$inst$md.inst * num) / 2
+      } else {
+        out$inst$edges <- sum(unname(table(out$attr$race)) * netparams$inst$nf.race) / 2
+      }
+      # nodefactor("race") ---
+      nodefactor_race <- table(out$attr$race) * netparams$inst$nf.race
+      out$inst$nodefactor_race <- unname(nodefactor_race)
+
+      # nodematch("race") ---
+      nodematch_race <- nodefactor_race / 2 * netparams$inst$nm.race
+      out$inst$nodematch_race <- unname(nodematch_race)
+
+      # nodematch("race", diff = FALSE) ---
+      nodematch_race <- out$inst$edges * netparams$inst$nm.race_diffF
+      out$inst$nodematch_race_diffF <- unname(nodematch_race)
     } else {
-      out$inst$edges <- sum(unname(table(out$attr$race)) * netparams$inst$nf.race) / 2
+      out$inst$edges <- (netparams$inst$md.inst * num) / 2
     }
-    # nodefactor("race") ---
-    nodefactor_race <- table(out$attr$race) * netparams$inst$nf.race
-    out$inst$nodefactor_race <- unname(nodefactor_race)
 
-    # nodematch("race") ---
-    nodematch_race <- nodefactor_race / 2 * netparams$inst$nm.race
-    out$inst$nodematch_race <- unname(nodematch_race)
+    # nodefactor("age.grp") ---
+    nodefactor_age.grp <- table(out$attr$age.grp) * netparams$inst$nf.age.grp
+    if (sex.cess.mod == TRUE) {
+      nodefactor_age.grp[length(nodefactor_age.grp)] <- 0
+    }
+    out$inst$nodefactor_age.grp <- unname(nodefactor_age.grp)
 
-    # nodematch("race", diff = FALSE) ---
-    nodematch_race <- out$inst$edges * netparams$inst$nm.race_diffF
-    out$inst$nodematch_race_diffF <- unname(nodematch_race)
-  } else {
-    out$inst$edges <- (netparams$inst$md.inst * num) / 2
+    # nodematch("age.grp") ---
+    nodematch_age.grp <- nodefactor_age.grp / 2 * netparams$inst$nm.age.grp
+    out$inst$nodematch_age.grp <- unname(nodematch_age.grp)
+
+    # absdiff("age") ---
+    absdiff_age <- out$inst$edges * netparams$inst$absdiff.age
+    out$inst$absdiff_age <- absdiff_age
+
+    # absdiff("sqrt.age") ---
+    absdiff_sqrt.age <- out$inst$edges * netparams$inst$absdiff.sqrt.age
+    out$inst$absdiff_sqrt.age <- absdiff_sqrt.age
+
+    # nodefactor("risk.grp") ---
+    nodefactor_risk.grp <- table(out$attr$risk.grp) * netparams$inst$nf.risk.grp
+    out$inst$nodefactor_risk.grp <- unname(nodefactor_risk.grp)
+
+    # nodefactor("deg.tot") ---
+    nodefactor_deg.tot <- table(out$attr$deg.tot) * netparams$inst$nf.deg.tot
+    out$inst$nodefactor_deg.tot <- unname(nodefactor_deg.tot)
+
+    # nodefactor("diag.status") ---
+    nodefactor_diag.status <- table(out$attr$diag.status) * netparams$inst$nf.diag.status
+    out$inst$nodefactor_diag.status <- unname(nodefactor_diag.status)
+
+  } else {  # method == "joint"
+
+    out$inst$edges <- sum(pred_deg_inst) / 2
+
+    if (race == TRUE) {
+      n_race <- length(netparams$inst$nf.race)
+      out$inst$nodefactor_race <- vapply(seq_len(n_race),
+        function(r) sum(pred_deg_inst[out$attr$race == r]), numeric(1))
+      out$inst$nodematch_race <- unname(
+        out$inst$nodefactor_race / 2 * netparams$inst$nm.race)
+      out$inst$nodematch_race_diffF <- unname(
+        out$inst$edges * netparams$inst$nm.race_diffF)
+    }
+
+    n_age <- length(netparams$inst$nf.age.grp)
+    out$inst$nodefactor_age.grp <- vapply(seq_len(n_age),
+      function(k) sum(pred_deg_inst[out$attr$age.grp == k]), numeric(1))
+
+    out$inst$nodematch_age.grp <- unname(
+      out$inst$nodefactor_age.grp / 2 * netparams$inst$nm.age.grp)
+
+    out$inst$absdiff_age <- out$inst$edges * netparams$inst$absdiff.age
+    out$inst$absdiff_sqrt.age <- out$inst$edges * netparams$inst$absdiff.sqrt.age
+
+    # nodefactor("risk.grp") -- quantile-scheme preserved from univariate
+    nodefactor_risk.grp <- table(out$attr$risk.grp) * netparams$inst$nf.risk.grp
+    out$inst$nodefactor_risk.grp <- unname(nodefactor_risk.grp)
+
+    # nodefactor("deg.tot") -- truncated at 3 in build_netparams
+    out$inst$nodefactor_deg.tot <- vapply(0:3,
+      function(d) sum(pred_deg_inst[out$attr$deg.tot == d]), numeric(1))
+
+    out$inst$nodefactor_diag.status <- vapply(0:1,
+      function(h) sum(pred_deg_inst[out$attr$diag.status == h]), numeric(1))
   }
-
-  # nodefactor("age.grp") ---
-  nodefactor_age.grp <- table(out$attr$age.grp) * netparams$inst$nf.age.grp
-  if (sex.cess.mod == TRUE) {
-    nodefactor_age.grp[length(nodefactor_age.grp)] <- 0
-  }
-  out$inst$nodefactor_age.grp <- unname(nodefactor_age.grp)
-
-  # nodematch("age.grp") ---
-  nodematch_age.grp <- nodefactor_age.grp / 2 * netparams$inst$nm.age.grp
-  out$inst$nodematch_age.grp <- unname(nodematch_age.grp)
-
-  # absdiff("age") ---
-  absdiff_age <- out$inst$edges * netparams$inst$absdiff.age
-  out$inst$absdiff_age <- absdiff_age
-
-  # absdiff("sqrt.age") ---
-  absdiff_sqrt.age <- out$inst$edges * netparams$inst$absdiff.sqrt.age
-  out$inst$absdiff_sqrt.age <- absdiff_sqrt.age
-
-  # nodefactor("risk.grp") ---
-  nodefactor_risk.grp <- table(out$attr$risk.grp) * netparams$inst$nf.risk.grp
-  out$inst$nodefactor_risk.grp <- unname(nodefactor_risk.grp)
-
-  # nodefactor("deg.tot") ---
-  nodefactor_deg.tot <- table(out$attr$deg.tot) * netparams$inst$nf.deg.tot
-  out$inst$nodefactor_deg.tot <- unname(nodefactor_deg.tot)
-
-  # nodefactor("diag.status") ---
-  nodefactor_diag.status <- table(out$attr$diag.status) * netparams$inst$nf.diag.status
-  out$inst$nodefactor_diag.status <- unname(nodefactor_diag.status)
 
 
   return(out)
