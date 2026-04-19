@@ -23,7 +23,7 @@ build_netstats(
 
 \item{network.size}{Size of the starting network.}
 
-\item{expect.mort}{Expected average mortality level to pass into \code{\link{dissolution_coefs}} function.}
+\item{expect.mort}{Expected average mortality level to pass into \code{\link[EpiModel:dissolution_coefs]{EpiModel::dissolution_coefs}} function.}
 
 \item{age.pyramid}{Numerical vector of length equal to the length of the age range specified in
 \code{\link{build_epistats}}, containing probability distribution of each year of age, summing to
@@ -49,7 +49,7 @@ use in the EpiModelHIV workflow.
 }
 \details{
 This function takes output from \code{\link{build_epistats}} and \code{\link{build_netparams}} to build the relevant
-population-level network statistics that will be used in network estimation using the \link{EpiModel}
+population-level network statistics that will be used in network estimation using the \link[EpiModel:EpiModel-package]{EpiModel::EpiModel}
 package.
 
 The parameter \code{edge.avg} allows a user specify how the network edges statistics as estimated from
