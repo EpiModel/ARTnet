@@ -26,14 +26,14 @@
 #'        `netparams`. `"joint"` uses the joint Poisson GLM fit at `netparams$<layer>$joint_model`
 #'        (set by `build_netparams(..., method = "joint")`) to predict expected degree for each
 #'        synthetic-population node and aggregates via g-computation:
-#'        `edges = sum(pred) / 2` and `nodefactor_<attr>[level] = sum(pred[attr == level])`.
-#'        Under `"joint"`, edges and all nodefactor target stats are internally consistent by
-#'        construction (`sum(nodefactor_<attr>) = 2 * edges`), so `edges.avg` has no effect.
-#'        `nodematch_*`, `absdiff_*`, dissolution coefficients, `concurrent`, and
-#'        `nodefactor_risk.grp` continue to use the univariate marginals — those are scoped for
-#'        later issues (#63–#64). `concurrent` in particular is retained from the univariate
-#'        binomial fit because the joint Poisson's implied `P(deg > 1)` is biased by the
-#'        truncation of `deg.main` and `deg.casl` in the training data.
+#'        `edges = sum(pred) / 2` and `nodefactor_<attr>[level] = sum(pred[attr == level])`. The
+#'        `concurrent` target for the main and casual layers uses a parallel joint binomial GLM
+#'        fit on the `deg > 1` indicator (`netparams$<layer>$joint_concurrent_model`), so
+#'        `concurrent = sum(P(deg > 1 | attrs))` per node. Under `"joint"`, edges and all
+#'        nodefactor target stats are internally consistent by construction
+#'        (`sum(nodefactor_<attr>) = 2 * edges`), so `edges.avg` has no effect. `nodematch_*`,
+#'        `absdiff_*`, dissolution coefficients, and `nodefactor_risk.grp` continue to use the
+#'        univariate marginals — those are scoped for later issues (#63–#64).
 #' @param browser If `TRUE`, run `build_netparams` in interactive browser mode.
 #'
 #' @details
@@ -422,11 +422,22 @@ build_netstats <- function(epistats, netparams,
     pred_count_inst <- predict(netparams$inst$joint_model, newdata = synth, type = "response")
     pred_deg_inst   <- pred_count_inst / (364 / time.unit)
 
+    # Concurrency probabilities from the joint binomial GLMs on the
+    # deg.{main,casl}.conc indicators (fit alongside the Poisson in
+    # build_netparams under method = "joint"). No concurrent target for
+    # the one-off layer.
+    pred_conc_main <- predict(netparams$main$joint_concurrent_model,
+                              newdata = synth, type = "response")
+    pred_conc_casl <- predict(netparams$casl$joint_concurrent_model,
+                              newdata = synth, type = "response")
+
     if (sex.cess.mod == TRUE) {
       inactive <- out$attr$active.sex == 0L
-      pred_deg_main[inactive] <- 0
-      pred_deg_casl[inactive] <- 0
-      pred_deg_inst[inactive] <- 0
+      pred_deg_main[inactive]  <- 0
+      pred_deg_casl[inactive]  <- 0
+      pred_deg_inst[inactive]  <- 0
+      pred_conc_main[inactive] <- 0
+      pred_conc_casl[inactive] <- 0
     }
   }
 
@@ -521,14 +532,8 @@ build_netstats <- function(epistats, netparams,
     out$main$nodefactor_deg.casl <- vapply(0:3,
       function(d) sum(pred_deg_main[out$attr$deg.casl == d]), numeric(1))
 
-    # concurrent -- keep the univariate binomial unchanged. The Poisson
-    # joint model's implied P(deg > 1) = 1 - exp(-lambda)(1+lambda) would
-    # inflate this ~5x because deg.main is truncated at 2 in the training
-    # data, so the fitted lambda approximates E[min(deg, 2)] rather than
-    # the true Poisson rate. The binomial logistic fit is the right model
-    # for the probability of concurrency; joint-modeling it is scoped to
-    # a separate issue.
-    out$main$concurrent <- num * netparams$main$concurrent
+    # concurrent from the joint binomial GLM on deg.main.conc ----------------
+    out$main$concurrent <- sum(pred_conc_main)
 
     # nodefactor("diag.status") ---------------------------------------------
     out$main$nodefactor_diag.status <- vapply(0:1,
@@ -631,10 +636,8 @@ build_netstats <- function(epistats, netparams,
     out$casl$nodefactor_deg.main <- vapply(0:2,
       function(d) sum(pred_deg_casl[out$attr$deg.main == d]), numeric(1))
 
-    # concurrent -- see note in main layer block. Truncation of deg.casl
-    # at 3 in the training data makes Poisson-implied P(deg > 1)
-    # unreliable; retain the univariate binomial fit.
-    out$casl$concurrent <- num * netparams$casl$concurrent
+    # concurrent from the joint binomial GLM on deg.casl.conc ----------------
+    out$casl$concurrent <- sum(pred_conc_casl)
 
     out$casl$nodefactor_diag.status <- vapply(0:1,
       function(h) sum(pred_deg_casl[out$attr$diag.status == h]), numeric(1))

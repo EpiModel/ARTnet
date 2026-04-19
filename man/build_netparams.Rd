@@ -24,11 +24,12 @@ of one-off partners per unit time).}
 \item{method}{Character. Either \code{"existing"} (default) or \code{"joint"}. \code{"existing"} reproduces
 the pre-refactor behavior byte-for-byte: a separate univariate Poisson/binomial GLM is
 fit for each ERGM target statistic. \code{"joint"} leaves all of those outputs intact \strong{and}
-additionally fits one joint Poisson GLM per layer (main/casual/one-off) predicting
-degree (or one-off partner count) from all attributes simultaneously, with AIC-based
-interaction selection. The fitted objects are returned at \verb{$main$joint_model},
-\verb{$casl$joint_model}, and \verb{$inst$joint_model} and form the basis of the g-computation
-refactor planned for \code{\link{build_netstats}} in a later release.}
+additionally fits joint GLMs per layer with AIC-based interaction selection:
+a Poisson model for degree (main/casual) or one-off partner count (inst), stored at
+\verb{$<layer>$joint_model}; and, for the main and casual layers, a binomial model for the
+concurrency indicator (\code{deg > 1}), stored at \verb{$<layer>$joint_concurrent_model}. These
+models are consumed by \code{\link{build_netstats}} under \code{method = "joint"} to produce
+internally-consistent g-computation target statistics.}
 
 \item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
 }

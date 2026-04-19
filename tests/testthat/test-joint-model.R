@@ -45,6 +45,26 @@ test_that("method='joint' adds a converged glm per layer", {
   }
 })
 
+test_that("method='joint' adds a converged concurrent binomial for main/casl", {
+  skip_without_artnetdata()
+  np <- get_netparams("joint")
+  for (layer in c("main", "casl")) {
+    m <- np[[layer]]$joint_concurrent_model
+    expect_s3_class(m, "glm")
+    expect_true(isTRUE(m$converged),
+                info = paste("joint_concurrent_model did not converge for", layer))
+    expect_identical(m$family$family, "binomial")
+    # Marginal recovery on training data
+    col <- paste0("deg.", layer, ".conc")
+    obs <- mean(m$data[[col]], na.rm = TRUE)
+    pred <- mean(predict(m, type = "response"))
+    expect_lt(abs(pred - obs) / obs, 0.01,
+              label = paste0("[", layer, "] concurrent marginal recovery"))
+  }
+  # inst has no concurrent target, so no concurrent model
+  expect_null(np$inst$joint_concurrent_model)
+})
+
 test_that("joint models recover observed marginal means within 1%", {
   skip_without_artnetdata()
   np <- get_netparams("joint")
@@ -91,9 +111,10 @@ test_that("method='joint' leaves existing marginal fields untouched", {
   skip_without_artnetdata()
   np_existing <- get_netparams("existing")
   np_joint <- get_netparams("joint")
+  additive_fields <- c("joint_model", "joint_concurrent_model")
   for (layer in c("main", "casl", "inst", "all")) {
     if (is.null(np_existing[[layer]])) next
-    fields <- setdiff(names(np_existing[[layer]]), "joint_model")
+    fields <- setdiff(names(np_existing[[layer]]), additive_fields)
     for (f in fields) {
       expect_equal(np_joint[[layer]][[f]], np_existing[[layer]][[f]],
                    info = paste0("[", layer, "$", f, "] diverged under joint"))

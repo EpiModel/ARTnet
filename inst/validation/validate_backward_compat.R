@@ -88,6 +88,7 @@ PARAM_SETS <- list(
   for (layer in c("main", "casl", "inst", "all")) {
     if (is.null(netparams[[layer]])) next
     netparams[[layer]]$joint_model <- NULL
+    netparams[[layer]]$joint_concurrent_model <- NULL
   }
   netparams
 }

@@ -95,13 +95,26 @@ test_that("joint netstats preserve non-refactored fields exactly", {
   joint    <- get_stats("joint", "joint")$netstats
   # risk.grp nodefactor (inst) is NOT refactored — keeps univariate.
   expect_equal(existing$inst$nodefactor_risk.grp, joint$inst$nodefactor_risk.grp)
-  # concurrent is NOT refactored (truncation bias in Poisson-derived P(deg>1)).
-  expect_equal(existing$main$concurrent, joint$main$concurrent)
-  expect_equal(existing$casl$concurrent, joint$casl$concurrent)
   # attributes are sampled identically when seeded, so they should match
   expect_equal(existing$attr, joint$attr)
   # demography likewise unchanged
   expect_equal(existing$demog$num, joint$demog$num)
+})
+
+test_that("joint concurrent is in a reasonable range (not inflated by Poisson)", {
+  skip_without_artnetdata()
+  existing <- get_stats("existing", "existing")$netstats
+  joint    <- get_stats("joint", "joint")$netstats
+  # Joint concurrent should stay in the same order of magnitude as existing.
+  # A Poisson-derived P(deg>1) would inflate main concurrent ~5x because of
+  # the deg.main truncation at 2 in the training data; the binomial joint
+  # model avoids that.
+  ratio_main <- joint$main$concurrent / existing$main$concurrent
+  expect_gt(ratio_main, 0.5)
+  expect_lt(ratio_main, 2.0)
+  ratio_casl <- joint$casl$concurrent / existing$casl$concurrent
+  expect_gt(ratio_casl, 0.5)
+  expect_lt(ratio_casl, 2.0)
 })
 
 test_that("joint edges differ materially from existing when population shifts", {

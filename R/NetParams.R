@@ -1,11 +1,14 @@
-# Fit a joint Poisson GLM predicting `response` from all available
-# individual attributes (age, race, the concurrent-layer degree, HIV
-# status, geography). Candidate interactions are considered one at a
-# time and kept only when they reduce AIC. Internal helper for the
-# `method = "joint"` path of `build_netparams()`; see issue #61.
-fit_joint_poisson <- function(d, response, main_terms,
-                              race, geog.lvl,
-                              interaction_cross_deg = NULL) {
+# Fit a joint GLM predicting `response` from all available individual
+# attributes (age, race, the concurrent-layer degree, HIV status,
+# geography). Candidate interactions are considered one at a time and
+# kept only when they reduce AIC. `family` selects between the Poisson
+# model for degree / one-off count and the binomial model for the
+# concurrency indicator (1 = deg > 1). Internal helper for the
+# `method = "joint"` path of `build_netparams()`; see issues #61 / #62.
+fit_joint_glm <- function(d, response, main_terms,
+                          race, geog.lvl,
+                          interaction_cross_deg = NULL,
+                          family = poisson()) {
   if (isTRUE(race)) {
     main_terms <- c(main_terms, "as.factor(race.cat.num)")
   }
@@ -14,7 +17,7 @@ fit_joint_poisson <- function(d, response, main_terms,
   }
 
   base_fml <- reformulate(main_terms, response = response)
-  best <- glm(base_fml, data = d, family = poisson())
+  best <- glm(base_fml, data = d, family = family)
   selected <- character(0)
 
   candidates <- character(0)
@@ -28,7 +31,7 @@ fit_joint_poisson <- function(d, response, main_terms,
   for (ix in candidates) {
     ix_fml <- update(formula(best), paste("~ . +", ix))
     cand <- tryCatch(
-      suppressWarnings(glm(ix_fml, data = d, family = poisson())),
+      suppressWarnings(glm(ix_fml, data = d, family = family)),
       error = function(e) NULL
     )
     if (!is.null(cand) && isTRUE(cand$converged) && AIC(cand) < AIC(best)) {
@@ -56,11 +59,12 @@ fit_joint_poisson <- function(d, response, main_terms,
 #' @param method Character. Either `"existing"` (default) or `"joint"`. `"existing"` reproduces
 #'        the pre-refactor behavior byte-for-byte: a separate univariate Poisson/binomial GLM is
 #'        fit for each ERGM target statistic. `"joint"` leaves all of those outputs intact **and**
-#'        additionally fits one joint Poisson GLM per layer (main/casual/one-off) predicting
-#'        degree (or one-off partner count) from all attributes simultaneously, with AIC-based
-#'        interaction selection. The fitted objects are returned at `$main$joint_model`,
-#'        `$casl$joint_model`, and `$inst$joint_model` and form the basis of the g-computation
-#'        refactor planned for [`build_netstats`] in a later release.
+#'        additionally fits joint GLMs per layer with AIC-based interaction selection:
+#'        a Poisson model for degree (main/casual) or one-off partner count (inst), stored at
+#'        `$<layer>$joint_model`; and, for the main and casual layers, a binomial model for the
+#'        concurrency indicator (`deg > 1`), stored at `$<layer>$joint_concurrent_model`. These
+#'        models are consumed by [`build_netstats`] under `method = "joint"` to produce
+#'        internally-consistent g-computation target statistics.
 #' @param browser If `TRUE`, run `build_netparams` in interactive browser mode.
 #'
 #' @details
@@ -598,15 +602,25 @@ build_netparams <- function(epistats,
   }
 
 
-  ## joint g-computation model (additive output; see issue #61) ----
+  ## joint g-computation models (additive outputs; see issues #61/#62) ----
   if (method == "joint") {
-    out$main$joint_model <- fit_joint_poisson(
+    out$main$joint_model <- fit_joint_glm(
       d,
       response = "deg.main",
       main_terms = c("age.grp", "sqrt(age.grp)", "deg.casl", "hiv2"),
       race = race,
       geog.lvl = geog.lvl,
-      interaction_cross_deg = "deg.casl"
+      interaction_cross_deg = "deg.casl",
+      family = poisson()
+    )
+    out$main$joint_concurrent_model <- fit_joint_glm(
+      d,
+      response = "deg.main.conc",
+      main_terms = c("age.grp", "sqrt(age.grp)", "deg.casl", "hiv2"),
+      race = race,
+      geog.lvl = geog.lvl,
+      interaction_cross_deg = "deg.casl",
+      family = binomial()
     )
   }
 
@@ -933,15 +947,25 @@ build_netparams <- function(epistats,
   }
 
 
-  ## joint g-computation model (additive output; see issue #61) ----
+  ## joint g-computation models (additive outputs; see issues #61/#62) ----
   if (method == "joint") {
-    out$casl$joint_model <- fit_joint_poisson(
+    out$casl$joint_model <- fit_joint_glm(
       d,
       response = "deg.casl",
       main_terms = c("age.grp", "sqrt(age.grp)", "deg.main", "hiv2"),
       race = race,
       geog.lvl = geog.lvl,
-      interaction_cross_deg = "deg.main"
+      interaction_cross_deg = "deg.main",
+      family = poisson()
+    )
+    out$casl$joint_concurrent_model <- fit_joint_glm(
+      d,
+      response = "deg.casl.conc",
+      main_terms = c("age.grp", "sqrt(age.grp)", "deg.main", "hiv2"),
+      race = race,
+      geog.lvl = geog.lvl,
+      interaction_cross_deg = "deg.main",
+      family = binomial()
     )
   }
 
@@ -1216,15 +1240,17 @@ build_netparams <- function(epistats,
 
 
   ## joint g-computation model (additive output; see issue #61) ----
+  # No concurrent target for the one-off layer, so no binomial model here.
   if (method == "joint") {
-    out$inst$joint_model <- fit_joint_poisson(
+    out$inst$joint_model <- fit_joint_glm(
       d,
       response = "count.oo.part",
       main_terms = c("age.grp", "sqrt(age.grp)", "deg.tot3", "sqrt(deg.tot3)",
                      "hiv2"),
       race = race,
       geog.lvl = geog.lvl,
-      interaction_cross_deg = "deg.tot3"
+      interaction_cross_deg = "deg.tot3",
+      family = poisson()
     )
   }
 
