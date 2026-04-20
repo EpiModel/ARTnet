@@ -13,6 +13,7 @@ build_netstats(
   edges.avg = FALSE,
   race.prop = NULL,
   young.prop = NULL,
+  method = c("existing", "joint"),
   browser = FALSE
 )
 }
@@ -39,6 +40,21 @@ Hispanic, and White/Other).}
 \item{young.prop}{The proportion of the population that should be below the age of sexual cessation.
 Default is NULL (meaning no re-weighting of the \code{age.pyramid} parameter is performed).
 This parameter is only used if the age of sexual cessation is less than the upper age bound.}
+
+\item{method}{Character. Either \code{"existing"} (default) or \code{"joint"}. \code{"existing"} reproduces
+the pre-refactor behavior byte-for-byte: target statistics for edges, nodefactor, and
+concurrent are computed layer-by-layer from the univariate marginal fits stored on
+\code{netparams}. \code{"joint"} uses the joint Poisson GLM fit at \verb{netparams$<layer>$joint_model}
+(set by \code{build_netparams(..., method = "joint")}) to predict expected degree for each
+synthetic-population node and aggregates via g-computation:
+\code{edges = sum(pred) / 2} and \verb{nodefactor_<attr>[level] = sum(pred[attr == level])}. The
+\code{concurrent} target for the main and casual layers uses a parallel joint binomial GLM
+fit on the \code{deg > 1} indicator (\verb{netparams$<layer>$joint_concurrent_model}), so
+\code{concurrent = sum(P(deg > 1 | attrs))} per node. Under \code{"joint"}, edges and all
+nodefactor target stats are internally consistent by construction
+(\verb{sum(nodefactor_<attr>) = 2 * edges}), so \code{edges.avg} has no effect. \verb{nodematch_*},
+\verb{absdiff_*}, dissolution coefficients, and \code{nodefactor_risk.grp} continue to use the
+univariate marginals — those are scoped for later issues (#63–#64).}
 
 \item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
 }
