@@ -16,7 +16,6 @@ Imports:
     dplyr
 Suggests:
     ARTnetData,
-    EpiModelHIV,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)
@@ -24,7 +23,6 @@ VignetteBuilder: knitr
 RoxygenNote: 7.3.3
 Encoding: UTF-8
 Remotes:
-   github::EpiModel/ARTnetData@main,
-   github::EpiModel/EpiModelHIV-p
+   github::EpiModel/ARTnetData@main
 Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3

@@ -2,6 +2,7 @@
 
 utils::globalVariables(c( "age",
                          "race.cat",
+                         "race.cat.num",
                          "p_race.cat",
                          "AMIS_ID",
                          "survey_year",

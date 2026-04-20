@@ -1,3 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 .lintr
+^CLAUDE\.md$
+^inst/validation/snapshots$
+^\.github$

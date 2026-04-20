@@ -1,5 +1,9 @@
 ## ARTnet: Model Parameterization with the ARTnet Study Data
 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/EpiModel/ARTnet/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EpiModel/ARTnet/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
 ARTnet is an anonymous cross-sectional web-based survey conducted from 2017 to 2019 of HIV-related risk behaviors, testing, and use of prevention services among men who have sex with men (MSM) in the United States. It recruited MSM who have completed the American Men’s Internet Survey (AMIS) study, and therefore, the dataset contains variables merged from that study as well. Full access to the dataset from ARTnet will allow the researchers to conduct analyses and disseminate results using the data.
 
 For further details on the ARTnet Study, you can read the descriptive paper ["Egocentric Sexual Networks of Men Who Have Sex with Men in the United States: Results from the ARTnet Study"](https://www.sciencedirect.com/science/article/pii/S1755436519301409?via%3Dihub) by Weiss et al. in _Epidemics._ See the **ARTnet Scientific Publications** section below for further details.
