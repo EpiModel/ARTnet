@@ -22,13 +22,21 @@ oldest and second oldest age groups.}
 of one-off partners per unit time).}
 
 \item{method}{Character. Either \code{"existing"} (default) or \code{"joint"}. \code{"existing"} reproduces
-the pre-refactor behavior byte-for-byte: a separate univariate Poisson/binomial GLM is
+the pre-refactor behavior byte-for-byte: a separate univariate Poisson/binomial/linear
 fit for each ERGM target statistic. \code{"joint"} leaves all of those outputs intact \strong{and}
 additionally fits joint GLMs per layer with AIC-based interaction selection:
-a Poisson model for degree (main/casual) or one-off partner count (inst), stored at
-\verb{$<layer>$joint_model}; and, for the main and casual layers, a binomial model for the
-concurrency indicator (\code{deg > 1}), stored at \verb{$<layer>$joint_concurrent_model}. These
-models are consumed by \code{\link{build_netstats}} under \code{method = "joint"} to produce
+\itemize{
+\item \strong{Ego-level}: a Poisson model for degree / one-off count at
+\verb{$<layer>$joint_model}, and (main/casual only) a binomial for the
+concurrency indicator at \verb{$<layer>$joint_concurrent_model}.
+\item \strong{Dyad-level} (partnership data with ego attrs on RHS):
+binomial for same-age-group at \verb{$<layer>$joint_nm_age_model}, binomial
+for same-race (when \code{race = TRUE}) at \verb{$<layer>$joint_nm_race_model},
+and Gaussian fits for the age absolute-difference terms at
+\verb{$<layer>$joint_absdiff_age_model} and
+\verb{$<layer>$joint_absdiff_sqrtage_model}.
+}
+These models are consumed by \code{\link{build_netstats}} under \code{method = "joint"} to produce
 internally-consistent g-computation target statistics.}
 
 \item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}

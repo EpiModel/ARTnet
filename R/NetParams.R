@@ -57,13 +57,21 @@ fit_joint_glm <- function(d, response, main_terms,
 #' @param oo.nquants Number of quantiles to split the one-off partnership risk distribution (count
 #'        of one-off partners per unit time).
 #' @param method Character. Either `"existing"` (default) or `"joint"`. `"existing"` reproduces
-#'        the pre-refactor behavior byte-for-byte: a separate univariate Poisson/binomial GLM is
+#'        the pre-refactor behavior byte-for-byte: a separate univariate Poisson/binomial/linear
 #'        fit for each ERGM target statistic. `"joint"` leaves all of those outputs intact **and**
 #'        additionally fits joint GLMs per layer with AIC-based interaction selection:
-#'        a Poisson model for degree (main/casual) or one-off partner count (inst), stored at
-#'        `$<layer>$joint_model`; and, for the main and casual layers, a binomial model for the
-#'        concurrency indicator (`deg > 1`), stored at `$<layer>$joint_concurrent_model`. These
-#'        models are consumed by [`build_netstats`] under `method = "joint"` to produce
+#'        \itemize{
+#'          \item \strong{Ego-level}: a Poisson model for degree / one-off count at
+#'            `$<layer>$joint_model`, and (main/casual only) a binomial for the
+#'            concurrency indicator at `$<layer>$joint_concurrent_model`.
+#'          \item \strong{Dyad-level} (partnership data with ego attrs on RHS):
+#'            binomial for same-age-group at `$<layer>$joint_nm_age_model`, binomial
+#'            for same-race (when `race = TRUE`) at `$<layer>$joint_nm_race_model`,
+#'            and Gaussian fits for the age absolute-difference terms at
+#'            `$<layer>$joint_absdiff_age_model` and
+#'            `$<layer>$joint_absdiff_sqrtage_model`.
+#'        }
+#'        These models are consumed by [`build_netstats`] under `method = "joint"` to produce
 #'        internally-consistent g-computation target statistics.
 #' @param browser If `TRUE`, run `build_netparams` in interactive browser mode.
 #'
@@ -602,8 +610,9 @@ build_netparams <- function(epistats,
   }
 
 
-  ## joint g-computation models (additive outputs; see issues #61/#62) ----
+  ## joint g-computation models (additive outputs; see issues #61/#62/#63) ----
   if (method == "joint") {
+    # Ego-level Poisson + binomial (edges / nodefactor / concurrent)
     out$main$joint_model <- fit_joint_glm(
       d,
       response = "deg.main",
@@ -621,6 +630,43 @@ build_netparams <- function(epistats,
       geog.lvl = geog.lvl,
       interaction_cross_deg = "deg.casl",
       family = binomial()
+    )
+
+    # Dyad-level (nodematch / absdiff) -- fit on the partnership-level
+    # data lmain with ego attributes only on the RHS (Option A per #63).
+    # Alias index.age.grp -> age.grp so fit_joint_glm's hardcoded
+    # interaction-term naming works unchanged.
+    lmain$age.grp <- lmain$index.age.grp
+
+    out$main$joint_nm_age_model <- fit_joint_glm(
+      lmain,
+      response = "same.age.grp",
+      main_terms = c("age.grp", "sqrt(age.grp)", "hiv2"),
+      race = race, geog.lvl = geog.lvl,
+      family = binomial()
+    )
+    if (isTRUE(race)) {
+      out$main$joint_nm_race_model <- fit_joint_glm(
+        lmain,
+        response = "same.race",
+        main_terms = c("age.grp", "sqrt(age.grp)", "hiv2"),
+        race = race, geog.lvl = geog.lvl,
+        family = binomial()
+      )
+    }
+    out$main$joint_absdiff_age_model <- fit_joint_glm(
+      lmain,
+      response = "ad",
+      main_terms = c("age.grp", "sqrt(age.grp)", "hiv2"),
+      race = race, geog.lvl = geog.lvl,
+      family = gaussian()
+    )
+    out$main$joint_absdiff_sqrtage_model <- fit_joint_glm(
+      lmain,
+      response = "ad.sr",
+      main_terms = c("age.grp", "sqrt(age.grp)", "hiv2"),
+      race = race, geog.lvl = geog.lvl,
+      family = gaussian()
     )
   }
 
@@ -947,7 +993,7 @@ build_netparams <- function(epistats,
   }
 
 
-  ## joint g-computation models (additive outputs; see issues #61/#62) ----
+  ## joint g-computation models (additive outputs; see issues #61/#62/#63) ----
   if (method == "joint") {
     out$casl$joint_model <- fit_joint_glm(
       d,
@@ -966,6 +1012,35 @@ build_netparams <- function(epistats,
       geog.lvl = geog.lvl,
       interaction_cross_deg = "deg.main",
       family = binomial()
+    )
+
+    # Dyad-level (nodematch / absdiff) -- see #63.
+    lcasl$age.grp <- lcasl$index.age.grp
+    out$casl$joint_nm_age_model <- fit_joint_glm(
+      lcasl, response = "same.age.grp",
+      main_terms = c("age.grp", "sqrt(age.grp)", "hiv2"),
+      race = race, geog.lvl = geog.lvl,
+      family = binomial()
+    )
+    if (isTRUE(race)) {
+      out$casl$joint_nm_race_model <- fit_joint_glm(
+        lcasl, response = "same.race",
+        main_terms = c("age.grp", "sqrt(age.grp)", "hiv2"),
+        race = race, geog.lvl = geog.lvl,
+        family = binomial()
+      )
+    }
+    out$casl$joint_absdiff_age_model <- fit_joint_glm(
+      lcasl, response = "ad",
+      main_terms = c("age.grp", "sqrt(age.grp)", "hiv2"),
+      race = race, geog.lvl = geog.lvl,
+      family = gaussian()
+    )
+    out$casl$joint_absdiff_sqrtage_model <- fit_joint_glm(
+      lcasl, response = "ad.sr",
+      main_terms = c("age.grp", "sqrt(age.grp)", "hiv2"),
+      race = race, geog.lvl = geog.lvl,
+      family = gaussian()
     )
   }
 
@@ -1239,8 +1314,9 @@ build_netparams <- function(epistats,
   }
 
 
-  ## joint g-computation model (additive output; see issue #61) ----
-  # No concurrent target for the one-off layer, so no binomial model here.
+  ## joint g-computation models (additive outputs; see issues #61/#62/#63) ----
+  # No concurrent target for the one-off layer, so no binomial concurrent
+  # model here. Dyad-level nodematch/absdiff still apply.
   if (method == "joint") {
     out$inst$joint_model <- fit_joint_glm(
       d,
@@ -1251,6 +1327,35 @@ build_netparams <- function(epistats,
       geog.lvl = geog.lvl,
       interaction_cross_deg = "deg.tot3",
       family = poisson()
+    )
+
+    # Dyad-level (nodematch / absdiff) -- see #63.
+    linst$age.grp <- linst$index.age.grp
+    out$inst$joint_nm_age_model <- fit_joint_glm(
+      linst, response = "same.age.grp",
+      main_terms = c("age.grp", "sqrt(age.grp)", "hiv2"),
+      race = race, geog.lvl = geog.lvl,
+      family = binomial()
+    )
+    if (isTRUE(race)) {
+      out$inst$joint_nm_race_model <- fit_joint_glm(
+        linst, response = "same.race",
+        main_terms = c("age.grp", "sqrt(age.grp)", "hiv2"),
+        race = race, geog.lvl = geog.lvl,
+        family = binomial()
+      )
+    }
+    out$inst$joint_absdiff_age_model <- fit_joint_glm(
+      linst, response = "ad",
+      main_terms = c("age.grp", "sqrt(age.grp)", "hiv2"),
+      race = race, geog.lvl = geog.lvl,
+      family = gaussian()
+    )
+    out$inst$joint_absdiff_sqrtage_model <- fit_joint_glm(
+      linst, response = "ad.sr",
+      main_terms = c("age.grp", "sqrt(age.grp)", "hiv2"),
+      race = race, geog.lvl = geog.lvl,
+      family = gaussian()
     )
   }
 

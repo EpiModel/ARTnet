@@ -46,15 +46,18 @@ the pre-refactor behavior byte-for-byte: target statistics for edges, nodefactor
 concurrent are computed layer-by-layer from the univariate marginal fits stored on
 \code{netparams}. \code{"joint"} uses the joint Poisson GLM fit at \verb{netparams$<layer>$joint_model}
 (set by \code{build_netparams(..., method = "joint")}) to predict expected degree for each
-synthetic-population node and aggregates via g-computation:
-\code{edges = sum(pred) / 2} and \verb{nodefactor_<attr>[level] = sum(pred[attr == level])}. The
-\code{concurrent} target for the main and casual layers uses a parallel joint binomial GLM
-fit on the \code{deg > 1} indicator (\verb{netparams$<layer>$joint_concurrent_model}), so
-\code{concurrent = sum(P(deg > 1 | attrs))} per node. Under \code{"joint"}, edges and all
+synthetic-population node and aggregates via g-computation: \code{edges = sum(pred) / 2}
+and \verb{nodefactor_<attr>[level] = sum(pred[attr == level])}. \code{concurrent} uses a parallel
+joint binomial GLM on the \code{deg > 1} indicator. \verb{nodematch_*} (age.grp and race) and
+\verb{absdiff_*} (age and sqrt.age) are aggregated from per-ego dyad-level predictions:
+\code{sum(pred_deg * pred_dyad) / 2}, where \code{pred_dyad} is a per-ego expected value from a
+partnership-level GLM fit on long-format ARTnet data with ego attributes on the RHS
+(\verb{netparams$<layer>$joint_nm_\{age,race\}_model} and
+\verb{netparams$<layer>$joint_absdiff_\{age,sqrtage\}_model}). Under \code{"joint"}, edges and all
 nodefactor target stats are internally consistent by construction
-(\verb{sum(nodefactor_<attr>) = 2 * edges}), so \code{edges.avg} has no effect. \verb{nodematch_*},
-\verb{absdiff_*}, dissolution coefficients, and \code{nodefactor_risk.grp} continue to use the
-univariate marginals — those are scoped for later issues (#63–#64).}
+(\verb{sum(nodefactor_<attr>) = 2 * edges}), so \code{edges.avg} has no effect. Dissolution
+coefficients and \code{nodefactor_risk.grp} still use the univariate marginals — the
+duration refactor lives on #63 and will be addressed in a follow-up PR.}
 
 \item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
 }

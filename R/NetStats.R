@@ -25,15 +25,18 @@
 #'        concurrent are computed layer-by-layer from the univariate marginal fits stored on
 #'        `netparams`. `"joint"` uses the joint Poisson GLM fit at `netparams$<layer>$joint_model`
 #'        (set by `build_netparams(..., method = "joint")`) to predict expected degree for each
-#'        synthetic-population node and aggregates via g-computation:
-#'        `edges = sum(pred) / 2` and `nodefactor_<attr>[level] = sum(pred[attr == level])`. The
-#'        `concurrent` target for the main and casual layers uses a parallel joint binomial GLM
-#'        fit on the `deg > 1` indicator (`netparams$<layer>$joint_concurrent_model`), so
-#'        `concurrent = sum(P(deg > 1 | attrs))` per node. Under `"joint"`, edges and all
+#'        synthetic-population node and aggregates via g-computation: `edges = sum(pred) / 2`
+#'        and `nodefactor_<attr>[level] = sum(pred[attr == level])`. `concurrent` uses a parallel
+#'        joint binomial GLM on the `deg > 1` indicator. `nodematch_*` (age.grp and race) and
+#'        `absdiff_*` (age and sqrt.age) are aggregated from per-ego dyad-level predictions:
+#'        `sum(pred_deg * pred_dyad) / 2`, where `pred_dyad` is a per-ego expected value from a
+#'        partnership-level GLM fit on long-format ARTnet data with ego attributes on the RHS
+#'        (`netparams$<layer>$joint_nm_{age,race}_model` and
+#'        `netparams$<layer>$joint_absdiff_{age,sqrtage}_model`). Under `"joint"`, edges and all
 #'        nodefactor target stats are internally consistent by construction
-#'        (`sum(nodefactor_<attr>) = 2 * edges`), so `edges.avg` has no effect. `nodematch_*`,
-#'        `absdiff_*`, dissolution coefficients, and `nodefactor_risk.grp` continue to use the
-#'        univariate marginals — those are scoped for later issues (#63–#64).
+#'        (`sum(nodefactor_<attr>) = 2 * edges`), so `edges.avg` has no effect. Dissolution
+#'        coefficients and `nodefactor_risk.grp` still use the univariate marginals — the
+#'        duration refactor lives on #63 and will be addressed in a follow-up PR.
 #' @param browser If `TRUE`, run `build_netparams` in interactive browser mode.
 #'
 #' @details
@@ -431,6 +434,27 @@ build_netstats <- function(epistats, netparams,
     pred_conc_casl <- predict(netparams$casl$joint_concurrent_model,
                               newdata = synth, type = "response")
 
+    # Dyad-level predictions (nodematch / absdiff). Each is a per-ego
+    # expected value of a partnership property (P(same.attr), E[|age-p_age|])
+    # from a partnership-level GLM with only ego attributes on the RHS.
+    # Aggregation over edges: sum(pred_deg * pred_dyad) / 2 (each edge is
+    # counted from both endpoints).
+    .predict_dyad <- function(layer) {
+      list(
+        pred_nm_age_grp  = predict(netparams[[layer]]$joint_nm_age_model,
+                                   newdata = synth, type = "response"),
+        pred_nm_race     = if (race) predict(netparams[[layer]]$joint_nm_race_model,
+                                             newdata = synth, type = "response") else NULL,
+        pred_ad_age      = predict(netparams[[layer]]$joint_absdiff_age_model,
+                                   newdata = synth, type = "response"),
+        pred_ad_sqrtage  = predict(netparams[[layer]]$joint_absdiff_sqrtage_model,
+                                   newdata = synth, type = "response")
+      )
+    }
+    dyad_main <- .predict_dyad("main")
+    dyad_casl <- .predict_dyad("casl")
+    dyad_inst <- .predict_dyad("inst")
+
     if (sex.cess.mod == TRUE) {
       inactive <- out$attr$active.sex == 0L
       pred_deg_main[inactive]  <- 0
@@ -438,6 +462,8 @@ build_netstats <- function(epistats, netparams,
       pred_deg_inst[inactive]  <- 0
       pred_conc_main[inactive] <- 0
       pred_conc_casl[inactive] <- 0
+      # dyad predictions are multiplied by pred_deg downstream, so
+      # zeroing pred_deg above already suppresses their contribution.
     }
   }
 
@@ -504,29 +530,37 @@ build_netstats <- function(epistats, netparams,
     # edges from summed per-node predictions --------------------------------
     out$main$edges <- sum(pred_deg_main) / 2
 
-    # nodefactor + derived nodematch terms ----------------------------------
+    # Per-ego expected edge contributions to dyad-level sums. edge_wt[i]
+    # is what ego i contributes to edges × expected-value-per-partnership,
+    # so that sum(edge_wt * dyad_pred) / 2 aggregates across all edges
+    # with correct double-counting from both endpoints.
+    edge_wt_main <- pred_deg_main
+
+    # nodefactor("race") + nodematch("race") --------------------------------
     if (race == TRUE) {
       n_race <- length(netparams$main$nf.race)
       out$main$nodefactor_race <- vapply(seq_len(n_race),
         function(r) sum(pred_deg_main[out$attr$race == r]), numeric(1))
-      out$main$nodematch_race <- unname(
-        out$main$nodefactor_race / 2 * netparams$main$nm.race)
-      out$main$nodematch_race_diffF <- unname(
-        out$main$edges * netparams$main$nm.race_diffF)
+      # nodematch_race[r] = expected count of race-r-to-race-r edges
+      race_match_contrib <- edge_wt_main * dyad_main$pred_nm_race
+      out$main$nodematch_race <- vapply(seq_len(n_race),
+        function(r) sum(race_match_contrib[out$attr$race == r]) / 2,
+        numeric(1))
+      out$main$nodematch_race_diffF <- sum(race_match_contrib) / 2
     }
 
-    # nodefactor("age.grp") -------------------------------------------------
+    # nodefactor("age.grp") + nodematch("age.grp") --------------------------
     n_age <- length(netparams$main$nf.age.grp)
     out$main$nodefactor_age.grp <- vapply(seq_len(n_age),
       function(k) sum(pred_deg_main[out$attr$age.grp == k]), numeric(1))
+    age_match_contrib <- edge_wt_main * dyad_main$pred_nm_age_grp
+    out$main$nodematch_age.grp <- vapply(seq_len(n_age),
+      function(k) sum(age_match_contrib[out$attr$age.grp == k]) / 2,
+      numeric(1))
 
-    # nodematch("age.grp") -- reuse univariate nm ratio on new nodefactor
-    out$main$nodematch_age.grp <- unname(
-      out$main$nodefactor_age.grp / 2 * netparams$main$nm.age.grp)
-
-    # absdiff stats scale with new edges ------------------------------------
-    out$main$absdiff_age <- out$main$edges * netparams$main$absdiff.age
-    out$main$absdiff_sqrt.age <- out$main$edges * netparams$main$absdiff.sqrt.age
+    # absdiff -- sum over edges of expected |age_i - age_j| --------------
+    out$main$absdiff_age <- sum(edge_wt_main * dyad_main$pred_ad_age) / 2
+    out$main$absdiff_sqrt.age <- sum(edge_wt_main * dyad_main$pred_ad_sqrtage) / 2
 
     # nodefactor("deg.casl") ------------------------------------------------
     out$main$nodefactor_deg.casl <- vapply(0:3,
@@ -611,26 +645,29 @@ build_netstats <- function(epistats, netparams,
   } else {  # method == "joint"
 
     out$casl$edges <- sum(pred_deg_casl) / 2
+    edge_wt_casl <- pred_deg_casl
 
     if (race == TRUE) {
       n_race <- length(netparams$casl$nf.race)
       out$casl$nodefactor_race <- vapply(seq_len(n_race),
         function(r) sum(pred_deg_casl[out$attr$race == r]), numeric(1))
-      out$casl$nodematch_race <- unname(
-        out$casl$nodefactor_race / 2 * netparams$casl$nm.race)
-      out$casl$nodematch_race_diffF <- unname(
-        out$casl$edges * netparams$casl$nm.race_diffF)
+      race_match_contrib <- edge_wt_casl * dyad_casl$pred_nm_race
+      out$casl$nodematch_race <- vapply(seq_len(n_race),
+        function(r) sum(race_match_contrib[out$attr$race == r]) / 2,
+        numeric(1))
+      out$casl$nodematch_race_diffF <- sum(race_match_contrib) / 2
     }
 
     n_age <- length(netparams$casl$nf.age.grp)
     out$casl$nodefactor_age.grp <- vapply(seq_len(n_age),
       function(k) sum(pred_deg_casl[out$attr$age.grp == k]), numeric(1))
+    age_match_contrib <- edge_wt_casl * dyad_casl$pred_nm_age_grp
+    out$casl$nodematch_age.grp <- vapply(seq_len(n_age),
+      function(k) sum(age_match_contrib[out$attr$age.grp == k]) / 2,
+      numeric(1))
 
-    out$casl$nodematch_age.grp <- unname(
-      out$casl$nodefactor_age.grp / 2 * netparams$casl$nm.age.grp)
-
-    out$casl$absdiff_age <- out$casl$edges * netparams$casl$absdiff.age
-    out$casl$absdiff_sqrt.age <- out$casl$edges * netparams$casl$absdiff.sqrt.age
+    out$casl$absdiff_age <- sum(edge_wt_casl * dyad_casl$pred_ad_age) / 2
+    out$casl$absdiff_sqrt.age <- sum(edge_wt_casl * dyad_casl$pred_ad_sqrtage) / 2
 
     # nodefactor("deg.main") -- truncated at 2 in build_netparams
     out$casl$nodefactor_deg.main <- vapply(0:2,
@@ -715,26 +752,29 @@ build_netstats <- function(epistats, netparams,
   } else {  # method == "joint"
 
     out$inst$edges <- sum(pred_deg_inst) / 2
+    edge_wt_inst <- pred_deg_inst
 
     if (race == TRUE) {
       n_race <- length(netparams$inst$nf.race)
       out$inst$nodefactor_race <- vapply(seq_len(n_race),
         function(r) sum(pred_deg_inst[out$attr$race == r]), numeric(1))
-      out$inst$nodematch_race <- unname(
-        out$inst$nodefactor_race / 2 * netparams$inst$nm.race)
-      out$inst$nodematch_race_diffF <- unname(
-        out$inst$edges * netparams$inst$nm.race_diffF)
+      race_match_contrib <- edge_wt_inst * dyad_inst$pred_nm_race
+      out$inst$nodematch_race <- vapply(seq_len(n_race),
+        function(r) sum(race_match_contrib[out$attr$race == r]) / 2,
+        numeric(1))
+      out$inst$nodematch_race_diffF <- sum(race_match_contrib) / 2
     }
 
     n_age <- length(netparams$inst$nf.age.grp)
     out$inst$nodefactor_age.grp <- vapply(seq_len(n_age),
       function(k) sum(pred_deg_inst[out$attr$age.grp == k]), numeric(1))
+    age_match_contrib <- edge_wt_inst * dyad_inst$pred_nm_age_grp
+    out$inst$nodematch_age.grp <- vapply(seq_len(n_age),
+      function(k) sum(age_match_contrib[out$attr$age.grp == k]) / 2,
+      numeric(1))
 
-    out$inst$nodematch_age.grp <- unname(
-      out$inst$nodefactor_age.grp / 2 * netparams$inst$nm.age.grp)
-
-    out$inst$absdiff_age <- out$inst$edges * netparams$inst$absdiff.age
-    out$inst$absdiff_sqrt.age <- out$inst$edges * netparams$inst$absdiff.sqrt.age
+    out$inst$absdiff_age <- sum(edge_wt_inst * dyad_inst$pred_ad_age) / 2
+    out$inst$absdiff_sqrt.age <- sum(edge_wt_inst * dyad_inst$pred_ad_sqrtage) / 2
 
     # nodefactor("risk.grp") -- quantile-scheme preserved from univariate
     nodefactor_risk.grp <- table(out$attr$risk.grp) * netparams$inst$nf.risk.grp

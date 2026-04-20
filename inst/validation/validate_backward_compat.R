@@ -85,10 +85,12 @@ PARAM_SETS <- list(
 # spurious diffs against a pre-refactor snapshot. Extend this list as new
 # fields are added (e.g., $joint_model).
 .strip_additive <- function(netparams) {
+  additive <- c("joint_model", "joint_concurrent_model",
+                "joint_nm_age_model", "joint_nm_race_model",
+                "joint_absdiff_age_model", "joint_absdiff_sqrtage_model")
   for (layer in c("main", "casl", "inst", "all")) {
     if (is.null(netparams[[layer]])) next
-    netparams[[layer]]$joint_model <- NULL
-    netparams[[layer]]$joint_concurrent_model <- NULL
+    for (f in additive) netparams[[layer]][[f]] <- NULL
   }
   netparams
 }
