@@ -1,14 +1,20 @@
-# R CMD check on ubuntu-latest / R release. Based on the standard
-# r-lib/actions template; see https://github.com/r-lib/actions/tree/v2/examples
+# R CMD check on ubuntu-latest / R release.
 #
 # Single-OS matrix because ARTnet is not CRAN-published — we don't need
 # to test against multi-platform portability the way a CRAN package would.
 #
-# ARTnetData is a private package and is NOT installed in CI — the
-# package's exported functions guard on its presence and error with a
-# clear message, and the testthat suite skips gracefully when it's
-# missing. That keeps CI fast and avoids having to provision a PAT
-# with access to EpiModel/ARTnetData.
+# ARTnetData (private, EpiModel/ARTnetData) is declared in Remotes and
+# is core to the package's behavior — the whole test suite exercises it.
+# Installing it in CI requires a PAT with read access to the private
+# EpiModel repos; set up once in repo secrets as `EPIMODEL_PAT`:
+#
+#   1. Create a fine-grained PAT scoped to EpiModel/ARTnetData and
+#      EpiModel/EpiModelHIV-p with Contents: Read.
+#   2. Add it to Settings → Secrets and variables → Actions as a
+#      repository secret named EPIMODEL_PAT.
+#
+# The default GITHUB_TOKEN can't see other org-private repos and will
+# fail dependency resolution at setup-r-dependencies.
 name: R-CMD-check
 
 on:
@@ -23,7 +29,11 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      # Use a user-configured PAT that has read access to private EpiModel
+      # repos (ARTnetData, EpiModelHIV-p). Falls back to GITHUB_TOKEN so
+      # the workflow file itself is valid on forks without the secret —
+      # it'll just fail dependency resolution there.
+      GITHUB_PAT: ${{ secrets.EPIMODEL_PAT || secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
 
     steps:
