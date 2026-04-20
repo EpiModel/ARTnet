@@ -8,6 +8,7 @@ build_netparams(
   epistats,
   smooth.main.dur = FALSE,
   oo.nquants = 5,
+  duration.method = c("empirical", "weibull_strat", "joint_lm"),
   method = c("existing", "joint"),
   browser = FALSE
 )
@@ -20,6 +21,38 @@ oldest and second oldest age groups.}
 
 \item{oo.nquants}{Number of quantiles to split the one-off partnership risk distribution (count
 of one-off partners per unit time).}
+
+\item{duration.method}{Character. Controls how partnership durations for dissolution-coef
+estimation are computed. One of:
+\itemize{
+\item \code{"empirical"} (default) — mean / median of observed durations among ongoing
+partnerships, stratified by (age-match x index.age.grp). Relies on the
+geometric / memoryless assumption that median elapsed time in ongoing
+partnerships equals median full-partnership duration. Byte-identical to the
+pre-refactor behavior.
+\item \code{"weibull_strat"} — Weibull AFT fits per stratum via
+\code{survival::survreg(Surv(duration.time, 1 - ongoing2) ~ 1, ...)}. Uses both
+ongoing (right-censored) and completed partnerships. The Weibull shape
+parameter \code{k} is attached to \verb{durs.<layer>.byage} as a \code{"weibull_shape"}
+attribute — diagnostic for the constant-hazard assumption embedded in the
+TERGM dissolution (k ~= 1 means geometric is correct; k far from 1 flags
+mis-specification). \strong{Caveat}: on the ARTnet data the fitted \code{k} comes
+out well below 1 (decreasing hazard) in every stratum, and the implied
+Weibull median can extrapolate to implausibly large values in heavily
+censored strata (e.g., the oldest matched age groups). Treat
+\code{"weibull_strat"} as diagnostic — look at the \code{k} values to decide
+whether the geometric assumption is defensible — rather than as a
+drop-in production method. \code{"joint_lm"} is the more production-safe
+non-default option.
+\item \code{"joint_lm"} — log-linear \verb{lm(log(duration.time) ~ <joint ego + partner + match terms>)} on ongoing partnerships; per-stratum medians computed from model
+predictions. Fitted model is stored at \verb{netparams$<layer>$joint_duration_model}
+for optional per-dyad use by future \code{build_netstats} refactors.
+}
+Under all three methods, the stratum-level medians flow through the same
+geometric transformation (\code{mean.dur.adj = 1 / (1 - 2^(-1 / median))}) that
+\code{build_netstats} passes to \code{dissolution_coefs()}, so the TERGM offset structure
+is identical across methods. The one-off layer has no durations, so this flag
+only affects main and casual-layer output.}
 
 \item{method}{Character. Either \code{"existing"} (default) or \code{"joint"}. \code{"existing"} reproduces
 the pre-refactor behavior byte-for-byte: a separate univariate Poisson/binomial/linear
