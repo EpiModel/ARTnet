@@ -26,6 +26,12 @@ one analysis.}
 
 \item{race}{If \code{TRUE}, stratify model estimates by race/ethnic grouping.}
 
+\item{race.level}{List of race/ethnicity categories from ARTnet to use for stratification.
+Each list element is a character vector of one or more ARTnet race labels
+(\code{"black"}, \code{"hispanic"}, \code{"white"}, \code{"other"}, \code{"asian"}, \code{"ai/an"}, \code{"mult"}, \code{"nh/pi"})
+to collapse into a single model category. Default groups into Black / Hispanic /
+White-or-Other. Ignored when \code{race = FALSE}.}
+
 \item{age.limits}{Lower and upper limit of age range to include in model. Minimum of 15 and
 maximum of 100 allowed. Lower limit is inclusive boundary and upper boundary is
 exclusive boundary.}

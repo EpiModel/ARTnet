@@ -3,6 +3,7 @@
 .RData
 .Ruserdata
 .DS_Store
+Rplots.pdf
 vignettes/*.html
 vignettes/*.R
 inst/validation/snapshots/*.rds
