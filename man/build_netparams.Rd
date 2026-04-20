@@ -30,20 +30,31 @@ partnerships, stratified by (age-match x index.age.grp). Relies on the
 geometric / memoryless assumption that median elapsed time in ongoing
 partnerships equals median full-partnership duration. Byte-identical to the
 pre-refactor behavior.
-\item \code{"weibull_strat"} — Weibull AFT fits per stratum via
-\code{survival::survreg(Surv(duration.time, 1 - ongoing2) ~ 1, ...)}. Uses both
-ongoing (right-censored) and completed partnerships. The Weibull shape
-parameter \code{k} is attached to \verb{durs.<layer>.byage} as a \code{"weibull_shape"}
-attribute — diagnostic for the constant-hazard assumption embedded in the
-TERGM dissolution (k ~= 1 means geometric is correct; k far from 1 flags
-mis-specification). \strong{Caveat}: on the ARTnet data the fitted \code{k} comes
-out well below 1 (decreasing hazard) in every stratum, and the implied
-Weibull median can extrapolate to implausibly large values in heavily
-censored strata (e.g., the oldest matched age groups). Treat
-\code{"weibull_strat"} as diagnostic — look at the \code{k} values to decide
-whether the geometric assumption is defensible — rather than as a
-drop-in production method. \code{"joint_lm"} is the more production-safe
-non-default option.
+\item \code{"weibull_strat"} — \strong{length-bias-corrected} Weibull MLE per stratum.
+ARTnet is a cross-sectional prevalence sample, not an incidence cohort:
+\code{duration.time} for ongoing partnerships is the backward recurrence time
+(age at inspection in a renewal process), not the full partnership
+duration. Under stationarity and Weibull(k, lambda) durations, the density
+of observed ages is \verb{f_A(a) = S(a; k, lambda) / (lambda * Gamma(1 + 1/k))},
+which this method fits directly via \code{optim()} on ongoing partnerships.
+A naive \code{survreg(Surv(t, event) ~ 1)} treatment of the same data would
+interpret length-biased elapsed durations as incidence-cohort survival
+times, biasing the scale parameter by multiple orders of magnitude on
+ARTnet; this method corrects for that. The fitted Weibull analytical mean
+(\code{lambda * Gamma(1 + 1/k)}) is used directly as \code{mean.dur.adj} — it does
+NOT pass through the geometric-distribution median->mean formula the
+empirical and joint_lm methods use, because under Weibull with k far from
+1 those two quantities diverge. The Weibull shape \code{k} is attached to
+\verb{durs.<layer>.byage} as a \code{"weibull_shape"} attribute. \verb{k ~= 1} supports
+the constant-hazard (geometric) assumption embedded in the TERGM
+dissolution offset; \code{k < 1} means the hazard of dissolution decreases
+with partnership age (early periods risky, stable partnerships stay
+stable); \code{k > 1} the reverse. On the ARTnet data, \code{k} fits at roughly
+0.5, a clean rejection of the geometric assumption. Completed
+partnerships (\code{ongoing2 == 0}) are not used because they are subject to
+a different truncation (past-12-month recall) that would require separate
+modeling; see issue #72 for broader discussion of ARTnet's sampling
+corrections.
 \item \code{"joint_lm"} — log-linear \verb{lm(log(duration.time) ~ <joint ego + partner + match terms>)} on ongoing partnerships; per-stratum medians computed from model
 predictions. Fitted model is stored at \verb{netparams$<layer>$joint_duration_model}
 for optional per-dyad use by future \code{build_netstats} refactors.

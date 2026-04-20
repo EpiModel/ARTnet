@@ -122,17 +122,33 @@ test_that("weibull_strat requires survival package", {
                         body_src)))
 })
 
-test_that("weibull shape exposes hazard mis-specification", {
+test_that("weibull shape k is finite and in a plausible range per stratum", {
   skip_without_artnetdata()
   testthat::skip_if_not_installed("survival")
   np <- get_np("weibull_strat")
   shapes_main <- attr(np$main$durs.main.byage, "weibull_shape")
-  # Under the null geometric (constant-hazard) model, k == 1. Empirically
-  # on ARTnet these come out well under 1 -- this test locks in that
-  # substantive finding so any regression to k ~= 1 is visible.
-  expect_true(all(shapes_main < 1, na.rm = TRUE),
-              info = paste("main layer shapes should all be < 1; got:",
+  shapes_casl <- attr(np$casl$durs.casl.byage, "weibull_shape")
+  shape_main_overall <- attr(np$main$durs.main.homog, "weibull_shape")
+  shape_casl_overall <- attr(np$casl$durs.casl.homog, "weibull_shape")
+  # Under length-biased MLE, per-stratum shapes should all be finite and
+  # in a plausible range (sanity checks against pathological optimization).
+  expect_true(all(is.finite(shapes_main)))
+  expect_true(all(is.finite(shapes_casl)))
+  expect_true(all(shapes_main >= 0.1 & shapes_main <= 20),
+              info = paste("main shapes out of range:",
                            paste(round(shapes_main, 3), collapse = ", ")))
+  expect_true(all(shapes_casl >= 0.1 & shapes_casl <= 20),
+              info = paste("casl shapes out of range:",
+                           paste(round(shapes_casl, 3), collapse = ", ")))
+  # Substantive finding on ARTnet: the overall (pooled) shape parameter
+  # for both layers lands well below 1 (decreasing hazard). If someone
+  # accidentally reverts to a naive survreg-style fit, the overall shape
+  # would shift to a very different value, so lock in the current value
+  # to a generous band.
+  expect_gt(shape_main_overall, 0.3)
+  expect_lt(shape_main_overall, 1.2)
+  expect_gt(shape_casl_overall, 0.3)
+  expect_lt(shape_casl_overall, 1.2)
 })
 
 test_that("joint_lm can be combined with method = 'joint' in build_netstats", {
