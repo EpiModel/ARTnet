@@ -55,3 +55,8 @@ jobs:
         with:
           upload-snapshots: true
           build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+          # Fail CI on WARNING (and anything stricter). This is the
+          # r-lib/actions current default, but made explicit so a
+          # silent upstream change won't weaken our CI signal. Also
+          # matches what the PI asked for in PR #70 review.
+          error-on: '"warning"'
