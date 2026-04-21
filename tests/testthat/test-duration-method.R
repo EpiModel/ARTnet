@@ -30,30 +30,6 @@ test_that("default duration.method is 'empirical'", {
   # No joint_duration_model attached when method is empirical
   expect_null(np_default$main$joint_duration_model)
   expect_null(np_default$casl$joint_duration_model)
-  # No weibull_shape attribute
-  expect_null(attr(np_default$main$durs.main.byage, "weibull_shape"))
-  expect_null(attr(np_default$casl$durs.casl.byage, "weibull_shape"))
-})
-
-test_that("weibull_strat produces valid durs shape and shape diagnostic", {
-  skip_without_artnetdata()
-  testthat::skip_if_not_installed("survival")
-  np <- get_np("weibull_strat")
-  for (layer in c("main", "casl")) {
-    df_byage <- np[[layer]][[paste0("durs.", layer, ".byage")]]
-    df_homog <- np[[layer]][[paste0("durs.", layer, ".homog")]]
-    # Shape attributes attached as diagnostic
-    shapes <- attr(df_byage, "weibull_shape")
-    expect_type(shapes, "double")
-    expect_length(shapes, nrow(df_byage))
-    expect_true(all(is.finite(shapes)),
-                info = paste("shapes must be finite:", layer))
-    # Medians must be positive
-    expect_true(all(df_byage$median.dur > 0, na.rm = TRUE))
-    expect_true(all(df_homog$median.dur > 0, na.rm = TRUE))
-    # mean.dur.adj > 0
-    expect_true(all(df_byage$mean.dur.adj > 0, na.rm = TRUE))
-  }
 })
 
 test_that("joint_lm stores fitted model at joint_duration_model", {
@@ -72,12 +48,11 @@ test_that("joint_lm stores fitted model at joint_duration_model", {
 
 test_that("all duration.methods preserve output shape for dissolution_coefs", {
   skip_without_artnetdata()
-  testthat::skip_if_not_installed("survival")
   # Every method must produce durs.<layer>.byage with the columns
   # dissolution_coefs() needs downstream, in the same order and types.
   expected_cols <- c("index.age.grp", "mean.dur", "median.dur",
                      "rates.main.adj", "mean.dur.adj")
-  for (dm in c("empirical", "weibull_strat", "joint_lm")) {
+  for (dm in c("empirical", "joint_lm")) {
     df <- get_np(dm)$main$durs.main.byage
     expect_identical(colnames(df), expected_cols,
                      info = paste("column mismatch for", dm))
@@ -89,9 +64,7 @@ test_that("all duration.methods preserve output shape for dissolution_coefs", {
 
 test_that("duration.method does not affect non-duration netparams fields", {
   skip_without_artnetdata()
-  testthat::skip_if_not_installed("survival")
   np_e <- get_np("empirical")
-  np_w <- get_np("weibull_strat")
   np_j <- get_np("joint_lm")
   # Everything except durs.*.byage, durs.*.homog, joint_duration_model
   # should be identical across methods.
@@ -104,51 +77,25 @@ test_that("duration.method does not affect non-duration netparams fields", {
         "joint_duration_model")
     )
     for (f in common_fields) {
-      expect_equal(np_w[[layer]][[f]], np_e[[layer]][[f]],
-                   info = paste0("[weibull ", layer, "$", f, "]"))
       expect_equal(np_j[[layer]][[f]], np_e[[layer]][[f]],
                    info = paste0("[joint_lm ", layer, "$", f, "]"))
     }
   }
 })
 
-test_that("weibull_strat requires survival package", {
+test_that("joint_lm rejects invalid method arg with clear error", {
   skip_without_artnetdata()
-  # If survival isn't available the call should error clearly
-  # (we can't actually uninstall it in a test, but we can confirm the
-  # guard exists by searching the function body).
-  body_src <- deparse(build_netparams)
-  expect_true(any(grepl("duration\\.method = 'weibull_strat' requires",
-                        body_src)))
-})
-
-test_that("weibull shape k is finite and in a plausible range per stratum", {
-  skip_without_artnetdata()
-  testthat::skip_if_not_installed("survival")
-  np <- get_np("weibull_strat")
-  shapes_main <- attr(np$main$durs.main.byage, "weibull_shape")
-  shapes_casl <- attr(np$casl$durs.casl.byage, "weibull_shape")
-  shape_main_overall <- attr(np$main$durs.main.homog, "weibull_shape")
-  shape_casl_overall <- attr(np$casl$durs.casl.homog, "weibull_shape")
-  # Under length-biased MLE, per-stratum shapes should all be finite and
-  # in a plausible range (sanity checks against pathological optimization).
-  expect_true(all(is.finite(shapes_main)))
-  expect_true(all(is.finite(shapes_casl)))
-  expect_true(all(shapes_main >= 0.1 & shapes_main <= 20),
-              info = paste("main shapes out of range:",
-                           paste(round(shapes_main, 3), collapse = ", ")))
-  expect_true(all(shapes_casl >= 0.1 & shapes_casl <= 20),
-              info = paste("casl shapes out of range:",
-                           paste(round(shapes_casl, 3), collapse = ", ")))
-  # Substantive finding on ARTnet: the overall (pooled) shape parameter
-  # for both layers lands well below 1 (decreasing hazard). If someone
-  # accidentally reverts to a naive survreg-style fit, the overall shape
-  # would shift to a very different value, so lock in the current value
-  # to a generous band.
-  expect_gt(shape_main_overall, 0.3)
-  expect_lt(shape_main_overall, 1.2)
-  expect_gt(shape_casl_overall, 0.3)
-  expect_lt(shape_casl_overall, 1.2)
+  set.seed(20260419L)
+  epistats <- build_epistats(
+    geog.lvl = "city", geog.cat = "Atlanta",
+    init.hiv.prev = c(0.33, 0.137, 0.084),
+    race = TRUE, time.unit = 7
+  )
+  expect_error(
+    build_netparams(epistats, duration.method = "weibull_strat",
+                    method = "existing"),
+    regexp = "should be one of"
+  )
 })
 
 test_that("joint_lm can be combined with method = 'joint' in build_netstats", {

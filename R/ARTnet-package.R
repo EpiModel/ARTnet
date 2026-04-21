@@ -13,8 +13,8 @@
 #' @name ARTnet-package
 #' @aliases ARTnet
 #' @import EpiModel dplyr
-#' @importFrom stats AIC binomial coef formula gaussian glm lm median optim
-#'   poisson predict rbinom reformulate runif update
+#' @importFrom stats AIC binomial coef formula gaussian glm lm median poisson
+#'   predict rbinom reformulate runif update
 #' @importFrom utils head
 #'
 #' @details

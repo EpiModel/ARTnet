@@ -1,88 +1,3 @@
-# Length-biased Weibull MLE for partnership durations.
-#
-# ARTnet is a cross-sectional prevalence sample, not an incidence cohort.
-# For ongoing partnerships, `duration.time` is the backward recurrence
-# time (age at inspection) in a renewal process, not the total partnership
-# duration. Under stationarity and partnership durations ~ Weibull(k, lambda),
-# the density of observed ages is
-#
-#   f_A(a; k, lambda) = S(a; k, lambda) / mu(k, lambda)
-#
-# where S is the Weibull survival function and mu = lambda * Gamma(1 + 1/k)
-# is the Weibull mean. The negative log-likelihood on ongoing observations
-# only is
-#
-#   -sum log f_A(t_i) = sum (t_i/lambda)^k + n * log(lambda) + n * log Gamma(1 + 1/k)
-#
-# Maximizing this over (k, lambda) yields the parameters of the underlying
-# full-duration Weibull distribution without the length-bias that standard
-# survreg(Surv(t, event) ~ 1) introduces when applied to cross-sectional
-# data.
-#
-# Completed partnerships (ongoing2 == 0) are not used here: they are subject
-# to a different truncation (past-12-month recall window) that would require
-# separate modeling. Restricting to ongoing matches the convention of the
-# empirical and joint_lm duration methods.
-#
-# Returns NULL on convergence failure, pathological parameter estimates, or
-# insufficient data.
-fit_weibull_dur <- function(data) {
-  if (!requireNamespace("survival", quietly = TRUE)) return(NULL)
-  # Survival package is kept as a Suggests-declared prerequisite so users
-  # get a clear error if they explicitly request this method without it
-  # installed; the fitting logic itself is base-R (custom optim()) and
-  # does not call survival::.
-  ongoing <- data$duration.time[data$ongoing2 == 1]
-  ongoing <- ongoing[!is.na(ongoing) & ongoing > 0]
-  if (length(ongoing) < 15) return(NULL)
-
-  neg_ll <- function(par) {
-    k <- exp(par[1])
-    lambda <- exp(par[2])
-    if (!is.finite(k) || !is.finite(lambda) || k <= 0 || lambda <= 0) {
-      return(1e12)
-    }
-    n <- length(ongoing)
-    val <- sum((ongoing / lambda)^k) + n * log(lambda) + n * lgamma(1 + 1 / k)
-    if (!is.finite(val)) return(1e12)
-    val
-  }
-
-  # Starting point: method-of-moments from length-biased-mean of Weibull.
-  # If the data were Weibull-generated with k = 1 and mean mu, observed mean
-  # of the backward recurrence time would be mu/2. So init lambda at 2 * mean(ongoing).
-  init <- c(log(1), log(max(mean(ongoing) * 2, 1)))
-
-  fit <- tryCatch(
-    optim(init, neg_ll, method = "BFGS", control = list(maxit = 200)),
-    error = function(e) NULL
-  )
-  if (is.null(fit) || fit$convergence != 0) {
-    fit <- tryCatch(
-      optim(init, neg_ll, method = "Nelder-Mead",
-            control = list(maxit = 2000)),
-      error = function(e) NULL
-    )
-  }
-  if (is.null(fit) || fit$convergence != 0) return(NULL)
-
-  k <- exp(fit$par[1])
-  lambda <- exp(fit$par[2])
-  # Reject pathological estimates that indicate the optimization wandered
-  # off. Heavy-tailed but reasonable: k in [0.05, 20], scale in positive
-  # range not larger than 10^8 time units.
-  if (!is.finite(k) || !is.finite(lambda) ||
-      k < 0.05 || k > 20 || lambda <= 0 || lambda > 1e8) {
-    return(NULL)
-  }
-
-  med <- lambda * log(2)^(1 / k)
-  mean_val <- lambda * gamma(1 + 1 / k)
-  list(mean.dur = mean_val, median.dur = med,
-       weibull_shape = k, weibull_scale = lambda)
-}
-
-
 # Joint log-linear lm on log(duration.time) for ongoing partnerships.
 # Same length-bias convention as the "empirical" default (uses only
 # ongoing, relies on the memoryless property to read stratum-specific
@@ -122,46 +37,8 @@ fit_joint_lm_dur <- function(l_layer, race, geog.lvl) {
 # subsequent = index.age.grp values for matched-within-age-group).
 compute_alt_durs <- function(l_layer, duration.method, byage_strata,
                              race, geog.lvl) {
-  stopifnot(duration.method %in% c("weibull_strat", "joint_lm"))
+  stopifnot(duration.method == "joint_lm")
 
-  # Subset each stratum the same way the empirical block does.
-  strata_data <- lapply(byage_strata, function(k) {
-    if (k == 0) {
-      l_layer[l_layer$same.age.grp == 0, , drop = FALSE]
-    } else {
-      l_layer[l_layer$same.age.grp == 1 & l_layer$index.age.grp == k,
-              , drop = FALSE]
-    }
-  })
-  names(strata_data) <- as.character(byage_strata)
-
-  if (duration.method == "weibull_strat") {
-    # Per-stratum Weibull fits.
-    per_stratum <- lapply(strata_data, fit_weibull_dur)
-    byage <- data.frame(
-      index.age.grp = byage_strata,
-      mean.dur = vapply(per_stratum,
-        function(x) if (is.null(x)) NA_real_ else x$mean.dur, numeric(1)),
-      median.dur = vapply(per_stratum,
-        function(x) if (is.null(x)) NA_real_ else x$median.dur, numeric(1))
-    )
-    shapes <- vapply(per_stratum,
-      function(x) if (is.null(x)) NA_real_ else x$weibull_shape, numeric(1))
-
-    # Overall (homog) fit on the whole subset used for durations.
-    homog_fit <- fit_weibull_dur(l_layer)
-    homog <- if (is.null(homog_fit)) {
-      data.frame(mean.dur = NA_real_, median.dur = NA_real_)
-    } else {
-      data.frame(mean.dur = homog_fit$mean.dur,
-                 median.dur = homog_fit$median.dur)
-    }
-    return(list(homog = homog, byage = byage, weibull_shapes = shapes,
-                weibull_shape_overall = if (is.null(homog_fit)) NA_real_
-                                         else homog_fit$weibull_shape))
-  }
-
-  # duration.method == "joint_lm"
   res <- fit_joint_lm_dur(l_layer, race = race, geog.lvl = geog.lvl)
   if (is.null(res)) {
     return(list(homog = data.frame(mean.dur = NA_real_, median.dur = NA_real_),
@@ -258,41 +135,29 @@ fit_joint_glm <- function(d, response, main_terms,
 #'            geometric / memoryless assumption that median elapsed time in ongoing
 #'            partnerships equals median full-partnership duration. Byte-identical to the
 #'            pre-refactor behavior.
-#'          \item `"weibull_strat"` — **length-bias-corrected** Weibull MLE per stratum.
-#'            ARTnet is a cross-sectional prevalence sample, not an incidence cohort:
-#'            `duration.time` for ongoing partnerships is the backward recurrence time
-#'            (age at inspection in a renewal process), not the full partnership
-#'            duration. Under stationarity and Weibull(k, lambda) durations, the density
-#'            of observed ages is `f_A(a) = S(a; k, lambda) / (lambda * Gamma(1 + 1/k))`,
-#'            which this method fits directly via `optim()` on ongoing partnerships.
-#'            A naive `survreg(Surv(t, event) ~ 1)` treatment of the same data would
-#'            interpret length-biased elapsed durations as incidence-cohort survival
-#'            times, biasing the scale parameter by multiple orders of magnitude on
-#'            ARTnet; this method corrects for that. The fitted Weibull analytical mean
-#'            (`lambda * Gamma(1 + 1/k)`) is used directly as `mean.dur.adj` — it does
-#'            NOT pass through the geometric-distribution median->mean formula the
-#'            empirical and joint_lm methods use, because under Weibull with k far from
-#'            1 those two quantities diverge. The Weibull shape `k` is attached to
-#'            `durs.<layer>.byage` as a `"weibull_shape"` attribute. `k ~= 1` supports
-#'            the constant-hazard (geometric) assumption embedded in the TERGM
-#'            dissolution offset; `k < 1` means the hazard of dissolution decreases
-#'            with partnership age (early periods risky, stable partnerships stay
-#'            stable); `k > 1` the reverse. On the ARTnet data, `k` fits at roughly
-#'            0.5, a clean rejection of the geometric assumption. Completed
-#'            partnerships (`ongoing2 == 0`) are not used because they are subject to
-#'            a different truncation (past-12-month recall) that would require separate
-#'            modeling; see issue #72 for broader discussion of ARTnet's sampling
-#'            corrections.
 #'          \item `"joint_lm"` — log-linear `lm(log(duration.time) ~ <joint ego + partner + match
 #'            terms>)` on ongoing partnerships; per-stratum medians computed from model
-#'            predictions. Fitted model is stored at `netparams$<layer>$joint_duration_model`
-#'            for optional per-dyad use by future `build_netstats` refactors.
+#'            predictions. The covariate-adjusted version of `"empirical"`: targets the
+#'            same cross-sectional age-of-extant-ties quantity (via the same geometric
+#'            transformation), but corrects for confounding of the duration estimate by
+#'            other attributes — the direct analog of the marginal-vs-joint fix that
+#'            `method = "joint"` applies to formation stats. Fitted model is stored at
+#'            `netparams$<layer>$joint_duration_model`; see issue #73 for the follow-up
+#'            to predict per-dyad on the synthetic target population in `build_netstats`.
 #'        }
-#'        Under all three methods, the stratum-level medians flow through the same
-#'        geometric transformation (`mean.dur.adj = 1 / (1 - 2^(-1 / median))`) that
-#'        `build_netstats` passes to `dissolution_coefs()`, so the TERGM offset structure
-#'        is identical across methods. The one-off layer has no durations, so this flag
-#'        only affects main and casual-layer output.
+#'        Both methods flow through the same geometric transformation
+#'        (`mean.dur.adj = 1 / (1 - 2^(-1 / median))`) that `build_netstats` passes to
+#'        `dissolution_coefs()`, so the TERGM offset structure is identical across
+#'        methods. The TERGM dissolution is geometric (constant hazard per timestep), so
+#'        under the inspection-paradox identity the `duration` parameter it consumes
+#'        simultaneously determines the simulated mean partnership duration and the
+#'        simulated mean age of extant ties at cross-section; both methods target the
+#'        observable latter quantity. A prior `"weibull_strat"` option targeting the
+#'        underlying mean full-partnership duration was explored and removed: its
+#'        output can't be faithfully honored by a geometric TERGM without a non-standard
+#'        age-dependent dissolution term, making it a diagnostic rather than a
+#'        production target. The one-off layer has no durations, so this flag only
+#'        affects main and casual-layer output.
 #' @param method Character. Either `"existing"` (default) or `"joint"`. `"existing"` reproduces
 #'        the pre-refactor behavior byte-for-byte: a separate univariate Poisson/binomial/linear
 #'        fit for each ERGM target statistic. `"joint"` leaves all of those outputs intact **and**
@@ -352,17 +217,11 @@ fit_joint_glm <- function(d, response, main_terms,
 build_netparams <- function(epistats,
                             smooth.main.dur = FALSE,
                             oo.nquants = 5,
-                            duration.method = c("empirical", "weibull_strat", "joint_lm"),
+                            duration.method = c("empirical", "joint_lm"),
                             method = c("existing", "joint"),
                             browser = FALSE) {
   method <- match.arg(method)
   duration.method <- match.arg(duration.method)
-
-  if (duration.method == "weibull_strat" &&
-      !requireNamespace("survival", quietly = TRUE)) {
-    stop("duration.method = 'weibull_strat' requires the 'survival' package. ",
-         "Install it with install.packages('survival').")
-  }
 
   # Ensures that ARTnetData is installed
   if (system.file(package = "ARTnetData") == "") stop(missing_data_msg)
@@ -839,38 +698,26 @@ build_netparams <- function(epistats,
 
 
   ## duration.method override (see #63 phase 3) ----
-  # Replace the empirical stratum summaries with model-based ones and
-  # recompute mean.dur.adj + rates.main.adj, preserving the downstream
-  # data.frame shape so smoothing and sex.cess.mod below work unchanged.
-  # Under weibull_strat the Weibull analytical mean (length-bias-
-  # corrected) is used directly as mean.dur.adj — we do NOT pass the
-  # Weibull median through the geometric-distribution formula, because
-  # when the fitted shape k is far from 1, geometric(median) and
-  # Weibull(mean) diverge by multiple orders of magnitude. Under
-  # joint_lm the predicted stratum medians flow through the geometric
-  # transformation exactly as empirical does.
-  if (duration.method != "empirical") {
+  # Replace the empirical stratum medians with model-based ones and
+  # re-apply the geometric transformation. Under joint_lm the predicted
+  # stratum medians flow through the same `mean.dur.adj =
+  # 1/(1 - 2^(-1/median))` formula empirical uses — the only difference
+  # is that the medians are covariate-adjusted rather than marginal.
+  if (duration.method == "joint_lm") {
     alt <- compute_alt_durs(
       l_layer = lmain[lmain$RAI == 1 | lmain$IAI == 1, , drop = FALSE],
       duration.method = duration.method,
       byage_strata = out$main$durs.main.byage$index.age.grp,
       race = race, geog.lvl = geog.lvl
     )
-    use_direct_mean <- duration.method == "weibull_strat"
     # homog
     if (!is.na(alt$homog$median.dur)) {
-      out$main$durs.main.homog$mean.dur   <- alt$homog$mean.dur
-      out$main$durs.main.homog$median.dur <- alt$homog$median.dur
-      if (use_direct_mean) {
-        out$main$durs.main.homog$mean.dur.adj <- wt * alt$homog$mean.dur
-        out$main$durs.main.homog$rates.main.adj <-
-          1 / out$main$durs.main.homog$mean.dur.adj
-      } else {
-        out$main$durs.main.homog$rates.main.adj <-
-          1 - 2^(-1 / (wt * out$main$durs.main.homog$median.dur))
-        out$main$durs.main.homog$mean.dur.adj <-
-          1 / (1 - 2^(-1 / (wt * out$main$durs.main.homog$median.dur)))
-      }
+      out$main$durs.main.homog$mean.dur       <- alt$homog$mean.dur
+      out$main$durs.main.homog$median.dur     <- alt$homog$median.dur
+      out$main$durs.main.homog$rates.main.adj <-
+        1 - 2^(-1 / (wt * out$main$durs.main.homog$median.dur))
+      out$main$durs.main.homog$mean.dur.adj <-
+        1 / (1 - 2^(-1 / (wt * out$main$durs.main.homog$median.dur)))
     }
     # byage: per-stratum replacement, with empirical fallback if a stratum
     # fit failed (keeps the row populated so dissolution_coefs doesn't NA).
@@ -878,26 +725,15 @@ build_netparams <- function(epistats,
       k <- out$main$durs.main.byage$index.age.grp[i]
       j <- which(alt$byage$index.age.grp == k)
       if (length(j) == 1 && !is.na(alt$byage$median.dur[j])) {
-        out$main$durs.main.byage$mean.dur[i]   <- alt$byage$mean.dur[j]
-        out$main$durs.main.byage$median.dur[i] <- alt$byage$median.dur[j]
-        if (use_direct_mean) {
-          out$main$durs.main.byage$mean.dur.adj[i] <-
-            wt * alt$byage$mean.dur[j]
-          out$main$durs.main.byage$rates.main.adj[i] <-
-            1 / out$main$durs.main.byage$mean.dur.adj[i]
-        } else {
-          out$main$durs.main.byage$rates.main.adj[i] <-
-            1 - 2^(-1 / (wt * alt$byage$median.dur[j]))
-          out$main$durs.main.byage$mean.dur.adj[i] <-
-            1 / (1 - 2^(-1 / (wt * alt$byage$median.dur[j])))
-        }
+        out$main$durs.main.byage$mean.dur[i]       <- alt$byage$mean.dur[j]
+        out$main$durs.main.byage$median.dur[i]     <- alt$byage$median.dur[j]
+        out$main$durs.main.byage$rates.main.adj[i] <-
+          1 - 2^(-1 / (wt * alt$byage$median.dur[j]))
+        out$main$durs.main.byage$mean.dur.adj[i] <-
+          1 / (1 - 2^(-1 / (wt * alt$byage$median.dur[j])))
       }
     }
-    if (duration.method == "weibull_strat") {
-      attr(out$main$durs.main.byage, "weibull_shape") <- alt$weibull_shapes
-      attr(out$main$durs.main.homog, "weibull_shape") <- alt$weibull_shape_overall
-    }
-    if (duration.method == "joint_lm" && !is.null(alt$model)) {
+    if (!is.null(alt$model)) {
       out$main$joint_duration_model <- alt$model
     }
   }
@@ -1297,52 +1133,34 @@ build_netparams <- function(epistats,
 
 
   ## duration.method override (see #63 phase 3) ----
-  if (duration.method != "empirical") {
+  if (duration.method == "joint_lm") {
     alt <- compute_alt_durs(
       l_layer = lcasl[lcasl$RAI == 1 | lcasl$IAI == 1, , drop = FALSE],
       duration.method = duration.method,
       byage_strata = out$casl$durs.casl.byage$index.age.grp,
       race = race, geog.lvl = geog.lvl
     )
-    use_direct_mean <- duration.method == "weibull_strat"
     if (!is.na(alt$homog$median.dur)) {
-      out$casl$durs.casl.homog$mean.dur   <- alt$homog$mean.dur
-      out$casl$durs.casl.homog$median.dur <- alt$homog$median.dur
-      if (use_direct_mean) {
-        out$casl$durs.casl.homog$mean.dur.adj <- wt * alt$homog$mean.dur
-        out$casl$durs.casl.homog$rates.casl.adj <-
-          1 / out$casl$durs.casl.homog$mean.dur.adj
-      } else {
-        out$casl$durs.casl.homog$rates.casl.adj <-
-          1 - 2^(-1 / (wt * out$casl$durs.casl.homog$median.dur))
-        out$casl$durs.casl.homog$mean.dur.adj <-
-          1 / (1 - 2^(-1 / (wt * out$casl$durs.casl.homog$median.dur)))
-      }
+      out$casl$durs.casl.homog$mean.dur       <- alt$homog$mean.dur
+      out$casl$durs.casl.homog$median.dur     <- alt$homog$median.dur
+      out$casl$durs.casl.homog$rates.casl.adj <-
+        1 - 2^(-1 / (wt * out$casl$durs.casl.homog$median.dur))
+      out$casl$durs.casl.homog$mean.dur.adj <-
+        1 / (1 - 2^(-1 / (wt * out$casl$durs.casl.homog$median.dur)))
     }
     for (i in seq_len(nrow(out$casl$durs.casl.byage))) {
       k <- out$casl$durs.casl.byage$index.age.grp[i]
       j <- which(alt$byage$index.age.grp == k)
       if (length(j) == 1 && !is.na(alt$byage$median.dur[j])) {
-        out$casl$durs.casl.byage$mean.dur[i]   <- alt$byage$mean.dur[j]
-        out$casl$durs.casl.byage$median.dur[i] <- alt$byage$median.dur[j]
-        if (use_direct_mean) {
-          out$casl$durs.casl.byage$mean.dur.adj[i] <-
-            wt * alt$byage$mean.dur[j]
-          out$casl$durs.casl.byage$rates.casl.adj[i] <-
-            1 / out$casl$durs.casl.byage$mean.dur.adj[i]
-        } else {
-          out$casl$durs.casl.byage$rates.casl.adj[i] <-
-            1 - 2^(-1 / (wt * alt$byage$median.dur[j]))
-          out$casl$durs.casl.byage$mean.dur.adj[i] <-
-            1 / (1 - 2^(-1 / (wt * alt$byage$median.dur[j])))
-        }
+        out$casl$durs.casl.byage$mean.dur[i]       <- alt$byage$mean.dur[j]
+        out$casl$durs.casl.byage$median.dur[i]     <- alt$byage$median.dur[j]
+        out$casl$durs.casl.byage$rates.casl.adj[i] <-
+          1 - 2^(-1 / (wt * alt$byage$median.dur[j]))
+        out$casl$durs.casl.byage$mean.dur.adj[i] <-
+          1 / (1 - 2^(-1 / (wt * alt$byage$median.dur[j])))
       }
     }
-    if (duration.method == "weibull_strat") {
-      attr(out$casl$durs.casl.byage, "weibull_shape") <- alt$weibull_shapes
-      attr(out$casl$durs.casl.homog, "weibull_shape") <- alt$weibull_shape_overall
-    }
-    if (duration.method == "joint_lm" && !is.null(alt$model)) {
+    if (!is.null(alt$model)) {
       out$casl$joint_duration_model <- alt$model
     }
   }
