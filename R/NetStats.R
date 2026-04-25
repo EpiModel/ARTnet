@@ -5,9 +5,11 @@
   if (is.null(target_pop)) return(list(form = "default"))
   if (is.character(target_pop)) {
     stop("Built-in reference target populations (target_pop = '",
-         target_pop, "') are not yet implemented in ARTnet. Coordinate ",
-         "with the package maintainer (data must ship via ARTnetData) or ",
-         "pass a list of marginal distributions / a data.frame instead. ",
+         target_pop, "') are not yet implemented in ARTnet. The planned ",
+         "set is geography-specific general male population demographics ",
+         "(NCHS age pyramid + ARTnetData::race.dist by geography); when ",
+         "those bundles ship, this argument will accept their names. ",
+         "For now, pass a list of marginal distributions or a data.frame. ",
          "See issue #64.", call. = FALSE)
   }
   if (is.data.frame(target_pop)) {
@@ -151,8 +153,10 @@
 #'            for users with a fully-specified joint synthetic population (e.g., post-stratified
 #'            to NHBS or AMIS demographics).
 #'          \item A **character string** naming a built-in reference population. Currently
-#'            raises an informative error — built-in reference data (e.g., `'nhbs_msm_2022'`)
-#'            requires a coordinated update to `ARTnetData` and is not yet implemented.
+#'            raises an informative error. The planned set is geography-specific general male
+#'            population demographics (NCHS age pyramid + `ARTnetData::race.dist` by
+#'            geography) — bundles like `"atlanta"` or `"us_msm_male"` packaged from data
+#'            already in the package, no NHBS or other restricted data required.
 #'        }
 #' @param method Character. Either `"existing"` (default) or `"joint"`. `"existing"` reproduces
 #'        the pre-refactor behavior byte-for-byte: target statistics for edges, nodefactor, and

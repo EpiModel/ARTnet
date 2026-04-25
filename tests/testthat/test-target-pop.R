@@ -196,10 +196,13 @@ test_that("data.frame form: composes with method = 'joint'", {
 test_that("character form raises informative not-yet-implemented error", {
   skip_without_artnetdata()
   s <- setup_pipeline()
+  # The planned named set is geography-specific general male population
+  # demographics (NCHS age pyramid + ARTnetData::race.dist), e.g. "atlanta".
+  # Currently any character string raises a clear not-yet-implemented error.
   expect_error(
     build_netstats(s$epistats, s$netparams,
                    expect.mort = 0.000478213, network.size = 1000,
-                   target_pop = "nhbs_msm_2022"),
+                   target_pop = "atlanta"),
     regexp = "not yet implemented"
   )
 })

@@ -86,8 +86,10 @@ bypassed entirely and \code{network.size} is set to \code{nrow(target_pop)}. Thi
 for users with a fully-specified joint synthetic population (e.g., post-stratified
 to NHBS or AMIS demographics).
 \item A \strong{character string} naming a built-in reference population. Currently
-raises an informative error — built-in reference data (e.g., \code{'nhbs_msm_2022'})
-requires a coordinated update to \code{ARTnetData} and is not yet implemented.
+raises an informative error. The planned set is geography-specific general male
+population demographics (NCHS age pyramid + \code{ARTnetData::race.dist} by
+geography) — bundles like \code{"atlanta"} or \code{"us_msm_male"} packaged from data
+already in the package, no NHBS or other restricted data required.
 }}
 
 \item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
