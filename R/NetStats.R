@@ -1,3 +1,64 @@
+# Aggregate synth-population stratum-level durations under joint_lm. Per-ego
+# predicted log(duration) from the joint_lm fit, marginalized over partner-race
+# uncertainty using joint_nm_race_model when race = TRUE, then exponentiated
+# and median-aggregated within each (same.age.grp x index.age.grp) stratum. The
+# returned vector matches the row layout of `netparams$<layer>$durs.<layer>.byage`:
+# nonmatch first (same.age.grp = 0), then matched-within-age-group 1..N, plus
+# an optional deterministic "post-cessation" row when sex.cess.mod = TRUE.
+#
+# Used in `build_netstats(method = "joint")` to override the within-ARTnet
+# stratum medians that build_netparams emits under duration.method = "joint_lm",
+# so dissolution offsets reflect the synthetic target population's joint
+# attribute distribution rather than ARTnet's. See issue #73.
+#
+# Returns NULL if joint_dur_model is NULL (caller falls back to netparams values).
+.aggregate_synth_byage_durations <- function(joint_dur_model,
+                                             joint_nm_race_model,
+                                             synth_data,
+                                             n_age_grps,
+                                             sex_cess_extra_row = FALSE) {
+  if (is.null(joint_dur_model)) return(NULL)
+
+  if (!is.null(joint_nm_race_model)) {
+    p_same_race <- predict(joint_nm_race_model, newdata = synth_data,
+                           type = "response")
+  } else {
+    p_same_race <- rep(0, nrow(synth_data))
+  }
+
+  predict_stratum_median <- function(same_age, age_grp_select) {
+    sel <- if (is.na(age_grp_select)) {
+      rep(TRUE, nrow(synth_data))
+    } else {
+      synth_data$age.grp == age_grp_select
+    }
+    if (!any(sel)) return(NA_real_)
+    sub <- synth_data[sel, , drop = FALSE]
+    sub$same.age.grp <- as.integer(same_age)
+
+    sub$same.race <- 0L
+    pred_log_0 <- predict(joint_dur_model, newdata = sub)
+    sub$same.race <- 1L
+    pred_log_1 <- predict(joint_dur_model, newdata = sub)
+
+    p <- p_same_race[sel]
+    dur_marg <- p * exp(pred_log_1) + (1 - p) * exp(pred_log_0)
+    median(dur_marg, na.rm = TRUE)
+  }
+
+  medians <- c(predict_stratum_median(0, NA),
+               vapply(seq_len(n_age_grps),
+                      function(k) predict_stratum_median(1, k),
+                      numeric(1)))
+
+  mean_dur_adj <- ifelse(is.na(medians) | medians <= 0,
+                         NA_real_,
+                         1 / (1 - 2^(-1 / medians)))
+
+  if (isTRUE(sex_cess_extra_row)) mean_dur_adj <- c(mean_dur_adj, 1)
+  mean_dur_adj
+}
+
 
 #' Calculate Network Target Statistics
 #'
@@ -34,9 +95,14 @@
 #'        (`netparams$<layer>$joint_nm_{age,race}_model` and
 #'        `netparams$<layer>$joint_absdiff_{age,sqrtage}_model`). Under `"joint"`, edges and all
 #'        nodefactor target stats are internally consistent by construction
-#'        (`sum(nodefactor_<attr>) = 2 * edges`), so `edges.avg` has no effect. Dissolution
-#'        coefficients and `nodefactor_risk.grp` still use the univariate marginals — the
-#'        duration refactor lives on #63 and will be addressed in a follow-up PR.
+#'        (`sum(nodefactor_<attr>) = 2 * edges`), so `edges.avg` has no effect. The
+#'        `diss.byage` dissolution offset is computed from synth-aggregated stratum-level
+#'        durations when `build_netparams(..., duration.method = "joint_lm")` was used:
+#'        per-ego predicted log(duration) from `joint_duration_model`, marginalized over
+#'        partner-race uncertainty via `joint_nm_race_model`, then median-aggregated within
+#'        stratum. `nodefactor_risk.grp` and `diss.homog` still use the within-ARTnet
+#'        univariate / aggregated values — those are not consumed by the standard
+#'        EpiModelHIV-Template dissolution offset.
 #' @param browser If `TRUE`, run `build_netparams` in interactive browser mode.
 #'
 #' @details
@@ -409,6 +475,12 @@ build_netstats <- function(epistats, netparams,
   # construction (sum(nodefactor_<attr>) == 2 * edges). Inactive-age nodes
   # (sex.cess.mod) are zeroed out so they contribute nothing to any layer's
   # edges or nodefactor counts.
+  # Initialize synth-aggregated duration overrides; populated below under
+  # method = "joint" + duration.method = "joint_lm". When NULL, the dissolution
+  # offsets fall back to the within-ARTnet values from build_netparams.
+  synth_dur_main_byage <- NULL
+  synth_dur_casl_byage <- NULL
+
   if (method == "joint") {
     synth <- data.frame(
       age.grp      = out$attr$age.grp,
@@ -419,6 +491,11 @@ build_netstats <- function(epistats, netparams,
       geogYN       = 1L
     )
     synth$deg.tot3 <- pmin(out$attr$deg.tot, 3)
+    # Alias for the joint duration model, which uses index.age.grp on the RHS
+    # rather than age.grp (a leftover from the partnership-level fit on lmain
+    # in build_netparams). Joint_nm_*_model uses age.grp; we keep both columns
+    # available so predict() works for both families of models.
+    synth$index.age.grp <- synth$age.grp
 
     pred_deg_main   <- predict(netparams$main$joint_model, newdata = synth, type = "response")
     pred_deg_casl   <- predict(netparams$casl$joint_model, newdata = synth, type = "response")
@@ -465,6 +542,29 @@ build_netstats <- function(epistats, netparams,
       # dyad predictions are multiplied by pred_deg downstream, so
       # zeroing pred_deg above already suppresses their contribution.
     }
+
+    # Synth-aggregated stratum durations (#73). Override the within-ARTnet
+    # joint_lm aggregation that build_netparams emits with synth-population
+    # aggregation. Only fires when duration.method = "joint_lm" was used in
+    # build_netparams (otherwise joint_duration_model is NULL).
+    n_age_grps_main <-
+      nrow(netparams$main$durs.main.byage) - 1L - as.integer(sex.cess.mod)
+    n_age_grps_casl <-
+      nrow(netparams$casl$durs.casl.byage) - 1L - as.integer(sex.cess.mod)
+    synth_dur_main_byage <- .aggregate_synth_byage_durations(
+      joint_dur_model     = netparams$main$joint_duration_model,
+      joint_nm_race_model = netparams$main$joint_nm_race_model,
+      synth_data          = synth,
+      n_age_grps          = n_age_grps_main,
+      sex_cess_extra_row  = sex.cess.mod
+    )
+    synth_dur_casl_byage <- .aggregate_synth_byage_durations(
+      joint_dur_model     = netparams$casl$joint_duration_model,
+      joint_nm_race_model = netparams$casl$joint_nm_race_model,
+      synth_data          = synth,
+      n_age_grps          = n_age_grps_casl,
+      sex_cess_extra_row  = sex.cess.mod
+    )
   }
 
 
@@ -574,14 +674,21 @@ build_netstats <- function(epistats, netparams,
       function(h) sum(pred_deg_main[out$attr$diag.status == h]), numeric(1))
   }
 
-  # Dissolution (identical under both methods) -----------------------------
+  # Dissolution -----------------------------------------------------------
+  # diss.byage uses synth-aggregated durations under method = "joint" +
+  # duration.method = "joint_lm" (#73). diss.homog still uses the within-
+  # ARTnet aggregation from build_netparams; it is not consumed by
+  # EpiModelHIV-Template's tergm offset, and its synth analog can be added
+  # later without changing the byage interface that matters for production.
   out$main$diss.homog <- dissolution_coefs(dissolution = ~offset(edges),
                                            duration = netparams$main$durs.main.homog$mean.dur.adj,
                                            d.rate = expect.mort)
-  out$main$diss.byage <- dissolution_coefs(dissolution = ~offset(edges) +
-                                             offset(nodematch("age.grp", diff = TRUE)),
-                                           duration = netparams$main$durs.main.byage$mean.dur.adj,
-                                           d.rate = expect.mort)
+  out$main$diss.byage <- dissolution_coefs(
+    dissolution = ~offset(edges) + offset(nodematch("age.grp", diff = TRUE)),
+    duration = if (!is.null(synth_dur_main_byage)) synth_dur_main_byage
+               else netparams$main$durs.main.byage$mean.dur.adj,
+    d.rate = expect.mort
+  )
 
 
 
@@ -680,14 +787,16 @@ build_netstats <- function(epistats, netparams,
       function(h) sum(pred_deg_casl[out$attr$diag.status == h]), numeric(1))
   }
 
-  # Dissolution (identical under both methods)
+  # Dissolution (see note on diss.byage / diss.homog at the main layer block)
   out$casl$diss.homog <- dissolution_coefs(dissolution = ~offset(edges),
                                            duration = netparams$casl$durs.casl.homog$mean.dur.adj,
                                            d.rate = expect.mort)
-  out$casl$diss.byage <- dissolution_coefs(dissolution = ~offset(edges) +
-                                             offset(nodematch("age.grp", diff = TRUE)),
-                                           duration = netparams$casl$durs.casl.byage$mean.dur.adj,
-                                           d.rate = expect.mort)
+  out$casl$diss.byage <- dissolution_coefs(
+    dissolution = ~offset(edges) + offset(nodematch("age.grp", diff = TRUE)),
+    duration = if (!is.null(synth_dur_casl_byage)) synth_dur_casl_byage
+               else netparams$casl$durs.casl.byage$mean.dur.adj,
+    d.rate = expect.mort
+  )
 
 
   # One-Time Model ----------------------------------------------------------
