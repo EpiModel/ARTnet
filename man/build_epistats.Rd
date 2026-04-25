@@ -43,11 +43,12 @@ with \code{age.limits = c(15, 65)}.}
 \item{age.sexual.cessation}{Age of cessation of sexual activity, while aging process continues
 through the upper age limit. Maximum allowed value of 66.}
 
-\item{init.hiv.prev}{Initial HIV prevalence to be used in epidemic model estimated model, with a
-numerical vector of size 3 corresponding to starting prevalence in three race/ethnic
-groups (Black, Hispanic, and White/Other, respectively). If \code{init.hiv.prev = NULL},
-\code{build_epistats} will estimate a logistic regression model to predict starting prevalence
-as a function of estimated prevalence in ARTnet as a function of race/ethnicity and age.}
+\item{init.hiv.prev}{Initial HIV prevalence to be used in epidemic model estimated model. When
+\code{race = TRUE}, must be a numerical vector with one element per race category in
+\code{race.level} (default 3, corresponding to Black, Hispanic, and White/Other). When
+\code{race = FALSE}, must be a single overall-population prevalence (length 1). If
+\code{init.hiv.prev = NULL}, \code{build_epistats} will estimate a logistic regression model to
+predict starting prevalence as a function of race/ethnicity and age in ARTnet.}
 
 \item{time.unit}{Specifies time unit for time-dependent ARTnet statistics. Default is 7,
 corresponding to a weekly time unit. Allowed inputs range from 1 for a daily time unit to
