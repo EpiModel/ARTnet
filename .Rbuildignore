@@ -4,3 +4,5 @@
 ^CLAUDE\.md$
 ^inst/validation/snapshots$
 ^\.github$
+^\.positai$
+^\.claude$
