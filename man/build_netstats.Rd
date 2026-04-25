@@ -14,6 +14,7 @@ build_netstats(
   race.prop = NULL,
   young.prop = NULL,
   method = c("existing", "joint"),
+  target_pop = NULL,
   browser = FALSE
 )
 }
@@ -63,6 +64,33 @@ partner-race uncertainty via \code{joint_nm_race_model}, then median-aggregated 
 stratum. \code{nodefactor_risk.grp} and \code{diss.homog} still use the within-ARTnet
 univariate / aggregated values — those are not consumed by the standard
 EpiModelHIV-Template dissolution offset.}
+
+\item{target_pop}{Optional specification of the synthetic target population. Defaults to NULL,
+which uses the legacy patchwork of reference sources (NCHS age pyramid +
+\code{ARTnetData::race.dist} + ARTnet's own degree / role / risk-quintile distributions).
+Supports three forms:
+\itemize{
+\item A \strong{named list} of marginal distribution overrides. Allowed names:
+\code{age.pyramid} (vector of length \code{nAges}), \code{race.prop} (length matching
+\code{race.level}), \code{deg.casl} (length 4), \code{deg.main} (length 3), \code{deg.tot} (length 4),
+\code{role.class} (length 3), \code{risk.grp} (length matching \code{nf.risk.grp}). Each
+element overrides the corresponding default source; absent names fall through
+to legacy defaults. Equivalent in form to passing the older \code{age.pyramid} /
+\code{race.prop} arguments, but extends the override surface to the per-attribute
+distributions previously sourced from \code{netparams}.
+\item A \strong{data.frame} with one row per node. Required columns: \code{age}, \code{deg.casl},
+\code{deg.main}, \code{role.class}, \code{risk.grp} (plus \code{race} when \code{epistats$race = TRUE}).
+Optional columns: \code{sqrt.age}, \code{age.grp}, \code{active.sex}, \code{deg.tot}, \code{diag.status}
+(derived from required columns if absent). When supplied, attribute sampling is
+bypassed entirely and \code{network.size} is set to \code{nrow(target_pop)}. This form is
+for users with a fully-specified joint synthetic population (e.g., post-stratified
+to NHBS or AMIS demographics).
+\item A \strong{character string} naming a built-in reference population. Currently
+raises an informative error. The planned set is geography-specific general male
+population demographics (NCHS age pyramid + \code{ARTnetData::race.dist} by
+geography) — bundles like \code{"atlanta"} or \code{"us_msm_male"} packaged from data
+already in the package, no NHBS or other restricted data required.
+}}
 
 \item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
 }
