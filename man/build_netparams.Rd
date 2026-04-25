@@ -8,6 +8,7 @@ build_netparams(
   epistats,
   smooth.main.dur = FALSE,
   oo.nquants = 5,
+  duration.method = c("empirical", "joint_lm"),
   method = c("existing", "joint"),
   browser = FALSE
 )
@@ -20,6 +21,37 @@ oldest and second oldest age groups.}
 
 \item{oo.nquants}{Number of quantiles to split the one-off partnership risk distribution (count
 of one-off partners per unit time).}
+
+\item{duration.method}{Character. Controls how partnership durations for dissolution-coef
+estimation are computed. One of:
+\itemize{
+\item \code{"empirical"} (default) — mean / median of observed durations among ongoing
+partnerships, stratified by (age-match x index.age.grp). Relies on the
+geometric / memoryless assumption that median elapsed time in ongoing
+partnerships equals median full-partnership duration. Byte-identical to the
+pre-refactor behavior.
+\item \code{"joint_lm"} — log-linear \verb{lm(log(duration.time) ~ <joint ego + partner + match terms>)} on ongoing partnerships; per-stratum medians computed from model
+predictions. The covariate-adjusted version of \code{"empirical"}: targets the
+same cross-sectional age-of-extant-ties quantity (via the same geometric
+transformation), but corrects for confounding of the duration estimate by
+other attributes — the direct analog of the marginal-vs-joint fix that
+\code{method = "joint"} applies to formation stats. Fitted model is stored at
+\verb{netparams$<layer>$joint_duration_model}; see issue #73 for the follow-up
+to predict per-dyad on the synthetic target population in \code{build_netstats}.
+}
+Both methods flow through the same geometric transformation
+(\code{mean.dur.adj = 1 / (1 - 2^(-1 / median))}) that \code{build_netstats} passes to
+\code{dissolution_coefs()}, so the TERGM offset structure is identical across
+methods. The TERGM dissolution is geometric (constant hazard per timestep), so
+under the inspection-paradox identity the \code{duration} parameter it consumes
+simultaneously determines the simulated mean partnership duration and the
+simulated mean age of extant ties at cross-section; both methods target the
+observable latter quantity. A prior \code{"weibull_strat"} option targeting the
+underlying mean full-partnership duration was explored and removed: its
+output can't be faithfully honored by a geometric TERGM without a non-standard
+age-dependent dissolution term, making it a diagnostic rather than a
+production target. The one-off layer has no durations, so this flag only
+affects main and casual-layer output.}
 
 \item{method}{Character. Either \code{"existing"} (default) or \code{"joint"}. \code{"existing"} reproduces
 the pre-refactor behavior byte-for-byte: a separate univariate Poisson/binomial/linear

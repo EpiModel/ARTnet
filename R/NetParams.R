@@ -1,3 +1,74 @@
+# Joint log-linear lm on log(duration.time) for ongoing partnerships.
+# Same length-bias convention as the "empirical" default (uses only
+# ongoing, relies on the memoryless property to read stratum-specific
+# predicted durations as the median full-duration quantity that feeds
+# the geometric transformation in build_netstats). Returns the fitted
+# model plus a vector of per-row predicted durations on the training
+# set so callers can stratify however they like.
+fit_joint_lm_dur <- function(l_layer, race, geog.lvl) {
+  ongoing <- l_layer[l_layer$ongoing2 == 1 &
+                       !is.na(l_layer$duration.time) &
+                       l_layer$duration.time > 0, , drop = FALSE]
+  if (nrow(ongoing) < 20) return(NULL)
+  terms <- c("index.age.grp", "sqrt(index.age.grp)", "hiv2", "same.age.grp")
+  if (isTRUE(race)) {
+    terms <- c(terms, "as.factor(race.cat.num)", "same.race")
+  }
+  if (!is.null(geog.lvl)) {
+    terms <- c("geogYN", terms)
+  }
+  fml <- reformulate(terms, response = "log(duration.time)")
+  fit <- tryCatch(
+    suppressWarnings(lm(fml, data = ongoing)),
+    error = function(e) NULL
+  )
+  if (is.null(fit)) return(NULL)
+  fitted_dur <- exp(predict(fit, newdata = ongoing))
+  list(model = fit, ongoing = ongoing, fitted_dur = fitted_dur)
+}
+
+
+# Given a partnership-level layer and a non-default duration.method,
+# return a list(homog, byage, joint_duration_model) of duration
+# summaries matching the shape of the empirical output (so that the
+# geometric transformation, smoothing, and sex.cess.mod logic in the
+# calling layer block apply uniformly). `byage_strata` is the vector
+# of stratum keys expected in the output (first = 0 for non-matched,
+# subsequent = index.age.grp values for matched-within-age-group).
+compute_alt_durs <- function(l_layer, duration.method, byage_strata,
+                             race, geog.lvl) {
+  stopifnot(duration.method == "joint_lm")
+
+  res <- fit_joint_lm_dur(l_layer, race = race, geog.lvl = geog.lvl)
+  if (is.null(res)) {
+    return(list(homog = data.frame(mean.dur = NA_real_, median.dur = NA_real_),
+                byage = data.frame(index.age.grp = byage_strata,
+                                   mean.dur = NA_real_, median.dur = NA_real_),
+                model = NULL))
+  }
+  # Stratum medians from predicted durations on the training set.
+  byage <- do.call(rbind, lapply(byage_strata, function(k) {
+    sub <- if (k == 0) {
+      res$ongoing[res$ongoing$same.age.grp == 0, , drop = FALSE]
+    } else {
+      res$ongoing[res$ongoing$same.age.grp == 1 &
+                    res$ongoing$index.age.grp == k, , drop = FALSE]
+    }
+    if (nrow(sub) == 0) {
+      data.frame(index.age.grp = k, mean.dur = NA_real_, median.dur = NA_real_)
+    } else {
+      pred_sub <- exp(predict(res$model, newdata = sub))
+      data.frame(index.age.grp = k,
+                 mean.dur = mean(pred_sub, na.rm = TRUE),
+                 median.dur = median(pred_sub, na.rm = TRUE))
+    }
+  }))
+  homog <- data.frame(mean.dur = mean(res$fitted_dur, na.rm = TRUE),
+                      median.dur = median(res$fitted_dur, na.rm = TRUE))
+  list(homog = homog, byage = byage, model = res$model)
+}
+
+
 # Fit a joint GLM predicting `response` from all available individual
 # attributes (age, race, the concurrent-layer degree, HIV status,
 # geography). Candidate interactions are considered one at a time and
@@ -56,6 +127,37 @@ fit_joint_glm <- function(d, response, main_terms,
 #'        oldest and second oldest age groups.
 #' @param oo.nquants Number of quantiles to split the one-off partnership risk distribution (count
 #'        of one-off partners per unit time).
+#' @param duration.method Character. Controls how partnership durations for dissolution-coef
+#'        estimation are computed. One of:
+#'        \itemize{
+#'          \item `"empirical"` (default) — mean / median of observed durations among ongoing
+#'            partnerships, stratified by (age-match x index.age.grp). Relies on the
+#'            geometric / memoryless assumption that median elapsed time in ongoing
+#'            partnerships equals median full-partnership duration. Byte-identical to the
+#'            pre-refactor behavior.
+#'          \item `"joint_lm"` — log-linear `lm(log(duration.time) ~ <joint ego + partner + match
+#'            terms>)` on ongoing partnerships; per-stratum medians computed from model
+#'            predictions. The covariate-adjusted version of `"empirical"`: targets the
+#'            same cross-sectional age-of-extant-ties quantity (via the same geometric
+#'            transformation), but corrects for confounding of the duration estimate by
+#'            other attributes — the direct analog of the marginal-vs-joint fix that
+#'            `method = "joint"` applies to formation stats. Fitted model is stored at
+#'            `netparams$<layer>$joint_duration_model`; see issue #73 for the follow-up
+#'            to predict per-dyad on the synthetic target population in `build_netstats`.
+#'        }
+#'        Both methods flow through the same geometric transformation
+#'        (`mean.dur.adj = 1 / (1 - 2^(-1 / median))`) that `build_netstats` passes to
+#'        `dissolution_coefs()`, so the TERGM offset structure is identical across
+#'        methods. The TERGM dissolution is geometric (constant hazard per timestep), so
+#'        under the inspection-paradox identity the `duration` parameter it consumes
+#'        simultaneously determines the simulated mean partnership duration and the
+#'        simulated mean age of extant ties at cross-section; both methods target the
+#'        observable latter quantity. A prior `"weibull_strat"` option targeting the
+#'        underlying mean full-partnership duration was explored and removed: its
+#'        output can't be faithfully honored by a geometric TERGM without a non-standard
+#'        age-dependent dissolution term, making it a diagnostic rather than a
+#'        production target. The one-off layer has no durations, so this flag only
+#'        affects main and casual-layer output.
 #' @param method Character. Either `"existing"` (default) or `"joint"`. `"existing"` reproduces
 #'        the pre-refactor behavior byte-for-byte: a separate univariate Poisson/binomial/linear
 #'        fit for each ERGM target statistic. `"joint"` leaves all of those outputs intact **and**
@@ -115,9 +217,11 @@ fit_joint_glm <- function(d, response, main_terms,
 build_netparams <- function(epistats,
                             smooth.main.dur = FALSE,
                             oo.nquants = 5,
+                            duration.method = c("empirical", "joint_lm"),
                             method = c("existing", "joint"),
                             browser = FALSE) {
   method <- match.arg(method)
+  duration.method <- match.arg(duration.method)
 
   # Ensures that ARTnetData is installed
   if (system.file(package = "ARTnetData") == "") stop(missing_data_msg)
@@ -592,6 +696,49 @@ build_netparams <- function(epistats,
   durs.main.all <- durs.main.all[, c(3, 1, 2, 4, 5)]
   out$main$durs.main.byage <- durs.main.all
 
+
+  ## duration.method override (see #63 phase 3) ----
+  # Replace the empirical stratum medians with model-based ones and
+  # re-apply the geometric transformation. Under joint_lm the predicted
+  # stratum medians flow through the same `mean.dur.adj =
+  # 1/(1 - 2^(-1/median))` formula empirical uses — the only difference
+  # is that the medians are covariate-adjusted rather than marginal.
+  if (duration.method == "joint_lm") {
+    alt <- compute_alt_durs(
+      l_layer = lmain[lmain$RAI == 1 | lmain$IAI == 1, , drop = FALSE],
+      duration.method = duration.method,
+      byage_strata = out$main$durs.main.byage$index.age.grp,
+      race = race, geog.lvl = geog.lvl
+    )
+    # homog
+    if (!is.na(alt$homog$median.dur)) {
+      out$main$durs.main.homog$mean.dur       <- alt$homog$mean.dur
+      out$main$durs.main.homog$median.dur     <- alt$homog$median.dur
+      out$main$durs.main.homog$rates.main.adj <-
+        1 - 2^(-1 / (wt * out$main$durs.main.homog$median.dur))
+      out$main$durs.main.homog$mean.dur.adj <-
+        1 / (1 - 2^(-1 / (wt * out$main$durs.main.homog$median.dur)))
+    }
+    # byage: per-stratum replacement, with empirical fallback if a stratum
+    # fit failed (keeps the row populated so dissolution_coefs doesn't NA).
+    for (i in seq_len(nrow(out$main$durs.main.byage))) {
+      k <- out$main$durs.main.byage$index.age.grp[i]
+      j <- which(alt$byage$index.age.grp == k)
+      if (length(j) == 1 && !is.na(alt$byage$median.dur[j])) {
+        out$main$durs.main.byage$mean.dur[i]       <- alt$byage$mean.dur[j]
+        out$main$durs.main.byage$median.dur[i]     <- alt$byage$median.dur[j]
+        out$main$durs.main.byage$rates.main.adj[i] <-
+          1 - 2^(-1 / (wt * alt$byage$median.dur[j]))
+        out$main$durs.main.byage$mean.dur.adj[i] <-
+          1 / (1 - 2^(-1 / (wt * alt$byage$median.dur[j])))
+      }
+    }
+    if (!is.null(alt$model)) {
+      out$main$joint_duration_model <- alt$model
+    }
+  }
+
+
   if (smooth.main.dur == TRUE) {
     n2 <- nrow(durs.main.all)
     n1 <- n2 - 1
@@ -983,6 +1130,41 @@ build_netparams <- function(epistats,
 
   durs.casl.all <- durs.casl.all[, c(3, 1, 2, 4, 5)]
   out$casl$durs.casl.byage <- durs.casl.all
+
+
+  ## duration.method override (see #63 phase 3) ----
+  if (duration.method == "joint_lm") {
+    alt <- compute_alt_durs(
+      l_layer = lcasl[lcasl$RAI == 1 | lcasl$IAI == 1, , drop = FALSE],
+      duration.method = duration.method,
+      byage_strata = out$casl$durs.casl.byage$index.age.grp,
+      race = race, geog.lvl = geog.lvl
+    )
+    if (!is.na(alt$homog$median.dur)) {
+      out$casl$durs.casl.homog$mean.dur       <- alt$homog$mean.dur
+      out$casl$durs.casl.homog$median.dur     <- alt$homog$median.dur
+      out$casl$durs.casl.homog$rates.casl.adj <-
+        1 - 2^(-1 / (wt * out$casl$durs.casl.homog$median.dur))
+      out$casl$durs.casl.homog$mean.dur.adj <-
+        1 / (1 - 2^(-1 / (wt * out$casl$durs.casl.homog$median.dur)))
+    }
+    for (i in seq_len(nrow(out$casl$durs.casl.byage))) {
+      k <- out$casl$durs.casl.byage$index.age.grp[i]
+      j <- which(alt$byage$index.age.grp == k)
+      if (length(j) == 1 && !is.na(alt$byage$median.dur[j])) {
+        out$casl$durs.casl.byage$mean.dur[i]       <- alt$byage$mean.dur[j]
+        out$casl$durs.casl.byage$median.dur[i]     <- alt$byage$median.dur[j]
+        out$casl$durs.casl.byage$rates.casl.adj[i] <-
+          1 - 2^(-1 / (wt * alt$byage$median.dur[j]))
+        out$casl$durs.casl.byage$mean.dur.adj[i] <-
+          1 / (1 - 2^(-1 / (wt * alt$byage$median.dur[j])))
+      }
+    }
+    if (!is.null(alt$model)) {
+      out$casl$joint_duration_model <- alt$model
+    }
+  }
+
 
   # If sexual cessation model, then set diss coef for age grp above boundary to 1
   if (sex.cess.mod == TRUE) {
