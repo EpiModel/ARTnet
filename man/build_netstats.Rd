@@ -55,9 +55,14 @@ partnership-level GLM fit on long-format ARTnet data with ego attributes on the 
 (\verb{netparams$<layer>$joint_nm_\{age,race\}_model} and
 \verb{netparams$<layer>$joint_absdiff_\{age,sqrtage\}_model}). Under \code{"joint"}, edges and all
 nodefactor target stats are internally consistent by construction
-(\verb{sum(nodefactor_<attr>) = 2 * edges}), so \code{edges.avg} has no effect. Dissolution
-coefficients and \code{nodefactor_risk.grp} still use the univariate marginals — the
-duration refactor lives on #63 and will be addressed in a follow-up PR.}
+(\verb{sum(nodefactor_<attr>) = 2 * edges}), so \code{edges.avg} has no effect. The
+\code{diss.byage} dissolution offset is computed from synth-aggregated stratum-level
+durations when \code{build_netparams(..., duration.method = "joint_lm")} was used:
+per-ego predicted log(duration) from \code{joint_duration_model}, marginalized over
+partner-race uncertainty via \code{joint_nm_race_model}, then median-aggregated within
+stratum. \code{nodefactor_risk.grp} and \code{diss.homog} still use the within-ARTnet
+univariate / aggregated values — those are not consumed by the standard
+EpiModelHIV-Template dissolution offset.}
 
 \item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
 }
