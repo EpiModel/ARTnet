@@ -23,11 +23,12 @@
 #'        with `age.limits = c(15, 65)`.
 #' @param age.sexual.cessation Age of cessation of sexual activity, while aging process continues
 #'        through the upper age limit. Maximum allowed value of 66.
-#' @param init.hiv.prev Initial HIV prevalence to be used in epidemic model estimated model, with a
-#'        numerical vector of size 3 corresponding to starting prevalence in three race/ethnic
-#'        groups (Black, Hispanic, and White/Other, respectively). If `init.hiv.prev = NULL`,
-#'        `build_epistats` will estimate a logistic regression model to predict starting prevalence
-#'        as a function of estimated prevalence in ARTnet as a function of race/ethnicity and age.
+#' @param init.hiv.prev Initial HIV prevalence to be used in epidemic model estimated model. When
+#'        `race = TRUE`, must be a numerical vector with one element per race category in
+#'        `race.level` (default 3, corresponding to Black, Hispanic, and White/Other). When
+#'        `race = FALSE`, must be a single overall-population prevalence (length 1). If
+#'        `init.hiv.prev = NULL`, `build_epistats` will estimate a logistic regression model to
+#'        predict starting prevalence as a function of race/ethnicity and age in ARTnet.
 #' @param time.unit Specifies time unit for time-dependent ARTnet statistics. Default is 7,
 #'        corresponding to a weekly time unit. Allowed inputs range from 1 for a daily time unit to
 #'        30 for a monthly time unit.
@@ -536,9 +537,17 @@ build_epistats <- function(geog.lvl = NULL,
     # Output
     out$hiv.mod <- hiv.mod
   } else {
-    #if (length(init.hiv.prev) != 3) {
-    #  stop("Input parameter init.prev.hiv must be a vector of size three")
-    #}
+    if (race == TRUE && length(init.hiv.prev) != length(race.level)) {
+      stop("init.hiv.prev must have length ", length(race.level),
+           " (one starting prevalence per race category in race.level) when ",
+           "race = TRUE; got length ", length(init.hiv.prev), ".")
+    }
+    if (race == FALSE && length(init.hiv.prev) < 1) {
+      stop("init.hiv.prev must have length >= 1 when race = FALSE.")
+    }
+    # Note: under race = FALSE the downstream sampler uses only
+    # init.hiv.prev[1] (the overall-population prevalence). Longer vectors
+    # are accepted for backward compatibility but extra elements are ignored.
     if (prod(init.hiv.prev < 1) == 0  || prod(init.hiv.prev > 0) == 0) {
       stop("All elements of init.hiv.prev must be between 0 and 1 non-inclusive")
     }
