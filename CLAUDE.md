@@ -9,21 +9,17 @@ ARTnet (R package, GitHub `EpiModel/ARTnet`) parameterizes epidemic and network 
 The package takes data from the private `ARTnetData` package and produces three objects consumed downstream:
 
 1. `build_epistats()` — epidemic parameters (HIV prevalence by race/age, HIV mortality, etc.).
-2. `build_netparams()` — estimated per-respondent network statistics (mean degrees, match/factor rates, durations).
+2. `build_netparams()` — estimated per-respondent / per-partnership network statistics (degree, mixing, durations).
 3. `build_netstats()` — population-scaled target statistics formatted for ERGM estimation in EpiModelHIV.
 
 Downstream consumers include `~/git/EpiModelHIV-Template/` (template simulation workflow) and `~/git/EpiModelHIV-p/` (model package). Any change to ARTnet's output structure or numerics is load-bearing for an entire simulation ecosystem.
 
-**Critical constraint — backward compatibility:** any refactor must be backward compatible by default. Existing EpiModelHIV users calling `build_netstats()` without new arguments must get byte-identical output. **Adding** fields to the return list is safe. **Removing** or **renaming** fields is not.
+**Critical constraint — backward compatibility:** any refactor must be backward compatible by default. Existing EpiModelHIV users calling `build_netstats()` without new arguments must get byte-identical output. **Adding** fields to the return list is safe. **Removing** or **renaming** fields is not. Verified by the snapshot harness in §5.
 
-## 2. Core workflow files (where most work happens)
+## 2. Core workflow files
 
-This session's refactor work — and most ongoing work in this repo — concentrates in two files:
-
-- [R/NetParams.R](R/NetParams.R) (~1,168 lines) — fits per-respondent Poisson / binomial / linear models for each target statistic, layer by layer (main / casl / inst). Currently **one univariate model per target stat**. This is the main surface of the joint g-comp refactor (issue [#61](https://github.com/EpiModel/ARTnet/issues/61)).
-- [R/NetStats.R](R/NetStats.R) (~723 lines) — consumes `netparams` output, builds the synthetic population, and scales per-respondent stats up to population-level ERGM target stats. This is the main surface of [#62](https://github.com/EpiModel/ARTnet/issues/62).
-
-Other files:
+- [R/NetParams.R](R/NetParams.R) (~1,400 lines after refactor) — fits per-respondent and per-partnership models for each target statistic, layer by layer (main / casl / inst). Both legacy univariate fits and joint g-computation models are produced.
+- [R/NetStats.R](R/NetStats.R) (~1,000 lines after refactor) — consumes `netparams` output, builds the synthetic population, and scales per-respondent stats up to population-level ERGM target stats. Branches by `method` argument.
 - [R/EpiStats.R](R/EpiStats.R) — act rates, condom use, starting HIV prevalence.
 - [R/ARTnet-package.R](R/ARTnet-package.R), [R/globals.R](R/globals.R) — package docs and global-binding declarations.
 
@@ -32,184 +28,199 @@ Other files:
 Exported functions (see [NAMESPACE](NAMESPACE)):
 `build_epistats`, `build_netparams`, `build_netstats`, `make_race_combo`, `reweight_age_pyr`, `trim_epistats`, `trim_netstats`, `update_asmr`.
 
-Canonical pipeline:
+### Canonical legacy pipeline (byte-identical to pre-refactor):
 
 ```r
-epistats  <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta", race = TRUE, time.unit = 7)
+epistats  <- build_epistats(geog.lvl = "city", geog.cat = "Atlanta",
+                            init.hiv.prev = c(0.33, 0.137, 0.084),
+                            race = TRUE, time.unit = 7)
 netparams <- build_netparams(epistats, smooth.main.dur = TRUE)
-netstats  <- build_netstats(epistats, netparams, expect.mort = 0.000478213, network.size = 5000)
+netstats  <- build_netstats(epistats, netparams,
+                            expect.mort = 0.000478213, network.size = 5000)
 ```
+
+### Joint g-computation pipeline (opt-in, post-refactor):
+
+```r
+netparams <- build_netparams(epistats, smooth.main.dur = TRUE,
+                             method = "joint",                 # joint Poisson + binomial fits
+                             duration.method = "joint_lm")     # log-linear duration regression
+netstats  <- build_netstats(epistats, netparams,
+                            expect.mort = 0.000478213, network.size = 5000,
+                            method = "joint",                  # g-computation aggregation
+                            target_pop = NULL)                 # optional post-stratification
+```
+
+`target_pop` accepts a named list (per-marginal overrides), a data.frame (one row per node, full bypass of attribute sampling), or a character string (reserved for future built-in geography bundles — currently raises a clear not-yet-implemented error). All defaults preserve byte-identical legacy behavior.
 
 Pre-built example objects ship in `inst/` (`epistats-example.rds`, `netstats-example.rds`) for users without `ARTnetData` access.
 
-## 4. The current refactor — joint g-computation
+## 4. The joint g-computation refactor (Phase 1 complete)
 
-### 4.1 Motivation (why we are doing this)
+### 4.1 Why this happened
 
-For each ERGM target stat, `R/NetParams.R` currently fits a **separate univariate Poisson GLM** (see [R/NetParams.R:220-450](R/NetParams.R) for the main layer; casl + inst mirror it):
+The legacy approach fit a separate univariate Poisson / binomial / linear regression for each target statistic, one attribute at a time. Three problems followed:
 
-```r
-mod_md    <- glm(deg.main ~ 1,                           family = poisson())
-mod_age   <- glm(deg.main ~ age.grp + sqrt(age.grp),     family = poisson())
-mod_race  <- glm(deg.main ~ as.factor(race.cat.num),     family = poisson())
-mod_dcas  <- glm(deg.main ~ deg.casl,                    family = poisson())
-mod_hiv   <- glm(deg.main ~ hiv2,                        family = poisson())
-```
+1. **Marginal-vs-joint bias.** Each per-attribute estimate carried ARTnet's conditional joint distribution of the *other* attributes baked in. When `build_netstats()` applied these to a synthetic target population whose joint attribute distribution differed from ARTnet's (any city-specific MSM target, or any AMIS-projected population), bias propagated systematically.
+2. **Internal inconsistency across target stats.** Edges from `md.main * num / 2` did not equal edges from `Σ_r table(race) * nf.race[r] / 2`. The legacy `edges.avg` argument was a tacit acknowledgement.
+3. **Patchwork target population.** `build_netstats()` mixed reference sources (NCHS age pyramid + `ARTnetData::race.dist` + ARTnet's own degree/role distributions) with no coherent specification of who the target was.
 
-Each target stat (`md.main`, `nf.age.grp`, `nf.race`, `nf.deg.casl`, `nf.diag.status`) is estimated independently, each marginalizing over ARTnet's conditional joint distribution of the other attributes. This causes three problems:
+The refactor replaces the per-attribute univariate fits with joint Poisson and binomial GLMs (and a log-linear regression for durations) that condition on all attributes simultaneously, then aggregates per-respondent or per-dyad predictions against an explicitly-specified synthetic target via g-computation. Direct standardization in the sense of Hernán & Robins (2020).
 
-**Problem 1 — Marginal means don't carry to a different population.** When `build_netstats()` applies `nf.age.grp[k]` (estimated under ARTnet's `{race, deg.casl, hiv2, ...}` distribution given age = k) to a synthetic population with a *different* joint distribution, ARTnet's baked-in conditional distribution creates systematic bias whenever interactions on degree exist.
+### 4.2 What got built (PRs and what they did)
 
-**Problem 2 — Internal inconsistency across target stats.** In `build_netstats()`:
+| PR | Issue | Contribution |
+|---|---|---|
+| #66 | — | Backward-compat snapshot harness + pinned `EpiModelHIV-Template/R/A-networks/` reference |
+| #67 | #61 | Joint Poisson GLMs per layer in `build_netparams` (formation) |
+| #68 | #62 | G-computation in `build_netstats` for edges / nodefactor / concurrent |
+| #69 | #63 (phases 1–2) | Joint logistic for nodematch, joint Gaussian for absdiff |
+| #70 | — | Package housekeeping: R CMD check 0/0/0, silent tests, GitHub Actions CI |
+| #71 | #63 (phase 3) | `duration.method` flag with `empirical` and `joint_lm` options |
+| #74 | #73 | Synth-population aggregation of joint_lm durations in `build_netstats` |
+| #75 | #59 | Validate `init.hiv.prev` length against `race` flag |
+| #76 | #65 | Method-comparison validation suite + four-city comparison report |
+| #77 | #64 | `target_pop` argument: list / data.frame / character forms |
+| #78 | — | Research report: `inst/validation/method_refactor_report.md` |
 
-```r
-edges_a = (md.main * n) / 2                        # option 1
-edges_b = sum(table(race) * nf.race) / 2           # option 2
-```
+### 4.3 What `method = "joint"` actually fits
 
-These disagree whenever the target population's race distribution ≠ ARTnet's. The `edges.avg` argument (default `FALSE`) is a tell — the package already knows the math doesn't close.
+Per network layer (main, casual, one-time), under `method = "joint"`:
 
-**Problem 3 — Frankenstein reference distribution.** `build_netstats()` samples attributes from a mix of sources (NCHS general-population age pyramid; `ARTnetData::race.dist`; ARTnet's own `deg.casl` / `deg.main` dists; uniform `risk.grp`). There is no coherent single target population.
+- **Joint Poisson GLM** of partnership count on `age.grp + sqrt(age.grp) + race + cross-layer-degree + hiv2`, with AIC-based selection over `age.grp:race` and `age.grp:cross-layer-degree` interactions. Stored at `netparams$<layer>$joint_model`.
+- **Joint binomial GLM** of the concurrency indicator (`deg > 1`) on the same RHS, for main and casual. Stored at `netparams$<layer>$joint_concurrent_model`.
+- **Joint binomial GLMs** for `same.age.grp` and `same.race` (when race-stratified), fit on long-form partnership data with ego attributes only on the RHS. Stored at `netparams$<layer>$joint_nm_age_model` and `joint_nm_race_model`.
+- **Joint Gaussian regressions** for `ad` (absdiff age) and `ad.sr` (absdiff sqrt-age). Stored at `joint_absdiff_age_model` and `joint_absdiff_sqrtage_model`.
+- **Joint log-linear regression** of `log(duration.time)` among ongoing partnerships under `duration.method = "joint_lm"`, with ego + partner + matching terms. Stored at `joint_duration_model`.
 
-### 4.2 The proposed fix — joint Poisson GLM + g-computation
+Under `method = "joint"` in `build_netstats`, edges become `sum(pred_deg) / 2`, `nodefactor_<attr>[level] = sum(pred_deg | attr == level)`, and dyad-level statistics aggregate `pred_deg * pred_<dyad>` per stratum / 2. Internal consistency `Σ_<level> nodefactor_<attr>[level] = 2 × edges` holds to machine precision.
 
-Fit **one joint Poisson GLM per layer** with relevant attributes + interactions:
+### 4.4 The duration estimand argument (worth understanding)
 
-```r
-m_joint_main <- glm(deg.main ~ age.grp + sqrt(age.grp) +
-                      as.factor(race.cat.num) + deg.casl + hiv2 +
-                      age.grp:as.factor(race.cat.num),
-                    data = d, family = poisson())
-```
+TERGM dissolution uses `~offset(edges) + offset(nodematch("age.grp", diff = TRUE))` — a constant-hazard (geometric) per-stratum offset. Under that simulation:
+- Mean simulated full partnership duration **equals** mean simulated age of extant ties at cross-section, by the inspection paradox / memoryless property, *but only if the underlying duration distribution is exponential*.
+- Under non-exponential durations (Weibull `k ≠ 1`), these two quantities **diverge** by a factor of `(1 + CV²) / 2`.
+- Per-stratum Weibull shape parameters from a length-bias-corrected MLE (development-time exploration) showed `k ≈ 0.6` for casual partnerships (decreasing hazard) and `k > 2` for older-matched main partnerships (increasing hazard).
 
-In a later refactor (#62), `build_netstats()` will build a synthetic population from a single reference distribution, predict per-node expected degree, and aggregate to get target stats that are **internally consistent by construction**:
+Implication: the geometric simulation can match observed mean age of extant ties exactly, but cannot honor a distinct mean full duration estimate. The `empirical` and `joint_lm` methods both target the cross-sectional age statistic — *not* mean full partnership duration — because that is the quantity TERGM can faithfully reproduce. A proper Weibull-based duration estimate was attempted and discarded for this reason; the attempt also showed that naive `survreg` on ARTnet's elapsed-duration data is catastrophically biased without length-bias correction (matched.5 main partnerships extrapolating to 1.5M weeks).
 
-```r
-pred_deg <- predict(m_joint_main, newdata = synth, type = "response")
-edges_target      <- sum(pred_deg) / 2
-nf.age.grp[k]     <- sum(pred_deg[synth$age.grp == k])
-nf.race[r]        <- sum(pred_deg[synth$race.cat.num == r])
-# ...
-```
+### 4.5 The geogYN insight (worth understanding)
 
-### 4.3 Empirical evidence motivating this
+The legacy pipeline used `geogYN` as a **main-effect covariate** in each per-attribute regression, then predicted at `geogYN = 1` for the city of interest. This was a defensible design choice — filtering ARTnet to Atlanta would have left only n = 206 respondents — but it did not accomplish demographic rebalancing, because:
 
-From the sibling project `EpiModel/ARTnetPredict`:
+| Population | % Black |
+|---|---:|
+| ARTnet full sample | 5.5% |
+| ARTnet Atlanta sub-sample | 12.6% |
+| Atlanta MSM target population (`ARTnetData::race.dist`) | 51.5% |
 
-- Age-standardized covariate shifts in AMIS MSM 2017 → 2024 are substantial *within* strata: PrEP ever 11% → 48% (+350%); STI any past 12 mo 10% → 15% (+49%); NH Black share 7.7% → 20.8% (+169% age-std); UAS 67% → 84% (+24%).
-- Raw AMIS self-reported partners/yr: +38% (OANUM) 2017 → 2024, age-std. Current ARTnet marginal method was the baseline; the PI flagged that the marginal-vs-joint gap may be non-trivial given these compositional shifts.
+The Atlanta sub-sample is more Black than the full sample (so `geogYN = 1` does shift toward Atlanta-relevant rates) but is still far from Atlanta's actual MSM composition. Online-recruitment selection bias on race operates within geographic strata, not just at the national level. The per-respondent rate (`md.main = 0.398`) thus reflects the Atlanta sub-sample's race composition, while the synthetic population is drawn from a *different* source (`ARTnetData::race.dist`). The two halves of the legacy pipeline implicitly assumed different race compositions and never reconciled. The joint g-computation closes the loop by aggregating per-respondent predictions across the synth's actual joint distribution.
 
-If attribute interactions on degree are meaningful, the current marginal approach has been introducing quietly biased target stats into every EpiModelHIV simulation. The bias is small when target ≈ ARTnet, but may be substantial for NHBS MSM demographics or 2022–24 AMIS projections.
+### 4.6 Headline empirical findings
 
-### 4.4 Phase roadmap
+From `inst/validation/method_comparison.md` (4 city scenarios × ~96 cells each = 384 target-stat cells total):
 
-```
-Phase 1 (ARTnet): methodology fix
-  #61 (joint GLM fit)                  ← ACTIVE
-  #62 (build_netstats g-comp refactor)
-  #63 (nodematch joint modeling)
-  #64 (post-stratification target population API)
-  #65 (validation suite: marginal vs joint)
+- **60% of cells (232 / 384) shift > 5%** between joint and existing methods.
+- **Cross-city ordering tracks demographic distance from ARTnet sample**: Seattle (closest, 87.4% W/Other vs ARTnet's 80.7%) shifts 46% of cells; Atlanta / Boston / Chicago all shift 64–67%.
+- **Largest single shifts**: dissolution durations in matched-and-old strata (−47% to −66%), one-time-partnership nodematch in oldest age groups (−51%), high-deg.main casual nodefactor (+40%).
+- **Atlanta main-edges decomposition**: legacy `0.398 × 5000 / 2 = 995`; joint `0.338 × 5000 / 2 = 845`. The −15% shift comes entirely from race-composition aggregation: ARTnet 80.7% W/O × 0.420 main degree → 0.398; Atlanta 51.5% Black × 0.272 → 0.338.
+- **Coefficient strengthening under joint adjustment** (main Poisson): `deg.casl` slope −0.24 → −0.55; `hiv2` slope +0.09 → +0.25; AIC selects `age.grp:deg.casl` interaction (+0.10).
+- **End-to-end ERGM convergence**: clean for both methods on `EpiModelHIV-Template`-equivalent estimation. Static `netdx` matches all formation targets within `|Z| ≤ 2.05` and `|% diff| ≤ 4.2%` over 1000 sims.
 
-Phase 2+ (ARTnetPredict repo): application
-  regenerate 2017-18 baseline, re-run 2022-24 projection,
-  post-stratify AMIS to NHBS, gonorrhea simulation, AJE paper
-```
+## 5. Validation infrastructure (`inst/validation/`)
 
-Each arrow is a hard dependency. #61 unblocks #62 and #65.
+- `validate_backward_compat.R` — `capture_snapshot()` and `compare_to_snapshot()`. Iterates over `PARAM_SETS` (Atlanta+race, national no-geog, Atlanta no-race) and full-object-diffs `netparams` and `netstats` at machine precision. Snapshot `.rds` files at `inst/validation/snapshots/` are gitignored (~12 MB each). Strips `joint_*_model` additive fields before comparison.
+- `method_comparison.R` — `compare_methods()`, `summarize_comparison()`, `render_comparison_report()`. Runs both methods across four city scenarios (Atlanta, Boston, Chicago, Seattle), produces long-format comparison data frame with all per-stat shifts, renders the markdown table.
+- `method_comparison.md` — committed canonical comparison report (regenerated by the harness).
+- `method_refactor_report.md` — full research-style writeup (~3,900 words, 5 tables, 3 figures). Suitable for export to Word for collaborator review.
+- `figures.R` + `figures/` — ggplot2 rendering script for the report's figures (joint-vs-existing scatter, dissolution-duration comparison, race-composition bar chart). PNGs gitignored (regenerate via `render_all_figures()`).
+- `epimodelhiv_template_ref/` — verbatim pinned copies of `EpiModelHIV-Template/R/A-networks/{initialize,model_main,model_casl,model_ooff}.R` documenting the public contract.
+- `netstats_contract.md` — distilled list of `netstats` fields the template ERGM specs read.
 
-### 4.5 Active task — issue #61
-
-[Refactor `build_netparams()` to fit joint Poisson GLM across attributes](https://github.com/EpiModel/ARTnet/issues/61).
-
-**In scope for #61:**
-- Fit one joint Poisson GLM per layer (main, casl, inst) predicting degree from `age.grp`, `race.cat.num`, `deg.{casl|main}`, `hiv2` + interactions.
-- Use AIC / LRT to select interaction terms; document choices.
-- Store fitted `glm` objects in the return list at `netparams$main$joint_model`, `netparams$casl$joint_model`, `netparams$inst$joint_model`.
-- **Keep all existing univariate marginal output fields unchanged**. Joint models are an additive output.
-
-**Out of scope for #61** (separate issues):
-- `build_netstats()` refactor — #62.
-- Nodematch joint modeling — #63.
-- User-supplied target population API — #64.
-- Marginal-vs-joint validation suite — #65.
-
-**Design decisions to make in #61:**
-1. **Which interactions?** At minimum `age.grp × race.cat.num`. Consider also `age.grp × deg.casl`. Select via AIC, document reasoning.
-2. **GLM vs GAM vs ML?** Start with GLM + explicit interactions (interpretable, matches existing ARTnet idiom). Escalate to `mgcv::gam()` only if interaction structure is complex. Avoid ML here — interpretability matters.
-3. **Regularization?** Not needed by default. If unregularized GLM fails to converge for sparse cells, consider `glmnet::glmnet(family = "poisson")` as fallback.
-4. **Geography.** Include `geogYN` as a main effect (matches existing pattern); no interactions with `geogYN` in the first pass.
-
-**Validation before marking #61 done:**
-1. Joint model converges on ARTnet 2017–18 data without warnings, for each layer.
-2. Marginal recovery: `mean(predict(joint, type = 'response'))` on the ARTnet sample is within 1% of `mean(observed deg)`.
-3. Coefficient sanity: age slope negative (older → lower degree); race coefficients in expected direction.
-4. Regression safety: all existing univariate output fields are byte-identical to before the refactor — enforced by the snapshot harness in [`inst/validation/`](inst/validation/) (see §4.7).
-
-### 4.7 Backward-compatibility snapshot harness
-
-[`inst/validation/`](inst/validation/) contains a pre/post regression harness plus a pinned copy of the downstream consumer ([`EpiModelHIV-Template/R/A-networks/`](inst/validation/epimodelhiv_template_ref/)) and the [field-level contract](inst/validation/netstats_contract.md) it reads.
-
-Workflow:
+### Snapshot regression workflow
 
 ```r
-# Step A — run once on pre-refactor `main` (captures golden snapshots)
+# Step A: capture once on pre-refactor main (already done)
 devtools::load_all()
 source(system.file("validation/validate_backward_compat.R", package = "ARTnet"))
 capture_snapshot()
 
-# Step B — run on refactor branch; must report ALL MATCH before merge
-devtools::load_all()
-source(system.file("validation/validate_backward_compat.R", package = "ARTnet"))
-compare_to_snapshot(method = "existing")   # or whatever the legacy flag is named
+# Step B: verify on any subsequent change
+compare_to_snapshot()                      # default args path
+compare_to_snapshot(method = "existing")   # explicit legacy combo
+# Both must report ALL MATCH 3/3 before merging anything.
 ```
 
-The harness iterates over `PARAM_SETS` (Atlanta+race, national no-geog, Atlanta no-race at minimum — add coverage if the refactor risks touching more paths) and full-object-diffs both `netparams` and `netstats`. New additive fields like `$joint_model` are stripped before comparison so they don't cause spurious diffs. Snapshot `.rds` files live under [`inst/validation/snapshots/`](inst/validation/snapshots/) and are gitignored (large, local).
-
-**Naming:** when introducing the `method` argument, default should be the legacy behavior so downstream EpiModelHIV users are unaffected until they opt in. A clean progression is `method = c("existing", "joint")` with `"existing"` the default in the refactor release, transitioning the default to `"joint"` in a later minor/major version after validation work is done.
-
-### 4.6 Things to flag to the PI if encountered
-- Joint GLM convergence failures (may need regularization or model simplification).
-- >10% difference in predicted mean(deg) between marginal and joint on ARTnet-self — would indicate the basic sanity check fails.
-- Any accidental change to existing `netparams` output structure (field names, types, values).
-- Ambiguity about which interaction terms to include — worth a quick discussion rather than guessing.
-
-## 5. Repo conventions
-
-- **R style:** package-standard roxygen2 docs; 2-space indentation; base R + `dplyr` mix. Match surrounding style.
-- **Function naming:** snake_case, verb-first (`build_*`, `trim_*`, `update_*`).
-- **Lint:** see [.lintr](.lintr) — 120-char lines, cyclocomp and object-name linters disabled.
-- **Roxygen:** markdown mode (`Roxygen: list(markdown = TRUE)` in DESCRIPTION).
-- **Dependencies:** prefer `stats::glm` over `glmnet` / `mgcv` unless functionally needed. DESCRIPTION currently imports only `dplyr` and depends on `EpiModel`.
-- **Testing:** files under `tests/testthat/`. Note that the existing `test-workflow-*.R` files are end-to-end workflow scripts, not `test_that()` blocks — they require `ARTnetData` + `EpiModelHIV` and execute `netest` / `netdx`. Add new unit tests in proper `test_that()` form alongside them.
-- **ARTnetData access:** the data package is private and requires a `GITHUB_PAT`. Functions check for it with `system.file(package = "ARTnetData") == ""`. Document any new direct dependency on specific columns of `ARTnetData::ARTnet.wide` / `ARTnet.long`.
-
-## 6. Running checks
+### Method-comparison workflow
 
 ```r
-devtools::document()   # regenerate man/ from roxygen
-devtools::test()       # run testthat suite
-devtools::check()      # full R CMD check
+source(system.file("validation/method_comparison.R", package = "ARTnet"))
+res <- compare_methods()           # ~30s on 4 scenarios × 2 methods
+summarize_comparison(res)
+render_comparison_report(res)      # writes inst/validation/method_comparison.md
 ```
 
-Do not push failing CI.
+The `expect.mort` value used in the comparison harness is `0.00025`, slightly lower than the EpiModelHIV-Template default `0.000478213`. This is because Seattle's empirical matched.5 main duration is 1381 weeks (small ARTnet sub-sample noise) and the standard mortality rate trips `dissolution_coefs()`'s competing-risk-of-departure check. The lower rate accommodates Seattle uniformly across cities for the comparison.
 
-## 7. Git / PR workflow
+## 6. Open work
 
-- Branch off `main` with descriptive name (e.g., `feature/joint-gcomp-netparams`).
-- Commits per logical unit (model fitting, tests, docs).
-- PR description: summary, design decisions made, validation results (the four checks in §4.5).
-- PR should reference the issue (`Closes #61` or `Addresses #61`).
-- Request review from PI + package maintainers.
+- **Issue #72 — formation-stat sampling bias.** ARTnet's cross-sectional sampling design exposes formation-stat estimates to length-biased sampling (on partnership-pair targets like `nodematch` and `absdiff`) and to partnership-count truncation at 2 main / 3 casual partners (on degree-based targets). Neither is corrected by the joint g-computation. The first concern is partially addressable by restricting partnership-pair fits to ongoing partnerships only; the second requires a truncated-Poisson likelihood. Has not been started.
+- **Geography-named `target_pop` bundles.** The character form of `target_pop` (`"atlanta"`, `"us_msm_male"`) raises a not-yet-implemented error. Implementation is a lookup table from name → list using NCHS age pyramid + `ARTnetData::race.dist` (no new data needed, pure code change). Convenience for users.
+- **Methods paper.** `inst/validation/method_refactor_report.md` is currently a research report. To become a publishable methods paper it would need: a simulation study with known ground truth quantifying joint-vs-marginal bias as a function of population divergence; deeper engagement with prior literature (Krivitsky & Morris, ergm.ego); formal statistical claims (variance, robustness); and a downstream EpiModelHIV-p simulation showing differential incidence over a multi-year horizon. Path A (applications note, ~3 weeks) and Path B (full methods paper, 3–6 months) discussed in chat.
 
-## 8. External references
+## 7. Repo conventions
+
+- **R style:** package-standard roxygen2 docs; 2-space indentation; base R + `dplyr` mix.
+- **Function naming:** snake_case, verb-first (`build_*`, `trim_*`, `update_*`).
+- **Lint:** [.lintr](.lintr) — 120-char lines, cyclocomp and object-name linters disabled.
+- **Roxygen:** markdown mode (`Roxygen: list(markdown = TRUE)` in DESCRIPTION).
+- **Dependencies:** `Imports` is `dplyr`; `Depends` is `EpiModel`. `Suggests` is `ARTnetData`, `knitr`, `rmarkdown`, `testthat`. `EpiModelHIV` was removed from Suggests in #70 because the package has no runtime dependency on it (only docstring references).
+- **Testing:** `tests/testthat/` for unit tests in proper `test_that()` form (currently 571 assertions across 9 test files). `tests/workflows/` for end-to-end ERGM estimation scripts that require `EpiModelHIV` and produce console output — not picked up by `testthat::test_local()`.
+- **ARTnetData access:** the data package is private and requires a `GITHUB_PAT`. Functions check for it with `system.file(package = "ARTnetData") == ""`.
+
+## 8. Running checks
+
+```r
+devtools::document()                       # regenerate man/ from roxygen
+devtools::test()                           # run testthat suite (571 assertions)
+devtools::check(error_on = "never")        # full R CMD check (target: 0/0/0)
+```
+
+## 9. CI
+
+GitHub Actions workflow at `.github/workflows/R-CMD-check.yaml` runs `R CMD check` on every push and PR.
+
+- **Single OS / R combination**: `ubuntu-latest` × R release. The package is not CRAN-published; multi-OS portability matrix would be overkill.
+- **`error-on: "warning"`** explicitly set so any new WARNING fails the build.
+- **Private-repo access**: requires a fine-grained PAT with read access to `EpiModel/ARTnetData`, configured as repository secret `EPIMODEL_PAT`. Falls back to `GITHUB_TOKEN` if absent (so the workflow file is valid on forks). Without the secret, dependency resolution fails because `ARTnetData` is private.
+- **`ARTnetData` is installed** in CI so that joint-fit functionality is exercised, not skipped.
+
+## 10. Git / PR workflow
+
+- Branch off `main` with descriptive name (`feature/...`, `fix/...`, `chore/...`, `docs/...`).
+- Commits per logical unit. Match recent commit message style.
+- PR description: summary, design decisions, validation results, test plan checklist.
+- **Auto-close keywords are tricky.** GitHub parses `close[sd]?`, `fix(e[sd])?`, `resolve[sd]?` followed by `#N` *anywhere in the PR body or any commit message*, including in relative-clause references like "the PR that closes #N". Two issues (#63, #69) were inadvertently closed early by such phrasing during the refactor. Going forward: grep PR bodies for `(close|closes|closed|fix|fixed|fixes|resolve|resolves|resolved)\s+#\d+` before submitting; verify each match references the PR's own scope. Use "lands", "addresses", or "ships" for forward-references to other PRs.
+- Don't push failing CI.
+- Don't auto-commit during interactive sessions unless asked.
+
+## 11. External references
 
 ### Sister project: ARTnetPredict
-The detailed methodological analysis that motivated issues #61–#65 lives in `~/git/ARTnetPredict/`:
-- `Plan/Step08-BuildLog.md` — §13 age-adjusted partners/yr; §17 raw AMIS vs model; §18 covariate-shift analysis; §20 target-year comparison; §21 3-year pooled recommendation + methodology limitations.
-- `Plan/Step09-Plan.md` §2 — most directly relevant to #61 work.
+The detailed methodological analysis that motivated this refactor lives in `~/git/ARTnetPredict/`:
+- `Plan/Step08-BuildLog.md` — covariate-shift analysis, raw AMIS vs model.
+- `Plan/Step09-Plan.md` §2 — most directly relevant.
 - `CLAUDE.md` — sister-project context.
 
 ### Methodological references
-- Hernán & Robins, *Causal Inference: What If*, ch. 13 (g-computation / direct standardization).
-- Weiss KM, Goodreau SM, Jenness SM et al. (2020), "Egocentric sexual networks of men who have sex with men in the United States: Results from the ARTnet study." *Epidemics* — canonical ARTnet methodology paper.
+- Hernán MA, Robins JM. *Causal Inference: What If*. Chapman & Hall/CRC, 2020. (Chapter 13: g-computation / direct standardization.)
+- Weiss KM, Goodreau SM, Morris M, Prasad P, Ramaraju R, Sanchez T, Jenness SM. Egocentric Sexual Networks of Men Who Have Sex with Men in the United States: Results from the ARTnet Study. *Epidemics* 2020; 30: 100386. — canonical ARTnet methodology paper.
+- Krivitsky PN, Morris M. Inference for social network models from egocentrically sampled data. *Annals of Applied Statistics* 2017; 11(1): 427–455.
+
+## 12. Things to flag to the PI if encountered
+
+- Joint GLM convergence failures (may need regularization or model simplification).
+- Snapshot regression failure under default args or `method = "existing"` — that's a backward-compat break. Stop and investigate.
+- Any change to the legacy output structure (field names, types, byte values) — even additive fields should be vetted.
+- Ambiguity about which interaction terms to include in joint fits — the AIC-based selection in the existing code is the default, but specific applications may want hand-specified terms.
+- Issues that touch sampling design (length-bias, truncation) — those go to #72.

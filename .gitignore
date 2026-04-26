@@ -7,4 +7,5 @@ Rplots.pdf
 vignettes/*.html
 vignettes/*.R
 inst/validation/snapshots/*.rds
+inst/validation/figures/*.png
 .positai

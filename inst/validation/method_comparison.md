@@ -15,13 +15,13 @@ ARTnet version: 2.9.0. Seed: 20260420. Network size: 5000.
 
 ## High-level summary
 
-- Total target-stat cells across scenarios: 363
-- Cells where |joint vs existing %diff| > 5%: **229**
+- Total target-stat cells across scenarios: 384
+- Cells where |joint vs existing %diff| > 5%: **232**
 
 - `atlanta_default`: 96 cells, 63 materially shifted (>5%)
-- `atlanta_nhbs_shifted`: 96 cells, 66 materially shifted (>5%)
-- `atlanta_no_race`: 75 cells, 49 materially shifted (>5%)
-- `national_no_geog`: 96 cells, 51 materially shifted (>5%)
+- `boston_default`: 96 cells, 64 materially shifted (>5%)
+- `chicago_default`: 96 cells, 61 materially shifted (>5%)
+- `seattle_default`: 96 cells, 44 materially shifted (>5%)
 
 ## Per-scenario top shifts (by |% diff|)
 
@@ -47,71 +47,71 @@ ARTnet version: 2.9.0. Seed: 20260420. Network size: 5000.
 
 _...and 48 more cells over threshold._
 
-### atlanta_nhbs_shifted
+### boston_default
 
 | Layer | Stat | Level | Existing | Joint | %Δ |
 |---|---|---:|---:|---:|---:|
-| main | dissolution_duration | 6 | 934.45 | 491.48 | -47.4% |
-| inst | nodematch_age.grp | 5 | 7.90 | 4.18 | -47.1% |
-| main | dissolution_duration | 4 | 539.20 | 323.74 | -40.0% |
-| inst | nodefactor_diag.status | 2 | 129.36 | 80.06 | -38.1% |
-| main | dissolution_duration | 5 | 682.59 | 428.11 | -37.3% |
-| casl | nodefactor_deg.main | 3 | 11.74 | 15.96 | +36.0% |
-| casl | dissolution_duration | 5 | 159.54 | 102.54 | -35.7% |
-| inst | nodefactor_age.grp | 1 | 46.94 | 62.72 | +33.6% |
-| inst | nodefactor_age.grp | 5 | 85.81 | 61.75 | -28.0% |
-| casl | dissolution_duration | 4 | 113.16 | 81.76 | -27.7% |
-| casl | absdiff_age | — | 12912.10 | 16137.21 | +25.0% |
-| inst | nodematch_age.grp | 4 | 11.22 | 8.54 | -23.9% |
-| main | dissolution_duration | 3 | 253.67 | 196.29 | -22.6% |
-| casl | absdiff_sqrt.age | — | 1043.61 | 1278.92 | +22.5% |
-| main | nodematch_race_diffF | — | 759.45 | 588.51 | -22.5% |
+| main | dissolution_duration | 6 | 788.80 | 394.43 | -50.0% |
+| inst | nodematch_age.grp | 5 | 9.66 | 5.41 | -44.0% |
+| main | dissolution_duration | 4 | 455.19 | 260.07 | -42.9% |
+| main | dissolution_duration | 5 | 576.22 | 343.82 | -40.3% |
+| casl | nodefactor_deg.main | 3 | 22.83 | 31.88 | +39.6% |
+| inst | nodefactor_diag.status | 2 | 138.96 | 88.21 | -36.5% |
+| inst | nodefactor_age.grp | 1 | 63.38 | 82.87 | +30.8% |
+| main | dissolution_duration | 3 | 214.19 | 157.61 | -26.4% |
+| inst | nodefactor_age.grp | 5 | 115.85 | 86.20 | -25.6% |
+| casl | absdiff_age | — | 15284.68 | 18886.97 | +23.6% |
+| casl | nodefactor_race | 2 | 546.68 | 669.29 | +22.4% |
+| main | nodematch_race_diffF | — | 679.50 | 530.72 | -21.9% |
+| casl | dissolution_duration | 5 | 145.38 | 113.85 | -21.7% |
+| casl | absdiff_sqrt.age | — | 1245.73 | 1512.13 | +21.4% |
+| main | concurrent | — | 90.09 | 108.99 | +21.0% |
 
-_...and 51 more cells over threshold._
+_...and 49 more cells over threshold._
 
-### atlanta_no_race
-
-| Layer | Stat | Level | Existing | Joint | %Δ |
-|---|---|---:|---:|---:|---:|
-| main | dissolution_duration | 6 | 934.45 | 489.84 | -47.6% |
-| inst | nodefactor_age.grp | 1 | 46.94 | 67.75 | +44.4% |
-| casl | nodefactor_deg.main | 3 | 11.74 | 16.80 | +43.1% |
-| main | dissolution_duration | 4 | 539.20 | 322.52 | -40.2% |
-| main | dissolution_duration | 5 | 682.59 | 426.73 | -37.5% |
-| inst | nodematch_age.grp | 5 | 7.90 | 5.18 | -34.5% |
-| casl | dissolution_duration | 5 | 159.54 | 107.80 | -32.4% |
-| inst | nodematch_age.grp | 1 | 13.72 | 17.90 | +30.5% |
-| casl | absdiff_age | — | 12912.10 | 16581.25 | +28.4% |
-| main | absdiff_age | — | 5028.10 | 6346.42 | +26.2% |
-| casl | absdiff_sqrt.age | — | 1043.61 | 1316.79 | +26.2% |
-| inst | nodefactor_diag.status | 2 | 232.52 | 174.43 | -25.0% |
-| casl | dissolution_duration | 1 | 105.85 | 79.69 | -24.7% |
-| casl | dissolution_duration | 4 | 113.16 | 86.61 | -23.5% |
-| main | dissolution_duration | 3 | 253.67 | 195.22 | -23.0% |
-
-_...and 34 more cells over threshold._
-
-### national_no_geog
+### chicago_default
 
 | Layer | Stat | Level | Existing | Joint | %Δ |
 |---|---|---:|---:|---:|---:|
-| main | dissolution_duration | 6 | 916.66 | 459.09 | -49.9% |
-| main | dissolution_duration | 4 | 528.94 | 302.73 | -42.8% |
-| main | dissolution_duration | 5 | 669.60 | 400.16 | -40.2% |
-| inst | nodematch_age.grp | 5 | 8.51 | 5.15 | -39.6% |
-| casl | dissolution_duration | 5 | 161.98 | 104.87 | -35.3% |
-| inst | nodefactor_diag.status | 2 | 93.33 | 61.53 | -34.1% |
-| casl | nodefactor_deg.main | 3 | 19.56 | 25.18 | +28.7% |
-| casl | dissolution_duration | 1 | 107.47 | 76.90 | -28.4% |
-| casl | dissolution_duration | 4 | 114.89 | 83.60 | -27.2% |
-| main | dissolution_duration | 3 | 248.85 | 183.55 | -26.2% |
-| inst | nodefactor_age.grp | 1 | 55.02 | 68.06 | +23.7% |
-| casl | nodefactor_race | 2 | 510.68 | 626.72 | +22.7% |
-| casl | absdiff_age | — | 14388.91 | 17503.66 | +21.6% |
-| inst | nodefactor_age.grp | 5 | 100.47 | 80.16 | -20.2% |
-| casl | absdiff_sqrt.age | — | 1174.49 | 1401.01 | +19.3% |
+| main | dissolution_duration | 6 | 1034.43 | 492.95 | -52.3% |
+| main | dissolution_duration | 4 | 596.86 | 324.98 | -45.6% |
+| inst | nodematch_age.grp | 5 | 11.55 | 6.32 | -45.3% |
+| main | dissolution_duration | 5 | 755.61 | 429.59 | -43.1% |
+| inst | nodefactor_diag.status | 2 | 210.52 | 125.85 | -40.2% |
+| casl | dissolution_duration | 5 | 139.35 | 87.83 | -37.0% |
+| inst | nodefactor_age.grp | 1 | 77.34 | 103.64 | +34.0% |
+| casl | nodefactor_deg.main | 3 | 25.95 | 34.03 | +31.2% |
+| casl | dissolution_duration | 1 | 92.48 | 64.08 | -30.7% |
+| main | dissolution_duration | 3 | 280.77 | 197.07 | -29.8% |
+| casl | dissolution_duration | 4 | 98.86 | 69.92 | -29.3% |
+| inst | nodefactor_age.grp | 5 | 140.35 | 103.65 | -26.1% |
+| inst | nodematch_race_diffF | — | 212.84 | 157.75 | -25.9% |
+| main | nodematch_race_diffF | — | 592.50 | 449.49 | -24.1% |
+| main | concurrent | — | 82.87 | 99.96 | +20.6% |
 
-_...and 36 more cells over threshold._
+_...and 46 more cells over threshold._
+
+### seattle_default
+
+| Layer | Stat | Level | Existing | Joint | %Δ |
+|---|---|---:|---:|---:|---:|
+| main | dissolution_duration | 6 | 1380.99 | 471.87 | -65.8% |
+| main | dissolution_duration | 4 | 796.76 | 311.16 | -60.9% |
+| main | dissolution_duration | 5 | 1008.72 | 411.30 | -59.2% |
+| main | dissolution_duration | 3 | 374.72 | 188.65 | -49.7% |
+| casl | dissolution_duration | 5 | 153.51 | 86.81 | -43.5% |
+| inst | nodematch_age.grp | 5 | 7.70 | 4.66 | -39.4% |
+| casl | dissolution_duration | 1 | 101.86 | 63.71 | -37.5% |
+| casl | dissolution_duration | 4 | 108.89 | 69.18 | -36.5% |
+| main | dissolution_duration | 2 | 107.02 | 74.70 | -30.2% |
+| inst | nodefactor_age.grp | 1 | 56.39 | 71.43 | +26.7% |
+| inst | nodefactor_diag.status | 2 | 88.57 | 65.13 | -26.5% |
+| casl | dissolution_duration | 6 | 144.43 | 107.50 | -25.6% |
+| casl | nodefactor_deg.main | 3 | 24.27 | 30.42 | +25.4% |
+| main | dissolution_duration | 1 | 307.95 | 233.27 | -24.2% |
+| casl | dissolution_duration | 3 | 70.42 | 54.00 | -23.3% |
+
+_...and 29 more cells over threshold._
 
 ## Edges / concurrent comparison (all scenarios)
 
@@ -120,15 +120,15 @@ _...and 36 more cells over threshold._
 | atlanta_default | main | 995.15 | 844.80 | -15.1% | 48.54 | 47.53 | -2.1% |
 | atlanta_default | casl | 1334.95 | 1437.45 | +7.7% | 728.16 | 806.54 | +10.8% |
 | atlanta_default | inst | 191.37 | 171.30 | -10.5% | — | — | — |
-| atlanta_nhbs_shifted | main | 995.15 | 900.86 | -9.5% | 48.54 | 58.54 | +20.6% |
-| atlanta_nhbs_shifted | casl | 1334.95 | 1462.26 | +9.5% | 728.16 | 820.76 | +12.7% |
-| atlanta_nhbs_shifted | inst | 191.37 | 177.73 | -7.1% | — | — | — |
-| atlanta_no_race | main | 995.15 | 1021.72 | +2.7% | 48.54 | 59.13 | +21.8% |
-| atlanta_no_race | casl | 1334.95 | 1502.02 | +12.5% | 728.16 | 836.50 | +14.9% |
-| atlanta_no_race | inst | 191.37 | 205.30 | +7.3% | — | — | — |
-| national_no_geog | main | 1008.64 | 964.45 | -4.4% | 79.17 | 88.73 | +12.1% |
-| national_no_geog | casl | 1362.33 | 1487.06 | +9.2% | 716.64 | 802.16 | +11.9% |
-| national_no_geog | inst | 219.35 | 213.25 | -2.8% | — | — | — |
+| boston_default | main | 923.42 | 839.67 | -9.1% | 90.09 | 108.99 | +21.0% |
+| boston_default | casl | 1418.92 | 1587.83 | +11.9% | 630.63 | 740.18 | +17.4% |
+| boston_default | inst | 249.48 | 243.81 | -2.3% | — | — | — |
+| chicago_default | main | 1008.29 | 907.16 | -10.0% | 82.87 | 99.96 | +20.6% |
+| chicago_default | casl | 1726.52 | 1857.64 | +7.6% | 966.85 | 1059.45 | +9.6% |
+| chicago_default | inst | 319.80 | 301.01 | -5.9% | — | — | — |
+| seattle_default | main | 1071.43 | 1034.80 | -3.4% | 84.03 | 75.55 | -10.1% |
+| seattle_default | casl | 1575.63 | 1607.12 | +2.0% | 840.34 | 856.69 | +1.9% |
+| seattle_default | inst | 231.90 | 221.39 | -4.5% | — | — | — |
 
 ## Reproducibility
 

@@ -16,45 +16,32 @@
 # ---- Scenario definitions ----------------------------------------------------
 
 # Each scenario: a list with $name and the args to build_{epistats,netparams,netstats}.
-# Conceptually:
-#   atlanta_default      = baseline EpiModelHIV-Template setup
-#   national_no_geog     = no geographic stratification (sanity: no geogYN baked in)
-#   atlanta_nhbs_shifted = Atlanta with NHBS-MSM-like race composition
-#                          (35% Black, 25% Hispanic, 40% W/Other; vs Atlanta's
-#                          default ~52/5/44 mix). Tests population-shift bias.
-#   atlanta_no_race      = race = FALSE path (sanity)
-COMPARISON_SCENARIOS <- list(
+# Four city defaults selected because they are the cities we have applied
+# ARTnet for EpiModelHIV modeling with. Each uses ARTnetData::race.dist to
+# define the synthetic population's race composition (no fabricated mixes).
+# Race composition (W/Other / Black / Hispanic), by city:
+#   Atlanta:  43.9 / 51.5 /  4.6   -- far from ARTnet sample (~81% W/O)
+#   Boston:   59.7 / 20.9 / 19.4   -- moderate distance
+#   Chicago:  41.8 / 29.2 / 29.0   -- moderate distance, balanced
+#   Seattle:  87.4 /  6.1 /  6.5   -- closest to ARTnet sample composition
+.make_city_scenario <- function(city) {
   list(
-    name = "atlanta_default",
-    epistats = list(geog.lvl = "city", geog.cat = "Atlanta",
+    name = paste0(tolower(gsub(" ", "_", city)), "_default"),
+    epistats = list(geog.lvl = "city", geog.cat = city,
                     init.hiv.prev = c(0.33, 0.137, 0.084),
                     race = TRUE, time.unit = 7),
     netparams = list(smooth.main.dur = TRUE),
-    netstats  = list(expect.mort = 0.000478213, network.size = 5000)
-  ),
-  list(
-    name = "national_no_geog",
-    epistats = list(race = TRUE, time.unit = 7),
-    netparams = list(smooth.main.dur = TRUE),
-    netstats  = list(expect.mort = 0.000478213, network.size = 5000)
-  ),
-  list(
-    name = "atlanta_nhbs_shifted",
-    epistats = list(geog.lvl = "city", geog.cat = "Atlanta",
-                    init.hiv.prev = c(0.33, 0.137, 0.084),
-                    race = TRUE, time.unit = 7),
-    netparams = list(smooth.main.dur = TRUE),
-    netstats  = list(expect.mort = 0.000478213, network.size = 5000,
-                     race.prop = c(0.35, 0.25, 0.40))
-  ),
-  list(
-    name = "atlanta_no_race",
-    epistats = list(geog.lvl = "city", geog.cat = "Atlanta",
-                    init.hiv.prev = c(0.33, 0.137, 0.084),
-                    race = FALSE, time.unit = 7),
-    netparams = list(smooth.main.dur = TRUE),
-    netstats  = list(expect.mort = 0.000478213, network.size = 5000)
+    # expect.mort = 0.00025 (slightly lower than the EpiModelHIV-Template
+    # default 0.000478213) so dissolution_coefs accommodates Seattle's
+    # noisy empirical matched.5 main duration of ~1381 weeks. The
+    # absolute coef values shift, but the marginal-vs-joint comparison
+    # is consistent across scenarios at the same expect.mort.
+    netstats  = list(expect.mort = 0.00025, network.size = 5000)
   )
+}
+COMPARISON_SCENARIOS <- lapply(
+  c("Atlanta", "Boston", "Chicago", "Seattle"),
+  .make_city_scenario
 )
 
 .COMPARISON_SEED <- 20260420L
