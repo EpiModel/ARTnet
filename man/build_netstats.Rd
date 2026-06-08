@@ -15,6 +15,7 @@ build_netstats(
   young.prop = NULL,
   method = c("existing", "joint"),
   target_pop = NULL,
+  seed = NULL,
   browser = FALSE
 )
 }
@@ -25,7 +26,7 @@ build_netstats(
 
 \item{network.size}{Size of the starting network.}
 
-\item{expect.mort}{Expected average mortality level to pass into \code{\link[EpiModel:dissolution_coefs]{EpiModel::dissolution_coefs}} function.}
+\item{expect.mort}{Expected average mortality level to pass into \code{\link[EpiModel:dissolution_coefs]{dissolution_coefs}} function.}
 
 \item{age.pyramid}{Numerical vector of length equal to the length of the age range specified in
 \code{\link{build_epistats}}, containing probability distribution of each year of age, summing to
@@ -84,13 +85,27 @@ Optional columns: \code{sqrt.age}, \code{age.grp}, \code{active.sex}, \code{deg.
 (derived from required columns if absent). When supplied, attribute sampling is
 bypassed entirely and \code{network.size} is set to \code{nrow(target_pop)}. This form is
 for users with a fully-specified joint synthetic population (e.g., post-stratified
-to NHBS or AMIS demographics).
+to NHBS or AMIS demographics). Note (\code{method = "joint"}): the supplied \code{deg.main}
+and \code{deg.casl} columns are used \strong{only as covariates} in the cross-layer degree
+GLMs; the layer edge counts are re-predicted by g-computation, not taken from the
+supplied degrees. Likewise \code{diag.status} enters the degree GLMs as a predictor, so
+the HIV composition of the target population affects edges and not just
+\code{nodefactor_diag.status}. Degree/role/risk columns outside the fitted support
+(\code{deg.main} 0-2, \code{deg.casl}/\code{deg.tot} 0-3, \code{role.class} 0-2, \code{risk.grp}
+1-\code{nquants}) are clamped with a warning to preserve the
+\code{sum(nodefactor) = 2 * edges} invariant.
 \item A \strong{character string} naming a built-in reference population. Currently
 raises an informative error. The planned set is geography-specific general male
 population demographics (NCHS age pyramid + \code{ARTnetData::race.dist} by
 geography) — bundles like \code{"atlanta"} or \code{"us_msm_male"} packaged from data
 already in the package, no NHBS or other restricted data required.
 }}
+
+\item{seed}{Optional integer. If supplied, \code{set.seed(seed)} is called at the start of the
+function for reproducibility of the stochastic sampling path (default \code{target_pop} and
+list forms). Defaults to \code{NULL} (no seeding), which preserves prior behavior. The
+data.frame form of \code{target_pop} bypasses attribute sampling and is deterministic
+regardless of this argument.}
 
 \item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
 }
@@ -101,7 +116,7 @@ use in the EpiModelHIV workflow.
 }
 \details{
 This function takes output from \code{\link{build_epistats}} and \code{\link{build_netparams}} to build the relevant
-population-level network statistics that will be used in network estimation using the \link[EpiModel:EpiModel-package]{EpiModel::EpiModel}
+population-level network statistics that will be used in network estimation using the \link[EpiModel:EpiModel]{EpiModel}
 package.
 
 The parameter \code{edge.avg} allows a user specify how the network edges statistics as estimated from

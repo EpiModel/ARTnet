@@ -21,9 +21,9 @@ Suggests:
     survival,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
-RoxygenNote: 7.3.3
 Encoding: UTF-8
 Remotes:
    github::EpiModel/ARTnetData@main
 Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0

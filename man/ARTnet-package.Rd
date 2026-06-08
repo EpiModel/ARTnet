@@ -31,5 +31,10 @@ Useful links:
 \author{
 \strong{Maintainer}: Samuel Jenness \email{samuel.m.jenness@emory.edu}
 
+Authors:
+\itemize{
+  \item Samuel Jenness \email{samuel.m.jenness@emory.edu}
+}
+
 }
 \keyword{package}

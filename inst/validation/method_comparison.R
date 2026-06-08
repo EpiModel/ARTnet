@@ -214,12 +214,17 @@ render_comparison_report <- function(comparison,
   out()
   out("## Scenarios")
   out()
+  out("Derived from the scenarios actually present in the comparison object, ",
+      "so this table always matches the data below.")
+  out()
   out("| Scenario | Description |")
   out("|---|---|")
-  out("| `atlanta_default` | Baseline EpiModelHIV-Template config (Atlanta, race = TRUE) |")
-  out("| `national_no_geog` | No geographic stratification (sanity check) |")
-  out("| `atlanta_nhbs_shifted` | Atlanta config with `race.prop = c(0.35, 0.25, 0.40)` (NHBS-MSM-like) |")
-  out("| `atlanta_no_race` | `race = FALSE` path (sanity check) |")
+  for (s in unique(comparison$scenario)) {
+    city <- gsub("_default$", "", s)
+    city <- paste0(toupper(substring(city, 1, 1)), substring(city, 2))
+    out("| `", s, "` | City config (", city,
+        ", race = TRUE, init.hiv.prev = c(0.33, 0.137, 0.084)) |")
+  }
   out()
   out("## High-level summary")
   out()

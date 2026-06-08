@@ -49,6 +49,43 @@
 }
 
 
+# Tabulate `x` over a fixed, complete set of `levels` so that downstream
+# multiplication by a per-level netparams vector (nf.race, nf.age.grp,
+# nf.risk.grp, nf.deg.tot, nf.diag.status) never silently recycles when a
+# level is unobserved in the synthetic population. That can happen when a
+# user passes a target_pop with empty cells (e.g. no nodes in a risk
+# quintile or age group). Returns a "table" object so that the resulting
+# nodefactor fields keep the same class/structure as the prior `table(x)`
+# calls; with the default sampling path every level is populated and the
+# `levels` are the sorted observed values, so this is byte-identical to the
+# prior `table(x)` behavior (verified by the backward-compat snapshot).
+.tab_levels <- function(x, levels) {
+  table(factor(x, levels = levels))
+}
+
+# Clamp a user-supplied target_pop attribute to the support the joint GLMs
+# were fit on. Out-of-support values are a silent correctness hazard: the
+# Poisson degree models extrapolate, and the nodefactor aggregations (which
+# sum predicted degree only over the fitted levels) drop the out-of-support
+# nodes' degree mass, breaking the sum(nodefactor) == 2 * edges invariant.
+# Warns when clamping actually changes a value.
+.clamp_support <- function(x, allowed, nm) {
+  oob <- !(x %in% allowed)
+  if (any(oob, na.rm = TRUE)) {
+    warning(sprintf(
+      paste0("target_pop$%s has %d value(s) outside the fitted support ",
+             "{%s}; clamping to range. Out-of-support values would otherwise ",
+             "break the sum(nodefactor_%s) == 2 * edges invariant. Supply ",
+             "integer-coded attributes within the fitted support."),
+      nm, sum(oob, na.rm = TRUE),
+      paste(range(allowed), collapse = "-"), nm),
+      call. = FALSE)
+    x <- pmin(pmax(x, min(allowed)), max(allowed))
+  }
+  x
+}
+
+
 # Aggregate synth-population stratum-level durations under joint_lm. Per-ego
 # predicted log(duration) from the joint_lm fit, marginalized over partner-race
 # uncertainty using joint_nm_race_model when race = TRUE, then exponentiated
@@ -67,7 +104,8 @@
                                              joint_nm_race_model,
                                              synth_data,
                                              n_age_grps,
-                                             sex_cess_extra_row = FALSE) {
+                                             sex_cess_extra_row = FALSE,
+                                             fallback_mean_dur_adj = NULL) {
   if (is.null(joint_dur_model)) return(NULL)
 
   if (!is.null(joint_nm_race_model)) {
@@ -105,6 +143,27 @@
   mean_dur_adj <- ifelse(is.na(medians) | medians <= 0,
                          NA_real_,
                          1 / (1 - 2^(-1 / medians)))
+
+  # Per-stratum fallback to the within-ARTnet byage durations from
+  # build_netparams when a synth stratum is empty (no nodes in that age
+  # group) or yields a non-positive median. Without this, NA durations
+  # propagate into dissolution_coefs' `if (any(duration < 1))` check and
+  # abort the whole build. A restricted-age target_pop (which is common:
+  # forward-projected MSM populations often drop the oldest stratum) would
+  # otherwise crash. Mirrors build_netparams' own per-stratum empirical
+  # fallback in compute_alt_durs(). The fallback vector follows the same row
+  # layout (nonmatch first, then matched 1..N, plus an optional sex-cessation
+  # row), so drop the cessation row before substituting if present.
+  if (!is.null(fallback_mean_dur_adj)) {
+    fb <- fallback_mean_dur_adj
+    if (isTRUE(sex_cess_extra_row) && length(fb) == length(mean_dur_adj) + 1L) {
+      fb <- fb[-length(fb)]
+    }
+    if (length(fb) == length(mean_dur_adj)) {
+      na_idx <- which(is.na(mean_dur_adj))
+      mean_dur_adj[na_idx] <- fb[na_idx]
+    }
+  }
 
   if (isTRUE(sex_cess_extra_row)) mean_dur_adj <- c(mean_dur_adj, 1)
   mean_dur_adj
@@ -151,7 +210,15 @@
 #'            (derived from required columns if absent). When supplied, attribute sampling is
 #'            bypassed entirely and `network.size` is set to `nrow(target_pop)`. This form is
 #'            for users with a fully-specified joint synthetic population (e.g., post-stratified
-#'            to NHBS or AMIS demographics).
+#'            to NHBS or AMIS demographics). Note (`method = "joint"`): the supplied `deg.main`
+#'            and `deg.casl` columns are used **only as covariates** in the cross-layer degree
+#'            GLMs; the layer edge counts are re-predicted by g-computation, not taken from the
+#'            supplied degrees. Likewise `diag.status` enters the degree GLMs as a predictor, so
+#'            the HIV composition of the target population affects edges and not just
+#'            `nodefactor_diag.status`. Degree/role/risk columns outside the fitted support
+#'            (`deg.main` 0-2, `deg.casl`/`deg.tot` 0-3, `role.class` 0-2, `risk.grp`
+#'            1-`nquants`) are clamped with a warning to preserve the
+#'            `sum(nodefactor) = 2 * edges` invariant.
 #'          \item A **character string** naming a built-in reference population. Currently
 #'            raises an informative error. The planned set is geography-specific general male
 #'            population demographics (NCHS age pyramid + `ARTnetData::race.dist` by
@@ -180,6 +247,11 @@
 #'        stratum. `nodefactor_risk.grp` and `diss.homog` still use the within-ARTnet
 #'        univariate / aggregated values — those are not consumed by the standard
 #'        EpiModelHIV-Template dissolution offset.
+#' @param seed Optional integer. If supplied, `set.seed(seed)` is called at the start of the
+#'        function for reproducibility of the stochastic sampling path (default `target_pop` and
+#'        list forms). Defaults to `NULL` (no seeding), which preserves prior behavior. The
+#'        data.frame form of `target_pop` bypasses attribute sampling and is deterministic
+#'        regardless of this argument.
 #' @param browser If `TRUE`, run `build_netparams` in interactive browser mode.
 #'
 #' @details
@@ -244,8 +316,16 @@ build_netstats <- function(epistats, netparams,
                            young.prop = NULL,
                            method = c("existing", "joint"),
                            target_pop = NULL,
+                           seed = NULL,
                            browser = FALSE) {
   method <- match.arg(method)
+
+  # Optional reproducibility. The default sampling path draws the synthetic
+  # population stochastically (sample / runif / rbinom / apportion_lr), so two
+  # calls with identical arguments otherwise differ at the Monte Carlo noise
+  # level. Setting `seed` makes a run reproducible. The data.frame form of
+  # target_pop bypasses attribute sampling and is already deterministic.
+  if (!is.null(seed)) set.seed(seed)
 
   # Ensures that ARTnetData is installed
   if (system.file(package = "ARTnetData") == "") stop(missing_data_msg)
@@ -466,12 +546,15 @@ build_netstats <- function(epistats, netparams,
       attr_race <- apportion_lr(num, seq_along(flattened_race_level),
                                 race_numbers / num, shuffled = TRUE)
     }
-    attr_deg.casl   <- df$deg.casl
-    attr_deg.main   <- df$deg.main
-    attr_deg.tot    <- if (!is.null(df$deg.tot)) df$deg.tot else
+    attr_deg.casl   <- .clamp_support(df$deg.casl, 0:3, "deg.casl")
+    attr_deg.main   <- .clamp_support(df$deg.main, 0:2, "deg.main")
+    attr_deg.tot    <- if (!is.null(df$deg.tot)) {
+      .clamp_support(df$deg.tot, 0:3, "deg.tot")
+    } else {
       pmin(attr_deg.main + attr_deg.casl, 3L)
-    attr_risk.grp   <- df$risk.grp
-    attr_role.class <- df$role.class
+    }
+    attr_risk.grp   <- .clamp_support(df$risk.grp, seq_len(nquants), "risk.grp")
+    attr_role.class <- .clamp_support(df$role.class, 0:2, "role.class")
   } else {
     # ---- Existing sampling path (default + list-form marginal overrides) ----
     if (!is.null(age.pyramid)) {
@@ -700,14 +783,16 @@ build_netstats <- function(epistats, netparams,
       joint_nm_race_model = netparams$main$joint_nm_race_model,
       synth_data          = synth,
       n_age_grps          = n_age_grps_main,
-      sex_cess_extra_row  = sex.cess.mod
+      sex_cess_extra_row  = sex.cess.mod,
+      fallback_mean_dur_adj = netparams$main$durs.main.byage$mean.dur.adj
     )
     synth_dur_casl_byage <- .aggregate_synth_byage_durations(
       joint_dur_model     = netparams$casl$joint_duration_model,
       joint_nm_race_model = netparams$casl$joint_nm_race_model,
       synth_data          = synth,
       n_age_grps          = n_age_grps_casl,
-      sex_cess_extra_row  = sex.cess.mod
+      sex_cess_extra_row  = sex.cess.mod,
+      fallback_mean_dur_adj = netparams$casl$durs.casl.byage$mean.dur.adj
     )
   }
 
@@ -723,10 +808,12 @@ build_netstats <- function(epistats, netparams,
       if (edges.avg == FALSE) {
         out$main$edges <- (netparams$main$md.main * num) / 2
       } else {
-        out$main$edges <- sum(unname(table(out$attr$race)) * netparams$main$nf.race) / 2
+        out$main$edges <- sum(.tab_levels(out$attr$race, seq_along(netparams$main$nf.race)) *
+                                netparams$main$nf.race) / 2
       }
       # nodefactor("race") ---
-      nodefactor_race <- table(out$attr$race) * netparams$main$nf.race
+      nodefactor_race <- .tab_levels(out$attr$race, seq_along(netparams$main$nf.race)) *
+        netparams$main$nf.race
       out$main$nodefactor_race <- unname(nodefactor_race)
 
       # nodematch("race") ---
@@ -741,7 +828,8 @@ build_netstats <- function(epistats, netparams,
     }
 
     # nodefactor("age.grp") ---
-    nodefactor_age.grp <- table(out$attr$age.grp) * netparams$main$nf.age.grp
+    nodefactor_age.grp <- .tab_levels(out$attr$age.grp, seq_along(netparams$main$nf.age.grp)) *
+      netparams$main$nf.age.grp
     if (sex.cess.mod == TRUE) {
       nodefactor_age.grp[length(nodefactor_age.grp)] <- 0
     }
@@ -766,7 +854,8 @@ build_netstats <- function(epistats, netparams,
     out$main$concurrent <- num * netparams$main$concurrent
 
     # nodefactor("diag.status") ---
-    nodefactor_diag.status <- table(out$attr$diag.status) * netparams$main$nf.diag.status
+    nodefactor_diag.status <- .tab_levels(out$attr$diag.status, 0:1) *
+      netparams$main$nf.diag.status
     out$main$nodefactor_diag.status <- unname(nodefactor_diag.status)
 
   } else {  # method == "joint"
@@ -847,10 +936,12 @@ build_netstats <- function(epistats, netparams,
       if (edges.avg == FALSE) {
         out$casl$edges <- (netparams$casl$md.casl * num) / 2
       } else {
-        out$casl$edges <- sum(unname(table(out$attr$race)) * netparams$casl$nf.race) / 2
+        out$casl$edges <- sum(.tab_levels(out$attr$race, seq_along(netparams$casl$nf.race)) *
+                                netparams$casl$nf.race) / 2
       }
       # nodefactor("race") ---
-      nodefactor_race <- table(out$attr$race) * netparams$casl$nf.race
+      nodefactor_race <- .tab_levels(out$attr$race, seq_along(netparams$casl$nf.race)) *
+        netparams$casl$nf.race
       out$casl$nodefactor_race <- unname(nodefactor_race)
 
       # nodematch("race") ---
@@ -865,7 +956,8 @@ build_netstats <- function(epistats, netparams,
     }
 
     # nodefactor("age.grp") ---
-    nodefactor_age.grp <- table(out$attr$age.grp) * netparams$casl$nf.age.grp
+    nodefactor_age.grp <- .tab_levels(out$attr$age.grp, seq_along(netparams$casl$nf.age.grp)) *
+      netparams$casl$nf.age.grp
     if (sex.cess.mod == TRUE) {
       nodefactor_age.grp[length(nodefactor_age.grp)] <- 0
     }
@@ -890,7 +982,8 @@ build_netstats <- function(epistats, netparams,
     out$casl$concurrent <- num * netparams$casl$concurrent
 
     # nodefactor("diag.status") ---
-    nodefactor_diag.status <- table(out$attr$diag.status) * netparams$casl$nf.diag.status
+    nodefactor_diag.status <- .tab_levels(out$attr$diag.status, 0:1) *
+      netparams$casl$nf.diag.status
     out$casl$nodefactor_diag.status <- unname(nodefactor_diag.status)
 
   } else {  # method == "joint"
@@ -954,10 +1047,12 @@ build_netstats <- function(epistats, netparams,
       if (edges.avg == FALSE) {
         out$inst$edges <- (netparams$inst$md.inst * num) / 2
       } else {
-        out$inst$edges <- sum(unname(table(out$attr$race)) * netparams$inst$nf.race) / 2
+        out$inst$edges <- sum(.tab_levels(out$attr$race, seq_along(netparams$inst$nf.race)) *
+                                netparams$inst$nf.race) / 2
       }
       # nodefactor("race") ---
-      nodefactor_race <- table(out$attr$race) * netparams$inst$nf.race
+      nodefactor_race <- .tab_levels(out$attr$race, seq_along(netparams$inst$nf.race)) *
+        netparams$inst$nf.race
       out$inst$nodefactor_race <- unname(nodefactor_race)
 
       # nodematch("race") ---
@@ -972,7 +1067,8 @@ build_netstats <- function(epistats, netparams,
     }
 
     # nodefactor("age.grp") ---
-    nodefactor_age.grp <- table(out$attr$age.grp) * netparams$inst$nf.age.grp
+    nodefactor_age.grp <- .tab_levels(out$attr$age.grp, seq_along(netparams$inst$nf.age.grp)) *
+      netparams$inst$nf.age.grp
     if (sex.cess.mod == TRUE) {
       nodefactor_age.grp[length(nodefactor_age.grp)] <- 0
     }
@@ -991,15 +1087,17 @@ build_netstats <- function(epistats, netparams,
     out$inst$absdiff_sqrt.age <- absdiff_sqrt.age
 
     # nodefactor("risk.grp") ---
-    nodefactor_risk.grp <- table(out$attr$risk.grp) * netparams$inst$nf.risk.grp
+    nodefactor_risk.grp <- .tab_levels(out$attr$risk.grp, seq_len(nquants)) *
+      netparams$inst$nf.risk.grp
     out$inst$nodefactor_risk.grp <- unname(nodefactor_risk.grp)
 
     # nodefactor("deg.tot") ---
-    nodefactor_deg.tot <- table(out$attr$deg.tot) * netparams$inst$nf.deg.tot
+    nodefactor_deg.tot <- .tab_levels(out$attr$deg.tot, 0:3) * netparams$inst$nf.deg.tot
     out$inst$nodefactor_deg.tot <- unname(nodefactor_deg.tot)
 
     # nodefactor("diag.status") ---
-    nodefactor_diag.status <- table(out$attr$diag.status) * netparams$inst$nf.diag.status
+    nodefactor_diag.status <- .tab_levels(out$attr$diag.status, 0:1) *
+      netparams$inst$nf.diag.status
     out$inst$nodefactor_diag.status <- unname(nodefactor_diag.status)
 
   } else {  # method == "joint"
@@ -1030,7 +1128,8 @@ build_netstats <- function(epistats, netparams,
     out$inst$absdiff_sqrt.age <- sum(edge_wt_inst * dyad_inst$pred_ad_sqrtage) / 2
 
     # nodefactor("risk.grp") -- quantile-scheme preserved from univariate
-    nodefactor_risk.grp <- table(out$attr$risk.grp) * netparams$inst$nf.risk.grp
+    nodefactor_risk.grp <- .tab_levels(out$attr$risk.grp, seq_len(nquants)) *
+      netparams$inst$nf.risk.grp
     out$inst$nodefactor_risk.grp <- unname(nodefactor_risk.grp)
 
     # nodefactor("deg.tot") -- truncated at 3 in build_netparams
