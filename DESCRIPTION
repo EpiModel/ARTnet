@@ -1,6 +1,6 @@
 Package: ARTnet
-Version: 2.9.0
-Date: 2024-09-06
+Version: 2.9.1
+Date: 2026-06-08
 Title: Epidemic and Network Model Parameterization with the ARTnet Dataset
 Description: Epidemic and Network Model Parameterization with the ARTnet Dataset.
 Maintainer: Samuel Jenness <samuel.m.jenness@emory.edu>
@@ -21,9 +21,9 @@ Suggests:
     survival,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
-RoxygenNote: 7.3.3
 Encoding: UTF-8
 Remotes:
    github::EpiModel/ARTnetData@main
 Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0
