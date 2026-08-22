@@ -41,7 +41,11 @@ Hispanic, and White/Other).}
 
 \item{young.prop}{The proportion of the population that should be below the age of sexual cessation.
 Default is NULL (meaning no re-weighting of the \code{age.pyramid} parameter is performed).
-This parameter is only used if the age of sexual cessation is less than the upper age bound.}
+This parameter is only used if the age of sexual cessation is less than the upper age bound.
+Must be strictly between 0 and 1: either endpoint empties one side of the split, and an
+age group with no members cannot carry an \code{ergm} term. To start a model with effectively
+nobody above the cessation age, use a value just below 1 (for example 0.999) rather than
+1 itself, and let the post-cessation group fill over the burn-in.}
 
 \item{method}{Character. Either \code{"existing"} (default) or \code{"joint"}. \code{"existing"} reproduces
 the pre-refactor behavior byte-for-byte: target statistics for edges, nodefactor, and

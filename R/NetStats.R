@@ -191,6 +191,10 @@
 #' @param young.prop The proportion of the population that should be below the age of sexual cessation.
 #'        Default is NULL (meaning no re-weighting of the `age.pyramid` parameter is performed).
 #'        This parameter is only used if the age of sexual cessation is less than the upper age bound.
+#'        Must be strictly between 0 and 1: either endpoint empties one side of the split, and an
+#'        age group with no members cannot carry an `ergm` term. To start a model with effectively
+#'        nobody above the cessation age, use a value just below 1 (for example 0.999) rather than
+#'        1 itself, and let the post-cessation group fill over the burn-in.
 #' @param target_pop Optional specification of the synthetic target population. Defaults to NULL,
 #'        which uses the legacy patchwork of reference sources (NCHS age pyramid +
 #'        `ARTnetData::race.dist` + ARTnet's own degree / role / risk-quintile distributions).
@@ -373,6 +377,30 @@ build_netstats <- function(epistats, netparams,
 
   time.unit <- epistats$time.unit
 
+  # `young.prop` splits the age pyramid at the sexual cessation age, giving
+  # `young.prop` of the sampling mass to the sexually active ages and the
+  # remainder to the post-cessation ages. The two endpoints are degenerate:
+  # each empties one side of the split entirely, and an age group with no
+  # members cannot carry an `ergm` term, because levels are derived from the
+  # values actually present on the network. `netest()` would then fail on a
+  # target.stats length mismatch, a long way from the cause. Reject them here.
+  if (sex.cess.mod == TRUE && !is.null(young.prop)) {
+    if (young.prop >= 1) {
+      stop("`young.prop` must be less than 1 when the age of sexual cessation ",
+           "is below the upper age limit. At 1 no node is placed in the ",
+           "post-cessation age group, so that group's `nodefactor` and ",
+           "`nodematch` terms would be missing from any model fitted on the ",
+           "resulting population. Use a value just below 1 (for example ",
+           "0.999, which seeds about 0.1% of `network.size` above the ",
+           "cessation age) and let the group fill over the model burn-in.")
+    }
+    if (young.prop <= 0) {
+      stop("`young.prop` must be greater than 0. At 0 the entire population ",
+           "is placed above the age of sexual cessation, leaving no sexually ",
+           "active nodes to fit a network model to.")
+    }
+  }
+
 
   # Demographic Initialization ----------------------------------------------
 
@@ -510,6 +538,14 @@ build_netstats <- function(epistats, netparams,
   age.breaks <- out$demog$age.breaks <- epistats$age.breaks
   nquants <- length(netparams$inst$nf.risk.grp)
 
+  # The post-cessation age group, as declared by the age breaks rather than as
+  # realized in the sampled population. `build_epistats` puts
+  # `age.sexual.cessation` into `age.breaks`, so under `sex.cess.mod` the last
+  # group is exactly the post-cessation band. Reading the group off the data
+  # instead (`max(attr_age.grp)`) silently marks the oldest *sexually active*
+  # group inactive whenever the post-cessation band happens to be empty.
+  top.age.grp <- length(age.breaks) - 1L
+
   # List-form distribution overrides for the sampling path. NULL means
   # "use the existing default source" (current behavior).
   .ov <- if (.tp$form == "list") .tp$overrides else list()
@@ -531,7 +567,7 @@ build_netstats <- function(epistats, netparams,
     } else {
       as_active <- rep(1L, num)
       if (sex.cess.mod == TRUE) {
-        as_active[attr_age.grp == max(attr_age.grp, na.rm = TRUE)] <- 0L
+        as_active[attr_age.grp %in% top.age.grp] <- 0L
       }
       as_active
     }
@@ -598,7 +634,7 @@ build_netstats <- function(epistats, netparams,
     # sexually active attribute
     attr_active.sex <- rep(1L, num)
     if (sex.cess.mod == TRUE) {
-      attr_active.sex[attr_age.grp == max(attr_age.grp)] <- 0L
+      attr_active.sex[attr_age.grp %in% top.age.grp] <- 0L
     }
 
     # race attribute
@@ -638,6 +674,21 @@ build_netstats <- function(epistats, netparams,
 
     # role class
     attr_role.class <- apportion_lr(num, 0:2, .dist_role.class, shuffled = TRUE)
+  }
+
+  # A post-cessation band can still come out empty for reasons other than
+  # `young.prop`: a `network.size` too small for the seeded share, or a
+  # `target_pop` data frame with no members above the cessation age. The
+  # netstats object is self-consistent either way (the band's target statistics
+  # are zero), but no model with an `age.grp` term can be fitted on the
+  # population it describes, so say so here rather than leaving it to `netest`.
+  if (sex.cess.mod == TRUE && !any(attr_age.grp %in% top.age.grp)) {
+    warning("No node was placed in the post-cessation age group (age.grp ",
+            top.age.grp, ", ages ", age.breaks[top.age.grp], " and over). ",
+            "`nodefactor` and `nodematch` terms on `age.grp` will be missing ",
+            "that level, so fitting against these target statistics will fail ",
+            "on a length mismatch. Raise `network.size`, lower `young.prop`, ",
+            "or include post-cessation members in `target_pop`.")
   }
 
   # Common attr assignments (both paths) -----------------------------------

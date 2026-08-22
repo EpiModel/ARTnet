@@ -1,3 +1,28 @@
+## ARTnet v2.9.2
+
+Two fixes to the sexual-cessation configuration of `build_netstats()`, where
+`age.limits[2]` is set above `age.sexual.cessation` so the population keeps
+aging past the point where it stops forming partnerships.
+
+* `active.sex` is now zeroed on the age group the breaks declare rather than on
+  the largest age group realized in the sampled population. When the
+  post-cessation group came out empty, the old behavior marked the oldest
+  *sexually active* group inactive and zeroed its degree on all three layers,
+  with no error and no warning. This affected both the sampling path and the
+  `target_pop` data frame path, where a projected population whose oldest
+  member sits below the cessation age would have hit the same problem.
+* `young.prop` must now be strictly between 0 and 1 when a cessation band
+  exists, and is rejected with a message pointing at a usable value. Either
+  endpoint empties one side of the age split by construction, and an age group
+  with no members carries no `ergm` term, so the failure used to surface much
+  later as a `target.stats` length mismatch in `netest()`. A post-cessation
+  group that comes out empty for other reasons (a `network.size` too small for
+  the seeded share, or a `target_pop` with no members above the cessation age)
+  now warns for the same reason.
+
+Neither change affects the default configuration, where the population upper
+limit and the cessation age coincide and there is no post-cessation band.
+
 ## ARTnet v2.9.0
 
 * `ARTnetData` is now a suggested package and example `EpiStats` and `Netstats`
