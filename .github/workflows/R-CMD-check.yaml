@@ -1,0 +1,62 @@
+# R CMD check on ubuntu-latest / R release.
+#
+# Single-OS matrix because ARTnet is not CRAN-published — we don't need
+# to test against multi-platform portability the way a CRAN package would.
+#
+# ARTnetData (private, EpiModel/ARTnetData) is declared in Remotes and
+# is core to the package's behavior — the whole test suite exercises it.
+# Installing it in CI requires a PAT with read access to the private
+# EpiModel repos; set up once in repo secrets as `EPIMODEL_PAT`:
+#
+#   1. Create a fine-grained PAT scoped to EpiModel/ARTnetData and
+#      EpiModel/EpiModelHIV-p with Contents: Read.
+#   2. Add it to Settings → Secrets and variables → Actions as a
+#      repository secret named EPIMODEL_PAT.
+#
+# The default GITHUB_TOKEN can't see other org-private repos and will
+# fail dependency resolution at setup-r-dependencies.
+name: R-CMD-check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  R-CMD-check:
+    runs-on: ubuntu-latest
+
+    env:
+      # Use a user-configured PAT that has read access to private EpiModel
+      # repos (ARTnetData, EpiModelHIV-p). Falls back to GITHUB_TOKEN so
+      # the workflow file itself is valid on forks without the secret —
+      # it'll just fail dependency resolution there.
+      GITHUB_PAT: ${{ secrets.EPIMODEL_PAT || secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          upload-snapshots: true
+          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+          # Fail CI on WARNING (and anything stricter). This is the
+          # r-lib/actions current default, but made explicit so a
+          # silent upstream change won't weaken our CI signal. Also
+          # matches what the PI asked for in PR #70 review.
+          error-on: '"warning"'
