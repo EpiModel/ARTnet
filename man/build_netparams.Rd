@@ -52,7 +52,12 @@ underlying mean full-partnership duration was explored and removed: its
 output can't be faithfully honored by a geometric TERGM without a non-standard
 age-dependent dissolution term, making it a diagnostic rather than a
 production target. The one-off layer has no durations, so this flag only
-affects main and casual-layer output.}
+affects main and casual-layer output. Note that under \code{"joint_lm"},
+\code{\link{build_netstats}} with \code{method = "joint"} recomputes the by-age durations at the
+synthetic population and uses \verb{durs.<layer>.byage$mean.dur.adj} only as a fallback
+for empty strata, so editing that column after \code{build_netparams()} has no effect
+there (a warning says so). To cap durations, use the \code{duration.cap} argument of
+\code{\link{build_netstats}}, which applies under both methods.}
 
 \item{method}{Character. Either \code{"existing"} (default) or \code{"joint"}. \code{"existing"} reproduces
 the pre-refactor behavior byte-for-byte: a separate univariate Poisson/binomial/linear

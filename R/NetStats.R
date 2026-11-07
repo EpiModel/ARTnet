@@ -170,6 +170,47 @@
 }
 
 
+# Apply the optional build_netstats(duration.cap) to a vector of durations
+# (in time units) right before dissolution_coefs(), with a message naming
+# the layer and the strata it binds on. NULL cap returns the input as is.
+.cap_durations <- function(x, cap, layer, what) {
+  if (is.null(cap)) return(x)
+  over <- which(!is.na(x) & x > cap)
+  if (length(over) > 0) {
+    message(sprintf(
+      "duration.cap: capping %d of %d %s %s duration%s at %s (%s: %s).",
+      length(over), length(x), layer, what, if (length(x) > 1) "s" else "",
+      format(cap),
+      if (what == "by-age") paste0("stratum ", paste(over, collapse = ", ")) else "value",
+      paste(sprintf("%.1f", x[over]), collapse = ", ")))
+    x[over] <- cap
+  }
+  x
+}
+
+
+# Under duration.method = "joint_lm", build_netstats() recomputes the by-age
+# durations at the synthetic population and uses the netparams values only
+# as a fallback for empty strata, so an edit to
+# netparams$<layer>$durs.<layer>.byage$mean.dur.adj made after
+# build_netparams() has no effect. build_netparams() records the values it
+# produced as an attribute; warn when the column no longer matches.
+.warn_if_byage_edited <- function(byage, layer) {
+  built <- attr(byage, "mean.dur.adj.built")
+  if (is.null(built)) return(invisible(FALSE))
+  if (!isTRUE(all.equal(as.numeric(byage$mean.dur.adj), as.numeric(built)))) {
+    warning("netparams$", layer, "$durs.", layer, ".byage$mean.dur.adj differs from ",
+            "what build_netparams() produced. Under duration.method = 'joint_lm', ",
+            "build_netstats() recomputes the by-age durations at the synthetic ",
+            "population and uses the netparams values only as a fallback for empty ",
+            "strata, so this edit is ignored. To cap durations, use the ",
+            "duration.cap argument of build_netstats().", call. = FALSE)
+    return(invisible(TRUE))
+  }
+  invisible(FALSE)
+}
+
+
 #' Calculate Network Target Statistics
 #'
 #' @description Calculates the final target statistics for the network models by applying
@@ -180,6 +221,17 @@
 #' @param netparams Output from [`build_netparams`].
 #' @param network.size Size of the starting network.
 #' @param expect.mort Expected average mortality level to pass into [`dissolution_coefs`] function.
+#' @param duration.cap Optional single number, in the same time units as the durations
+#'        (`time.unit` days). When supplied, every main and casual partnership duration passed
+#'        to [`dissolution_coefs`] (the homogeneous and the by-age values, under both methods)
+#'        is capped at this value with `pmin()`, and a message names the layer and strata it
+#'        binds on. [`dissolution_coefs`] rejects a duration at or above the departure ceiling,
+#'        about `1 / (2 * expect.mort)`, so a cap just below that keeps every stratum fittable
+#'        when a small ARTnet sub-sample produces a very long stratum duration. Default `NULL`
+#'        (no cap). This replaces editing `netparams$<layer>$durs.<layer>.byage$mean.dur.adj`
+#'        by hand, which `method = "joint"` with `duration.method = "joint_lm"` does not honor
+#'        (the by-age durations are recomputed at the synthetic population; a warning is
+#'        raised if the column has been changed).
 #' @param age.pyramid Numerical vector of length equal to the length of the age range specified in
 #'        [`build_epistats`], containing probability distribution of each year of age, summing to
 #'        one. If `NULL`, then a default distribution based on 2020 NCHS data is used.
@@ -347,8 +399,17 @@ build_netstats <- function(epistats, netparams,
                            seed = NULL,
                            nodematch.race.floor = FALSE,
                            check.feasibility = TRUE,
+                           duration.cap = NULL,
                            browser = FALSE) {
   method <- match.arg(method)
+
+  if (!is.null(duration.cap)) {
+    if (!is.numeric(duration.cap) || length(duration.cap) != 1 ||
+        is.na(duration.cap) || duration.cap < 1) {
+      stop("`duration.cap` must be a single number >= 1, in the same time ",
+           "units as the partnership durations.", call. = FALSE)
+    }
+  }
 
   # Optional reproducibility. The default sampling path draws the synthetic
   # population stochastically (sample / runif / rbinom / apportion_lr), so two
@@ -871,6 +932,14 @@ build_netstats <- function(epistats, netparams,
       sex_cess_extra_row  = sex.cess.mod,
       fallback_mean_dur_adj = netparams$casl$durs.casl.byage$mean.dur.adj
     )
+    # The override above drops any edit made to the netparams by-age
+    # durations after build_netparams(); say so rather than stay silent.
+    if (!is.null(synth_dur_main_byage)) {
+      .warn_if_byage_edited(netparams$main$durs.main.byage, "main")
+    }
+    if (!is.null(synth_dur_casl_byage)) {
+      .warn_if_byage_edited(netparams$casl$durs.casl.byage, "casl")
+    }
   }
 
 
@@ -995,13 +1064,18 @@ build_netstats <- function(epistats, netparams,
   # ARTnet aggregation from build_netparams; it is not consumed by
   # EpiModelHIV-Template's tergm offset, and its synth analog can be added
   # later without changing the byage interface that matters for production.
-  out$main$diss.homog <- dissolution_coefs(dissolution = ~offset(edges),
-                                           duration = netparams$main$durs.main.homog$mean.dur.adj,
-                                           d.rate = expect.mort)
+  out$main$diss.homog <- dissolution_coefs(
+    dissolution = ~offset(edges),
+    duration = .cap_durations(netparams$main$durs.main.homog$mean.dur.adj,
+                              duration.cap, "main", "homogeneous"),
+    d.rate = expect.mort
+  )
   out$main$diss.byage <- dissolution_coefs(
     dissolution = ~offset(edges) + offset(nodematch("age.grp", diff = TRUE)),
-    duration = if (!is.null(synth_dur_main_byage)) synth_dur_main_byage
-               else netparams$main$durs.main.byage$mean.dur.adj,
+    duration = .cap_durations(
+      if (!is.null(synth_dur_main_byage)) synth_dur_main_byage
+      else netparams$main$durs.main.byage$mean.dur.adj,
+      duration.cap, "main", "by-age"),
     d.rate = expect.mort
   )
 
@@ -1109,13 +1183,18 @@ build_netstats <- function(epistats, netparams,
   }
 
   # Dissolution (see note on diss.byage / diss.homog at the main layer block)
-  out$casl$diss.homog <- dissolution_coefs(dissolution = ~offset(edges),
-                                           duration = netparams$casl$durs.casl.homog$mean.dur.adj,
-                                           d.rate = expect.mort)
+  out$casl$diss.homog <- dissolution_coefs(
+    dissolution = ~offset(edges),
+    duration = .cap_durations(netparams$casl$durs.casl.homog$mean.dur.adj,
+                              duration.cap, "casl", "homogeneous"),
+    d.rate = expect.mort
+  )
   out$casl$diss.byage <- dissolution_coefs(
     dissolution = ~offset(edges) + offset(nodematch("age.grp", diff = TRUE)),
-    duration = if (!is.null(synth_dur_casl_byage)) synth_dur_casl_byage
-               else netparams$casl$durs.casl.byage$mean.dur.adj,
+    duration = .cap_durations(
+      if (!is.null(synth_dur_casl_byage)) synth_dur_casl_byage
+      else netparams$casl$durs.casl.byage$mean.dur.adj,
+      duration.cap, "casl", "by-age"),
     d.rate = expect.mort
   )
 

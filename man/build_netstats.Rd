@@ -18,6 +18,7 @@ build_netstats(
   seed = NULL,
   nodematch.race.floor = FALSE,
   check.feasibility = TRUE,
+  duration.cap = NULL,
   browser = FALSE
 )
 }
@@ -138,6 +139,18 @@ balanced targets are feasible already and the floor should not bind. The per-rac
 race whose \code{nodefactor_race} exceeds \code{edges + nodematch_race_diffF}, naming the layer,
 the race and the excess. Such targets cannot be fit by MCMLE. Set to \code{FALSE} to return
 the targets anyway.}
+
+\item{duration.cap}{Optional single number, in the same time units as the durations
+(\code{time.unit} days). When supplied, every main and casual partnership duration passed
+to \code{\link[EpiModel:dissolution_coefs]{dissolution_coefs}} (the homogeneous and the by-age values, under both methods)
+is capped at this value with \code{pmin()}, and a message names the layer and strata it
+binds on. \code{\link[EpiModel:dissolution_coefs]{dissolution_coefs}} rejects a duration at or above the departure ceiling,
+about \code{1 / (2 * expect.mort)}, so a cap just below that keeps every stratum fittable
+when a small ARTnet sub-sample produces a very long stratum duration. Default \code{NULL}
+(no cap). This replaces editing \verb{netparams$<layer>$durs.<layer>.byage$mean.dur.adj}
+by hand, which \code{method = "joint"} with \code{duration.method = "joint_lm"} does not honor
+(the by-age durations are recomputed at the synthetic population; a warning is
+raised if the column has been changed).}
 
 \item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
 }

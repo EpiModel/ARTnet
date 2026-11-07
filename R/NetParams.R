@@ -199,7 +199,12 @@ fit_joint_multinom <- function(d, response, main_terms, race, geog.lvl) {
 #'        output can't be faithfully honored by a geometric TERGM without a non-standard
 #'        age-dependent dissolution term, making it a diagnostic rather than a
 #'        production target. The one-off layer has no durations, so this flag only
-#'        affects main and casual-layer output.
+#'        affects main and casual-layer output. Note that under `"joint_lm"`,
+#'        [`build_netstats`] with `method = "joint"` recomputes the by-age durations at the
+#'        synthetic population and uses `durs.<layer>.byage$mean.dur.adj` only as a fallback
+#'        for empty strata, so editing that column after `build_netparams()` has no effect
+#'        there (a warning says so). To cap durations, use the `duration.cap` argument of
+#'        [`build_netstats`], which applies under both methods.
 #' @param method Character. Either `"existing"` (default) or `"joint"`. `"existing"` reproduces
 #'        the pre-refactor behavior byte-for-byte: a separate univariate Poisson/binomial/linear
 #'        fit for each ERGM target statistic. `"joint"` leaves all of those outputs intact **and**
@@ -810,6 +815,15 @@ build_netparams <- function(epistats,
     out$main$durs.main.byage <- rbind(out$main$durs.main.byage, df)
   }
 
+  # Under joint_lm, build_netstats() recomputes these by-age durations at the
+  # synthetic population and uses the values here only as a fallback, so an
+  # edit made to them afterwards would be lost. Record what was produced so
+  # build_netstats() can warn when the column has been changed.
+  if (duration.method == "joint_lm") {
+    attr(out$main$durs.main.byage, "mean.dur.adj.built") <-
+      out$main$durs.main.byage$mean.dur.adj
+  }
+
 
   ## joint g-computation models (additive outputs; see issues #61/#62/#63) ----
   if (method == "joint") {
@@ -1235,6 +1249,11 @@ build_netparams <- function(epistats,
     df <- data.frame(index.age.grp = index.age.grp, mean.dur = 1, median.dur = 1,
                      rates.casl.adj = 1, mean.dur.adj = 1)
     out$casl$durs.casl.byage <- rbind(out$casl$durs.casl.byage, df)
+  }
+
+  if (duration.method == "joint_lm") {
+    attr(out$casl$durs.casl.byage, "mean.dur.adj.built") <-
+      out$casl$durs.casl.byage$mean.dur.adj
   }
 
 
