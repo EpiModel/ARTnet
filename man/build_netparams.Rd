@@ -10,6 +10,7 @@ build_netparams(
   oo.nquants = 5,
   duration.method = c("empirical", "joint_lm"),
   method = c("existing", "joint"),
+  seed = NULL,
   browser = FALSE
 )
 }
@@ -64,12 +65,21 @@ concurrency indicator at \verb{$<layer>$joint_concurrent_model}.
 \item \strong{Dyad-level} (partnership data with ego attrs on RHS):
 binomial for same-age-group at \verb{$<layer>$joint_nm_age_model}, binomial
 for same-race (when \code{race = TRUE}) at \verb{$<layer>$joint_nm_race_model},
-and Gaussian fits for the age absolute-difference terms at
-\verb{$<layer>$joint_absdiff_age_model} and
+a multinomial (\code{nnet::multinom}) for partner race (when \code{race = TRUE}) at
+\verb{$<layer>$joint_prace_model}, and Gaussian fits for the age
+absolute-difference terms at \verb{$<layer>$joint_absdiff_age_model} and
 \verb{$<layer>$joint_absdiff_sqrtage_model}.
 }
 These models are consumed by \code{\link{build_netstats}} under \code{method = "joint"} to produce
-internally-consistent g-computation target statistics.}
+internally-consistent g-computation target statistics. The partner-race multinomial
+is what lets \code{build_netstats} balance race mixing to the target population instead of
+standardizing the ego side only.}
+
+\item{seed}{Optional integer. If supplied, \code{set.seed(seed)} is called at the start of the
+function. The one stochastic step is the imputation of missing partner race, which
+draws from each ego race's observed partner-race distribution (pooled across
+partnership types), so two unseeded calls give slightly different race mixing
+parameters. Defaults to \code{NULL} (no seeding), which preserves prior behavior.}
 
 \item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
 }

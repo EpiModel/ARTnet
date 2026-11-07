@@ -250,12 +250,36 @@
 #'        partner-race uncertainty via `joint_nm_race_model`, then median-aggregated within
 #'        stratum. `nodefactor_risk.grp` and `diss.homog` still use the within-ARTnet
 #'        univariate / aggregated values — those are not consumed by the standard
-#'        EpiModelHIV-Template dissolution offset.
+#'        EpiModelHIV-Template dissolution offset. The race mixing targets are the exception
+#'        to the per-ego aggregation: `nodematch_race` and `nodematch_race_diffF` come from a
+#'        race mixing matrix built at the synthetic population from the partner-race
+#'        multinomial (`netparams$<layer>$joint_prace_model`) and balanced so that it describes
+#'        a closed population, with `nodefactor_race` held fixed. Standardizing the ego side
+#'        alone leaves the partner side as ARTnet's, and in a city whose race composition is far
+#'        from ARTnet's the two sides do not add up (Seattle: White egos report more Black
+#'        partners than Black egos have partnership endpoints). The balance is a symmetric
+#'        scaling of the averaged reports that keeps their homophily odds ratios and refits the
+#'        margins, so the targets are always feasible. The matrices are stored as
+#'        `mixmat_race` (balanced expected edge counts) and `mixmat_race_reported` (ego-side
+#'        reported endpoints, rows are the ego race).
 #' @param seed Optional integer. If supplied, `set.seed(seed)` is called at the start of the
 #'        function for reproducibility of the stochastic sampling path (default `target_pop` and
 #'        list forms). Defaults to `NULL` (no seeding), which preserves prior behavior. The
 #'        data.frame form of `target_pop` bypasses attribute sampling and is deterministic
 #'        regardless of this argument.
+#' @param nodematch.race.floor Logical. If `TRUE`, each layer's `nodematch_race_diffF` is raised
+#'        to the random-mixing value `edges * sum(p^2)`, with `p` the endpoint shares
+#'        `nodefactor_race / sum(nodefactor_race)`, wherever it falls below, with a message. Any
+#'        network with the layer's `nodefactor_race` targets can realize random mixing, so the
+#'        floored targets are always feasible. This is a stopgap for `method = "existing"`, whose
+#'        race mixing is not balanced to the target population; under `method = "joint"` the
+#'        balanced targets are feasible already and the floor should not bind. The per-race
+#'        `nodematch_race` vector is left unchanged. Default `FALSE`.
+#' @param check.feasibility Logical. If `TRUE` (default), the race targets are checked with
+#'        [`check_race_feasibility`] at the end and the function stops when any layer has a
+#'        race whose `nodefactor_race` exceeds `edges + nodematch_race_diffF`, naming the layer,
+#'        the race and the excess. Such targets cannot be fit by MCMLE. Set to `FALSE` to return
+#'        the targets anyway.
 #' @param browser If `TRUE`, run `build_netparams` in interactive browser mode.
 #'
 #' @details
@@ -321,6 +345,8 @@ build_netstats <- function(epistats, netparams,
                            method = c("existing", "joint"),
                            target_pop = NULL,
                            seed = NULL,
+                           nodematch.race.floor = FALSE,
+                           check.feasibility = TRUE,
                            browser = FALSE) {
   method <- match.arg(method)
 
@@ -925,12 +951,17 @@ build_netstats <- function(epistats, netparams,
       n_race <- length(netparams$main$nf.race)
       out$main$nodefactor_race <- vapply(seq_len(n_race),
         function(r) sum(pred_deg_main[out$attr$race == r]), numeric(1))
-      # nodematch_race[r] = expected count of race-r-to-race-r edges
-      race_match_contrib <- edge_wt_main * dyad_main$pred_nm_race
-      out$main$nodematch_race <- vapply(seq_len(n_race),
-        function(r) sum(race_match_contrib[out$attr$race == r]) / 2,
-        numeric(1))
-      out$main$nodematch_race_diffF <- sum(race_match_contrib) / 2
+      # Race mixing from both sides (#9): the reported endpoint matrix from
+      # the partner-race multinomial, balanced to a closed population with
+      # nodefactor_race held fixed. nodematch_race[r] is then the expected
+      # count of race-r-to-race-r edges in the balanced matrix.
+      race_mix <- .joint_race_mixing(
+        netparams$main$joint_prace_model, synth, pred_deg_main,
+        out$attr$race, n_race, flattened_race_level, layer = "main")
+      out$main$nodematch_race <- race_mix$nodematch_race
+      out$main$nodematch_race_diffF <- race_mix$nodematch_race_diffF
+      out$main$mixmat_race <- race_mix$mixmat_race
+      out$main$mixmat_race_reported <- race_mix$mixmat_race_reported
     }
 
     # nodefactor("age.grp") + nodematch("age.grp") --------------------------
@@ -1046,11 +1077,13 @@ build_netstats <- function(epistats, netparams,
       n_race <- length(netparams$casl$nf.race)
       out$casl$nodefactor_race <- vapply(seq_len(n_race),
         function(r) sum(pred_deg_casl[out$attr$race == r]), numeric(1))
-      race_match_contrib <- edge_wt_casl * dyad_casl$pred_nm_race
-      out$casl$nodematch_race <- vapply(seq_len(n_race),
-        function(r) sum(race_match_contrib[out$attr$race == r]) / 2,
-        numeric(1))
-      out$casl$nodematch_race_diffF <- sum(race_match_contrib) / 2
+      race_mix <- .joint_race_mixing(
+        netparams$casl$joint_prace_model, synth, pred_deg_casl,
+        out$attr$race, n_race, flattened_race_level, layer = "casl")
+      out$casl$nodematch_race <- race_mix$nodematch_race
+      out$casl$nodematch_race_diffF <- race_mix$nodematch_race_diffF
+      out$casl$mixmat_race <- race_mix$mixmat_race
+      out$casl$mixmat_race_reported <- race_mix$mixmat_race_reported
     }
 
     n_age <- length(netparams$casl$nf.age.grp)
@@ -1160,11 +1193,13 @@ build_netstats <- function(epistats, netparams,
       n_race <- length(netparams$inst$nf.race)
       out$inst$nodefactor_race <- vapply(seq_len(n_race),
         function(r) sum(pred_deg_inst[out$attr$race == r]), numeric(1))
-      race_match_contrib <- edge_wt_inst * dyad_inst$pred_nm_race
-      out$inst$nodematch_race <- vapply(seq_len(n_race),
-        function(r) sum(race_match_contrib[out$attr$race == r]) / 2,
-        numeric(1))
-      out$inst$nodematch_race_diffF <- sum(race_match_contrib) / 2
+      race_mix <- .joint_race_mixing(
+        netparams$inst$joint_prace_model, synth, pred_deg_inst,
+        out$attr$race, n_race, flattened_race_level, layer = "inst")
+      out$inst$nodematch_race <- race_mix$nodematch_race
+      out$inst$nodematch_race_diffF <- race_mix$nodematch_race_diffF
+      out$inst$mixmat_race <- race_mix$mixmat_race
+      out$inst$mixmat_race_reported <- race_mix$mixmat_race_reported
     }
 
     n_age <- length(netparams$inst$nf.age.grp)
@@ -1189,6 +1224,21 @@ build_netstats <- function(epistats, netparams,
 
     out$inst$nodefactor_diag.status <- vapply(0:1,
       function(h) sum(pred_deg_inst[out$attr$diag.status == h]), numeric(1))
+  }
+
+  # Race targets: the opt-in random-mixing floor (#9) and the feasibility
+  # check (#10), both methods. A race holding more partnership endpoints than
+  # edges + nodematch_race_diffF allows cannot be fit by MCMLE; better to
+  # stop here than on the cluster.
+  if (isTRUE(race)) {
+    if (isTRUE(nodematch.race.floor)) {
+      for (layer in c("main", "casl", "inst")) {
+        out[[layer]] <- .apply_race_floor(out[[layer]], layer)
+      }
+    }
+    if (isTRUE(check.feasibility)) {
+      .stop_if_race_infeasible(out, labels = flattened_race_level)
+    }
   }
 
   # The dissolution formulas were created inside this function, so their

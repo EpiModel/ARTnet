@@ -16,6 +16,8 @@ build_netstats(
   method = c("existing", "joint"),
   target_pop = NULL,
   seed = NULL,
+  nodematch.race.floor = FALSE,
+  check.feasibility = TRUE,
   browser = FALSE
 )
 }
@@ -68,7 +70,18 @@ per-ego predicted log(duration) from \code{joint_duration_model}, marginalized o
 partner-race uncertainty via \code{joint_nm_race_model}, then median-aggregated within
 stratum. \code{nodefactor_risk.grp} and \code{diss.homog} still use the within-ARTnet
 univariate / aggregated values — those are not consumed by the standard
-EpiModelHIV-Template dissolution offset.}
+EpiModelHIV-Template dissolution offset. The race mixing targets are the exception
+to the per-ego aggregation: \code{nodematch_race} and \code{nodematch_race_diffF} come from a
+race mixing matrix built at the synthetic population from the partner-race
+multinomial (\verb{netparams$<layer>$joint_prace_model}) and balanced so that it describes
+a closed population, with \code{nodefactor_race} held fixed. Standardizing the ego side
+alone leaves the partner side as ARTnet's, and in a city whose race composition is far
+from ARTnet's the two sides do not add up (Seattle: White egos report more Black
+partners than Black egos have partnership endpoints). The balance is a symmetric
+scaling of the averaged reports that keeps their homophily odds ratios and refits the
+margins, so the targets are always feasible. The matrices are stored as
+\code{mixmat_race} (balanced expected edge counts) and \code{mixmat_race_reported} (ego-side
+reported endpoints, rows are the ego race).}
 
 \item{target_pop}{Optional specification of the synthetic target population. Defaults to NULL,
 which uses the legacy patchwork of reference sources (NCHS age pyramid +
@@ -110,6 +123,21 @@ function for reproducibility of the stochastic sampling path (default \code{targ
 list forms). Defaults to \code{NULL} (no seeding), which preserves prior behavior. The
 data.frame form of \code{target_pop} bypasses attribute sampling and is deterministic
 regardless of this argument.}
+
+\item{nodematch.race.floor}{Logical. If \code{TRUE}, each layer's \code{nodematch_race_diffF} is raised
+to the random-mixing value \code{edges * sum(p^2)}, with \code{p} the endpoint shares
+\code{nodefactor_race / sum(nodefactor_race)}, wherever it falls below, with a message. Any
+network with the layer's \code{nodefactor_race} targets can realize random mixing, so the
+floored targets are always feasible. This is a stopgap for \code{method = "existing"}, whose
+race mixing is not balanced to the target population; under \code{method = "joint"} the
+balanced targets are feasible already and the floor should not bind. The per-race
+\code{nodematch_race} vector is left unchanged. Default \code{FALSE}.}
+
+\item{check.feasibility}{Logical. If \code{TRUE} (default), the race targets are checked with
+\code{\link{check_race_feasibility}} at the end and the function stops when any layer has a
+race whose \code{nodefactor_race} exceeds \code{edges + nodematch_race_diffF}, naming the layer,
+the race and the excess. Such targets cannot be fit by MCMLE. Set to \code{FALSE} to return
+the targets anyway.}
 
 \item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
 }

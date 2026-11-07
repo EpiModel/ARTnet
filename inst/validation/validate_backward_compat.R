@@ -86,7 +86,7 @@ PARAM_SETS <- list(
 # fields are added (e.g., $joint_model).
 .strip_additive <- function(netparams) {
   additive <- c("joint_model", "joint_concurrent_model",
-                "joint_nm_age_model", "joint_nm_race_model",
+                "joint_nm_age_model", "joint_nm_race_model", "joint_prace_model",
                 "joint_absdiff_age_model", "joint_absdiff_sqrtage_model")
   for (layer in c("main", "casl", "inst", "all")) {
     if (is.null(netparams[[layer]])) next

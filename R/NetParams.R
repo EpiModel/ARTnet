@@ -117,6 +117,48 @@ fit_joint_glm <- function(d, response, main_terms,
 }
 
 
+# Joint multinomial (baseline-category logit) for partner race on ego
+# attributes: the partner-race analog of the binomial same-race fit from
+# fit_joint_glm (issue #9). Same term assembly and the same AIC-selected
+# age.grp:race interaction. `response` must name a factor column whose
+# levels are the race categories in order; the fit is consumed by
+# build_netstats(method = "joint") to form the reported race mixing matrix
+# at the synthetic population before balancing it.
+#' @importFrom nnet multinom
+fit_joint_multinom <- function(d, response, main_terms, race, geog.lvl) {
+  if (isTRUE(race)) {
+    main_terms <- c(main_terms, "as.factor(race.cat.num)")
+  }
+  if (!is.null(geog.lvl)) {
+    main_terms <- c("geogYN", main_terms)
+  }
+  fit_one <- function(terms) {
+    fml <- reformulate(terms, response = response)
+    tryCatch(
+      suppressWarnings(nnet::multinom(fml, data = d, trace = FALSE, maxit = 500)),
+      error = function(e) NULL
+    )
+  }
+  best <- fit_one(main_terms)
+  if (is.null(best)) {
+    stop("The joint multinomial partner-race model for ", response,
+         " failed to fit.", call. = FALSE)
+  }
+  selected <- character(0)
+  candidates <- if (isTRUE(race)) "age.grp:as.factor(race.cat.num)" else character(0)
+  for (ix in candidates) {
+    cand <- fit_one(c(main_terms, selected, ix))
+    if (!is.null(cand) && cand$convergence == 0 && AIC(cand) < AIC(best)) {
+      best <- cand
+      selected <- c(selected, ix)
+    }
+  }
+  attr(best, "selected_interactions") <- selected
+  attr(best, "candidate_interactions") <- candidates
+  best
+}
+
+
 #' Calculate Individual-Level Network Parameters
 #'
 #' @description Builds statistical models predicting mean degree, mixing, and duration of sexual
@@ -169,12 +211,20 @@ fit_joint_glm <- function(d, response, main_terms,
 #'          \item \strong{Dyad-level} (partnership data with ego attrs on RHS):
 #'            binomial for same-age-group at `$<layer>$joint_nm_age_model`, binomial
 #'            for same-race (when `race = TRUE`) at `$<layer>$joint_nm_race_model`,
-#'            and Gaussian fits for the age absolute-difference terms at
-#'            `$<layer>$joint_absdiff_age_model` and
+#'            a multinomial (`nnet::multinom`) for partner race (when `race = TRUE`) at
+#'            `$<layer>$joint_prace_model`, and Gaussian fits for the age
+#'            absolute-difference terms at `$<layer>$joint_absdiff_age_model` and
 #'            `$<layer>$joint_absdiff_sqrtage_model`.
 #'        }
 #'        These models are consumed by [`build_netstats`] under `method = "joint"` to produce
-#'        internally-consistent g-computation target statistics.
+#'        internally-consistent g-computation target statistics. The partner-race multinomial
+#'        is what lets `build_netstats` balance race mixing to the target population instead of
+#'        standardizing the ego side only.
+#' @param seed Optional integer. If supplied, `set.seed(seed)` is called at the start of the
+#'        function. The one stochastic step is the imputation of missing partner race, which
+#'        draws from each ego race's observed partner-race distribution (pooled across
+#'        partnership types), so two unseeded calls give slightly different race mixing
+#'        parameters. Defaults to `NULL` (no seeding), which preserves prior behavior.
 #' @param browser If `TRUE`, run `build_netparams` in interactive browser mode.
 #'
 #' @details
@@ -219,9 +269,13 @@ build_netparams <- function(epistats,
                             oo.nquants = 5,
                             duration.method = c("empirical", "joint_lm"),
                             method = c("existing", "joint"),
+                            seed = NULL,
                             browser = FALSE) {
   method <- match.arg(method)
   duration.method <- match.arg(duration.method)
+
+  # Optional reproducibility of the partner-race imputation (issue #11).
+  if (!is.null(seed)) set.seed(seed)
 
   # Ensures that ARTnetData is installed
   if (system.file(package = "ARTnetData") == "") stop(missing_data_msg)
@@ -800,6 +854,15 @@ build_netparams <- function(epistats,
         race = race, geog.lvl = geog.lvl,
         family = binomial()
       )
+      # Partner race itself (not just sameness), for the balanced mixing
+      # matrix in build_netstats (#9).
+      lmain$p_race_f <- factor(lmain$p_race.cat.num, levels = race.categories)
+      out$main$joint_prace_model <- fit_joint_multinom(
+        lmain,
+        response = "p_race_f",
+        main_terms = c("age.grp", "sqrt(age.grp)", "hiv2"),
+        race = race, geog.lvl = geog.lvl
+      )
     }
     out$main$joint_absdiff_age_model <- fit_joint_glm(
       lmain,
@@ -1211,6 +1274,12 @@ build_netparams <- function(epistats,
         race = race, geog.lvl = geog.lvl,
         family = binomial()
       )
+      lcasl$p_race_f <- factor(lcasl$p_race.cat.num, levels = race.categories)
+      out$casl$joint_prace_model <- fit_joint_multinom(
+        lcasl, response = "p_race_f",
+        main_terms = c("age.grp", "sqrt(age.grp)", "hiv2"),
+        race = race, geog.lvl = geog.lvl
+      )
     }
     out$casl$joint_absdiff_age_model <- fit_joint_glm(
       lcasl, response = "ad",
@@ -1525,6 +1594,12 @@ build_netparams <- function(epistats,
         main_terms = c("age.grp", "sqrt(age.grp)", "hiv2"),
         race = race, geog.lvl = geog.lvl,
         family = binomial()
+      )
+      linst$p_race_f <- factor(linst$p_race.cat.num, levels = race.categories)
+      out$inst$joint_prace_model <- fit_joint_multinom(
+        linst, response = "p_race_f",
+        main_terms = c("age.grp", "sqrt(age.grp)", "hiv2"),
+        race = race, geog.lvl = geog.lvl
       )
     }
     out$inst$joint_absdiff_age_model <- fit_joint_glm(

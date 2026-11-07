@@ -37,6 +37,7 @@ test_that("method='joint' produces all dyad models per layer", {
   for (layer in c("main", "casl", "inst")) {
     expect_s3_class(np[[layer]]$joint_nm_age_model, "glm")
     expect_s3_class(np[[layer]]$joint_nm_race_model, "glm")
+    expect_s3_class(np[[layer]]$joint_prace_model, "multinom")
     expect_s3_class(np[[layer]]$joint_absdiff_age_model, "glm")
     expect_s3_class(np[[layer]]$joint_absdiff_sqrtage_model, "glm")
   }
@@ -48,6 +49,7 @@ test_that("method='existing' does not produce dyad models", {
   for (layer in c("main", "casl", "inst")) {
     expect_null(np[[layer]]$joint_nm_age_model)
     expect_null(np[[layer]]$joint_nm_race_model)
+    expect_null(np[[layer]]$joint_prace_model)
     expect_null(np[[layer]]$joint_absdiff_age_model)
     expect_null(np[[layer]]$joint_absdiff_sqrtage_model)
   }
@@ -134,9 +136,10 @@ test_that("race = FALSE skips nm_race model gracefully", {
   )
   set.seed(20260419L)
   np <- build_netparams(epistats, smooth.main.dur = TRUE, method = "joint")
-  # nm_age, absdiff models should be present; nm_race should not
+  # nm_age, absdiff models should be present; nm_race and prace should not
   expect_s3_class(np$main$joint_nm_age_model, "glm")
   expect_null(np$main$joint_nm_race_model)
+  expect_null(np$main$joint_prace_model)
   expect_s3_class(np$main$joint_absdiff_age_model, "glm")
 
   set.seed(20260419L)
