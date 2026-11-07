@@ -1,6 +1,6 @@
 Package: ARTnet
-Version: 2.9.3
-Date: 2026-10-18
+Version: 2.10.0
+Date: 2026-11-07
 Title: Epidemic and Network Model Parameterization with the ARTnet Dataset
 Description: Epidemic and Network Model Parameterization with the ARTnet Dataset.
 Maintainer: Samuel Jenness <samuel.m.jenness@emory.edu>
