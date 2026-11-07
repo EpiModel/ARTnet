@@ -1,3 +1,14 @@
+## ARTnet v2.10.0
+
+* `build_netstats(method = "joint")` now balances race mixing to the target population: partner race is modeled with a multinomial (`netparams$<layer>$joint_prace_model`), the reported mixing matrix is built at the synthetic population and symmetrically scaled with `nodefactor_race` held fixed, and `nodematch_race` and `nodematch_race_diffF` are read from the balanced matrix. The matrices are stored as `mixmat_race` and `mixmat_race_reported` (#9).
+* `build_netstats()` gains `nodematch.race.floor` (default `FALSE`), which raises each layer's `nodematch_race_diffF` to the random-mixing value where it falls below, the opt-in stopgap for `method = "existing"` (#9).
+* `build_netstats()` now stops when a layer's race targets are infeasible (`nodefactor_race[r] > edges + nodematch_race_diffF`), naming the layer, race and excess; `check.feasibility = FALSE` returns the targets anyway. The check is exported as `check_race_feasibility()` (#10).
+* `build_netparams()` gains `seed`, which makes the partner-race imputation reproducible (#11).
+* `inst/validation/method_comparison.R` gains `fit_comparison_ergms()`, which fits the three template ERGMs with MCMLE for every scenario city and method after checking feasibility, and `render_fit_report()` (#12).
+* `build_netstats()` gains `duration.cap`, which caps every main and casual duration passed to `dissolution_coefs()` under both methods, with a message naming the strata it binds on.
+* Under `duration.method = "joint_lm"`, `build_netstats(method = "joint")` now warns when `netparams$<layer>$durs.<layer>.byage$mean.dur.adj` has been edited after `build_netparams()`, since the by-age durations are recomputed at the synthetic population and the edit was silently dropped before.
+* `nnet` is a new import.
+
 ## ARTnet v2.9.3
 
 * `trim_epistats()` now also trims `hiv.mod`, which is fit when `init.hiv.prev` is `NULL`.

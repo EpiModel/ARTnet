@@ -10,6 +10,7 @@ build_netparams(
   oo.nquants = 5,
   duration.method = c("empirical", "joint_lm"),
   method = c("existing", "joint"),
+  seed = NULL,
   browser = FALSE
 )
 }
@@ -51,7 +52,12 @@ underlying mean full-partnership duration was explored and removed: its
 output can't be faithfully honored by a geometric TERGM without a non-standard
 age-dependent dissolution term, making it a diagnostic rather than a
 production target. The one-off layer has no durations, so this flag only
-affects main and casual-layer output.}
+affects main and casual-layer output. Note that under \code{"joint_lm"},
+\code{\link{build_netstats}} with \code{method = "joint"} recomputes the by-age durations at the
+synthetic population and uses \verb{durs.<layer>.byage$mean.dur.adj} only as a fallback
+for empty strata, so editing that column after \code{build_netparams()} has no effect
+there (a warning says so). To cap durations, use the \code{duration.cap} argument of
+\code{\link{build_netstats}}, which applies under both methods.}
 
 \item{method}{Character. Either \code{"existing"} (default) or \code{"joint"}. \code{"existing"} reproduces
 the pre-refactor behavior byte-for-byte: a separate univariate Poisson/binomial/linear
@@ -64,12 +70,21 @@ concurrency indicator at \verb{$<layer>$joint_concurrent_model}.
 \item \strong{Dyad-level} (partnership data with ego attrs on RHS):
 binomial for same-age-group at \verb{$<layer>$joint_nm_age_model}, binomial
 for same-race (when \code{race = TRUE}) at \verb{$<layer>$joint_nm_race_model},
-and Gaussian fits for the age absolute-difference terms at
-\verb{$<layer>$joint_absdiff_age_model} and
+a multinomial (\code{nnet::multinom}) for partner race (when \code{race = TRUE}) at
+\verb{$<layer>$joint_prace_model}, and Gaussian fits for the age
+absolute-difference terms at \verb{$<layer>$joint_absdiff_age_model} and
 \verb{$<layer>$joint_absdiff_sqrtage_model}.
 }
 These models are consumed by \code{\link{build_netstats}} under \code{method = "joint"} to produce
-internally-consistent g-computation target statistics.}
+internally-consistent g-computation target statistics. The partner-race multinomial
+is what lets \code{build_netstats} balance race mixing to the target population instead of
+standardizing the ego side only.}
+
+\item{seed}{Optional integer. If supplied, \code{set.seed(seed)} is called at the start of the
+function. The one stochastic step is the imputation of missing partner race, which
+draws from each ego race's observed partner-race distribution (pooled across
+partnership types), so two unseeded calls give slightly different race mixing
+parameters. Defaults to \code{NULL} (no seeding), which preserves prior behavior.}
 
 \item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
 }

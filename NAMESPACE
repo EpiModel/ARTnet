@@ -3,6 +3,7 @@
 export(build_epistats)
 export(build_netparams)
 export(build_netstats)
+export(check_race_feasibility)
 export(make_race_combo)
 export(reweight_age_pyr)
 export(trim_epistats)
@@ -11,18 +12,21 @@ export(update_asmr)
 import(EpiModel)
 import(dplyr)
 import(utils)
-importFrom(stats,AIC)
-importFrom(stats,binomial)
-importFrom(stats,coef)
-importFrom(stats,formula)
-importFrom(stats,gaussian)
-importFrom(stats,glm)
-importFrom(stats,lm)
-importFrom(stats,median)
-importFrom(stats,poisson)
-importFrom(stats,predict)
-importFrom(stats,rbinom)
-importFrom(stats,reformulate)
-importFrom(stats,runif)
-importFrom(stats,update)
+importFrom(nnet,multinom)
+importFrom(stats,
+  AIC,
+  binomial,
+  coef,
+  formula,
+  gaussian,
+  glm,
+  lm,
+  median,
+  poisson,
+  predict,
+  rbinom,
+  reformulate,
+  runif,
+  update
+)
 importFrom(utils,head)

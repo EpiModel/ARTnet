@@ -70,3 +70,21 @@ Two reasons:
 Unit tests for individual joint-GLM behaviors (convergence, marginal
 recovery, coefficient sanity) should still live in
 `tests/testthat/` as normal.
+
+## MCMLE fits by scenario city (issue #12)
+
+`method_comparison.R` also fits the three template ERGMs for every scenario
+city with MCMLE, under three arms (`existing`, `existing_floor`, `joint`),
+after running `check_race_feasibility()` on each target set:
+
+```r
+devtools::load_all()
+source(system.file("validation/method_comparison.R", package = "ARTnet"))
+fits <- fit_comparison_ergms(ncores = 4)   # ~15-20 min
+render_fit_report(fits)                    # writes inst/validation/method_comparison_fits.md
+```
+
+Stochastic-Approximation settles on the nearest reachable network when the
+targets are infeasible, so the earlier Atlanta-only SA fits could not have
+caught the Seattle race-mixing problem (issue #9). MCMLE fails on it, which
+is what the cluster runs use.
