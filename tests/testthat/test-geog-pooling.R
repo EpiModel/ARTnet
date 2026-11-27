@@ -126,9 +126,13 @@ test_that("build_netstats uses pooled netparams under joint and refuses existing
   for (layer in c("main", "casl", "inst")) {
     expect_equal(sum(ns[[layer]]$nodefactor_race), 2 * ns[[layer]]$edges)
   }
+  expect_equal(sum(ns$inst$nodefactor_risk.grp), 2 * ns$inst$edges)
   ns_none <- build_netstats(x$ep, x$np_none, expect.mort = 0.000478213, network.size = 5000,
                             method = "joint", seed = 1)
   expect_gt(ns$inst$edges, ns_none$inst$edges)
+  rg_pooled <- ns$inst$nodefactor_risk.grp
+  rg_none <- ns_none$inst$nodefactor_risk.grp
+  expect_equal(rg_pooled[rg_pooled > 0] / sum(rg_pooled), rg_none[rg_none > 0] / sum(rg_none))
   expect_error(build_netstats(x$ep, x$np, expect.mort = 0.000478213, network.size = 5000,
                               method = "existing"),
                "use method = \"joint\"")

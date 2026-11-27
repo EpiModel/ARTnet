@@ -1,6 +1,6 @@
 ## ARTnet v2.11.0
 
-* `build_netparams()` gains `geog.pooling`. `"hierarchical"` (with `method = "joint"` and `duration.method = "joint_lm"`) partially pools the target geography's effect in every joint model through crossed region, division, and city (or state, county) random intercepts, and pools the geography's raw degree distributions and one-off risk-group rates; the default `"none"` is unchanged. Requires glmmTMB, a new suggested package.
+* `build_netparams()` gains `geog.pooling`. `"hierarchical"` (with `method = "joint"` and `duration.method = "joint_lm"`) partially pools the target geography's effect in every joint model through crossed region, division, and city (or state, county) random intercepts, and pools the geography's raw degree distributions and one-off risk-group rates; the default `"none"` is unchanged. Requires glmmTMB, a new suggested package. With a pooled `netparams`, `build_netstats(method = "joint")` scales the one-off `nodefactor_risk.grp` targets to sum to twice the one-off edges.
 
 ## ARTnet v2.10.0
 

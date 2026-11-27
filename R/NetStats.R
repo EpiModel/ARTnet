@@ -1299,6 +1299,13 @@ build_netstats <- function(epistats, netparams,
     # nodefactor("risk.grp") -- quantile-scheme preserved from univariate
     nodefactor_risk.grp <- .tab_levels(out$attr$risk.grp, seq_len(nquants)) *
       netparams$inst$nf.risk.grp
+    # Under geog.pooling, scale the risk-group targets so they sum to the
+    # joint one-off endpoints (2 * edges), keeping the gradient across groups.
+    # The unpooled joint path keeps the univariate totals (byte-identical).
+    if (!is.null(netparams$geog.pooling) && sum(nodefactor_risk.grp) > 0) {
+      nodefactor_risk.grp <- nodefactor_risk.grp *
+        (2 * out$inst$edges) / sum(nodefactor_risk.grp)
+    }
     out$inst$nodefactor_risk.grp <- unname(nodefactor_risk.grp)
 
     # nodefactor("deg.tot") -- truncated at 3 in build_netparams

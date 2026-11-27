@@ -263,6 +263,8 @@ fit_joint_multinom <- function(d, response, main_terms, race, geog.lvl) {
 #'        errors and stored fitted values are from the unpooled fit. Only the joint models are
 #'        pooled, so [`build_netstats`] stops if such a `netparams` is used with
 #'        `method = "existing"`.
+#'        With such a `netparams`, `build_netstats(method = "joint")` also scales the one-off
+#'        `nodefactor_risk.grp` targets to sum to twice the one-off edges.
 #'
 #' @details
 #' `build_netparams` is a helper function that constructs the necessary network parameters for use

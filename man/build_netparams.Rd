@@ -108,7 +108,9 @@ model carries its row as \code{attr(, "geog_pooling")}. The pooled models keep t
 so \code{predict()} with \code{newdata} uses the pooled effect, while their \code{summary()} standard
 errors and stored fitted values are from the unpooled fit. Only the joint models are
 pooled, so \code{\link{build_netstats}} stops if such a \code{netparams} is used with
-\code{method = "existing"}.}
+\code{method = "existing"}.
+With such a \code{netparams}, \code{build_netstats(method = "joint")} also scales the one-off
+\code{nodefactor_risk.grp} targets to sum to twice the one-off edges.}
 }
 \description{
 Builds statistical models predicting mean degree, mixing, and duration of sexual
