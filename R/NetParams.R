@@ -5,7 +5,8 @@
 # the geometric transformation in build_netstats). Returns the fitted
 # model plus a vector of per-row predicted durations on the training
 # set so callers can stratify however they like.
-fit_joint_lm_dur <- function(l_layer, race, geog.lvl) {
+fit_joint_lm_dur <- function(l_layer, race, geog.lvl, geog.pooling = "none",
+                             layer = NULL) {
   ongoing <- l_layer[l_layer$ongoing2 == 1 &
                        !is.na(l_layer$duration.time) &
                        l_layer$duration.time > 0, , drop = FALSE]
@@ -23,6 +24,15 @@ fit_joint_lm_dur <- function(l_layer, race, geog.lvl) {
     error = function(e) NULL
   )
   if (is.null(fit)) return(NULL)
+  # geog.pooling = "hierarchical": replace the geogYN coefficient with the
+  # partially pooled geography effect (see R/GeogPooling.R) before the
+  # stratum durations are computed from the model.
+  if (identical(geog.pooling, "hierarchical") && !is.null(geog.lvl)) {
+    pooled <- .pool_glm_geog(fit, ongoing, stats::gaussian(),
+                             .geog_pool_groups(geog.lvl), layer,
+                             "joint_duration_model")
+    fit <- pooled$model
+  }
   fitted_dur <- exp(predict(fit, newdata = ongoing))
   list(model = fit, ongoing = ongoing, fitted_dur = fitted_dur)
 }
@@ -36,10 +46,12 @@ fit_joint_lm_dur <- function(l_layer, race, geog.lvl) {
 # of stratum keys expected in the output (first = 0 for non-matched,
 # subsequent = index.age.grp values for matched-within-age-group).
 compute_alt_durs <- function(l_layer, duration.method, byage_strata,
-                             race, geog.lvl) {
+                             race, geog.lvl, geog.pooling = "none",
+                             layer = NULL) {
   stopifnot(duration.method == "joint_lm")
 
-  res <- fit_joint_lm_dur(l_layer, race = race, geog.lvl = geog.lvl)
+  res <- fit_joint_lm_dur(l_layer, race = race, geog.lvl = geog.lvl,
+                          geog.pooling = geog.pooling, layer = layer)
   if (is.null(res)) {
     return(list(homog = data.frame(mean.dur = NA_real_, median.dur = NA_real_),
                 byage = data.frame(index.age.grp = byage_strata,
@@ -231,6 +243,28 @@ fit_joint_multinom <- function(d, response, main_terms, race, geog.lvl) {
 #'        partnership types), so two unseeded calls give slightly different race mixing
 #'        parameters. Defaults to `NULL` (no seeding), which preserves prior behavior.
 #' @param browser If `TRUE`, run `build_netparams` in interactive browser mode.
+#' @param geog.pooling Character. How the target geography's effect is estimated under
+#'        `method = "joint"`. `"none"` (default) keeps the single unpooled `geogYN` indicator in
+#'        every joint model, as in prior versions. `"hierarchical"` replaces each `geogYN`
+#'        coefficient with the geography's partially pooled effect from a refit of the same model
+#'        with crossed random intercepts over ARTnet's nested geographic levels (region, division,
+#'        then state, county, or city, by `geog.lvl`), so a geography with few respondents borrows
+#'        from its division and region before the nation. It also pools the raw geography-specific
+#'        inputs: the cross-layer degree distributions used to build the synthetic population
+#'        (Dirichlet-multinomial shrinkage toward the national distribution), the one-off
+#'        risk-group rates (scaled by the pooled rather than the raw one-off rate ratio), and the
+#'        joint_lm durations (no extra unpooled ratio of medians). For overdispersed count models,
+#'        interaction selection uses quasi-AIC and the pooled refit a negative binomial; point
+#'        estimates stay Poisson. Requires `method = "joint"`, `duration.method = "joint_lm"`, a
+#'        `geog.lvl` in `epistats`, and the glmmTMB package. The unpooled and pooled effects,
+#'        random-effect SDs, and shrinkage weights are returned at `$geog.pooling`, and each pooled
+#'        model carries its row as `attr(, "geog_pooling")`. The pooled models keep their class,
+#'        so `predict()` with `newdata` uses the pooled effect, while their `summary()` standard
+#'        errors and stored fitted values are from the unpooled fit. Only the joint models are
+#'        pooled, so [`build_netstats`] stops if such a `netparams` is used with
+#'        `method = "existing"`.
+#'        With such a `netparams`, `build_netstats(method = "joint")` also scales the one-off
+#'        `nodefactor_risk.grp` targets to sum to twice the one-off edges.
 #'
 #' @details
 #' `build_netparams` is a helper function that constructs the necessary network parameters for use
@@ -275,9 +309,11 @@ build_netparams <- function(epistats,
                             duration.method = c("empirical", "joint_lm"),
                             method = c("existing", "joint"),
                             seed = NULL,
-                            browser = FALSE) {
+                            browser = FALSE,
+                            geog.pooling = c("none", "hierarchical")) {
   method <- match.arg(method)
   duration.method <- match.arg(duration.method)
+  geog.pooling <- match.arg(geog.pooling)
 
   # Optional reproducibility of the partner-race imputation (issue #11).
   if (!is.null(seed)) set.seed(seed)
@@ -291,6 +327,26 @@ build_netparams <- function(epistats,
 
   ## Inputs ##
   geog.lvl <- epistats$geog.lvl
+
+  if (geog.pooling == "hierarchical") {
+    if (method != "joint") {
+      stop("geog.pooling = \"hierarchical\" requires method = \"joint\".", call. = FALSE)
+    }
+    if (duration.method != "joint_lm") {
+      stop("geog.pooling = \"hierarchical\" requires duration.method = \"joint_lm\"; ",
+           "the empirical durations scale by an unpooled ratio of medians.", call. = FALSE)
+    }
+    if (is.null(geog.lvl)) {
+      stop("geog.pooling = \"hierarchical\" requires epistats built with a geog.lvl.",
+           call. = FALSE)
+    }
+    .geog_pool_groups(geog.lvl)
+    for (pkg in "glmmTMB") {
+      if (!requireNamespace(pkg, quietly = TRUE)) {
+        stop("geog.pooling = \"hierarchical\" requires the ", pkg, " package.", call. = FALSE)
+      }
+    }
+  }
   race <- epistats$race
   race.level <- epistats$race.level
   age.limits <- epistats$age.limits
@@ -767,8 +823,12 @@ build_netparams <- function(epistats,
       l_layer = lmain[lmain$RAI == 1 | lmain$IAI == 1, , drop = FALSE],
       duration.method = duration.method,
       byage_strata = out$main$durs.main.byage$index.age.grp,
-      race = race, geog.lvl = geog.lvl
+      race = race, geog.lvl = geog.lvl,
+      geog.pooling = geog.pooling, layer = "main"
     )
+    # The joint_lm model already carries the geography effect, pooled under
+    # geog.pooling = "hierarchical"; drop the unpooled ratio of medians there.
+    if (geog.pooling == "hierarchical") wt <- 1
     # homog
     if (!is.na(alt$homog$median.dur)) {
       out$main$durs.main.homog$mean.dur       <- alt$homog$mean.dur
@@ -1215,8 +1275,12 @@ build_netparams <- function(epistats,
       l_layer = lcasl[lcasl$RAI == 1 | lcasl$IAI == 1, , drop = FALSE],
       duration.method = duration.method,
       byage_strata = out$casl$durs.casl.byage$index.age.grp,
-      race = race, geog.lvl = geog.lvl
+      race = race, geog.lvl = geog.lvl,
+      geog.pooling = geog.pooling, layer = "casl"
     )
+    # The joint_lm model already carries the geography effect, pooled under
+    # geog.pooling = "hierarchical"; drop the unpooled ratio of medians there.
+    if (geog.pooling == "hierarchical") wt <- 1
     if (!is.na(alt$homog$median.dur)) {
       out$casl$durs.casl.homog$mean.dur       <- alt$homog$mean.dur
       out$casl$durs.casl.homog$median.dur     <- alt$homog$median.dur
@@ -1668,6 +1732,11 @@ build_netparams <- function(epistats,
   out$all$role.type <- prop.table(table(roletype))
 
 
+
+  # Geographic pooling (geog.pooling = "hierarchical") ----------------------
+  if (geog.pooling == "hierarchical") {
+    out <- .pool_netparams(out, geog.lvl)
+  }
 
   # SAVE --------------------------------------------------------------------
 

@@ -11,7 +11,8 @@ build_netparams(
   duration.method = c("empirical", "joint_lm"),
   method = c("existing", "joint"),
   seed = NULL,
-  browser = FALSE
+  browser = FALSE,
+  geog.pooling = c("none", "hierarchical")
 )
 }
 \arguments{
@@ -87,6 +88,29 @@ partnership types), so two unseeded calls give slightly different race mixing
 parameters. Defaults to \code{NULL} (no seeding), which preserves prior behavior.}
 
 \item{browser}{If \code{TRUE}, run \code{build_netparams} in interactive browser mode.}
+
+\item{geog.pooling}{Character. How the target geography's effect is estimated under
+\code{method = "joint"}. \code{"none"} (default) keeps the single unpooled \code{geogYN} indicator in
+every joint model, as in prior versions. \code{"hierarchical"} replaces each \code{geogYN}
+coefficient with the geography's partially pooled effect from a refit of the same model
+with crossed random intercepts over ARTnet's nested geographic levels (region, division,
+then state, county, or city, by \code{geog.lvl}), so a geography with few respondents borrows
+from its division and region before the nation. It also pools the raw geography-specific
+inputs: the cross-layer degree distributions used to build the synthetic population
+(Dirichlet-multinomial shrinkage toward the national distribution), the one-off
+risk-group rates (scaled by the pooled rather than the raw one-off rate ratio), and the
+joint_lm durations (no extra unpooled ratio of medians). For overdispersed count models,
+interaction selection uses quasi-AIC and the pooled refit a negative binomial; point
+estimates stay Poisson. Requires \code{method = "joint"}, \code{duration.method = "joint_lm"}, a
+\code{geog.lvl} in \code{epistats}, and the glmmTMB package. The unpooled and pooled effects,
+random-effect SDs, and shrinkage weights are returned at \verb{$geog.pooling}, and each pooled
+model carries its row as \code{attr(, "geog_pooling")}. The pooled models keep their class,
+so \code{predict()} with \code{newdata} uses the pooled effect, while their \code{summary()} standard
+errors and stored fitted values are from the unpooled fit. Only the joint models are
+pooled, so \code{\link{build_netstats}} stops if such a \code{netparams} is used with
+\code{method = "existing"}.
+With such a \code{netparams}, \code{build_netstats(method = "joint")} also scales the one-off
+\code{nodefactor_risk.grp} targets to sum to twice the one-off edges.}
 }
 \description{
 Builds statistical models predicting mean degree, mixing, and duration of sexual
