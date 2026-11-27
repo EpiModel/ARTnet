@@ -1,3 +1,7 @@
+## ARTnet v2.11.0
+
+* `build_netparams()` gains `geog.pooling`. `"hierarchical"` (with `method = "joint"` and `duration.method = "joint_lm"`) partially pools the target geography's effect in every joint model through crossed region, division, and city (or state, county) random intercepts, and pools the geography's raw degree distributions and one-off risk-group rates; the default `"none"` is unchanged. Requires glmmTMB, a new suggested package.
+
 ## ARTnet v2.10.0
 
 * `build_netstats(method = "joint")` now balances race mixing to the target population: partner race is modeled with a multinomial (`netparams$<layer>$joint_prace_model`), the reported mixing matrix is built at the synthetic population and symmetrically scaled with `nodefactor_race` held fixed, and `nodematch_race` and `nodematch_race_diffF` are read from the balanced matrix. The matrices are stored as `mixmat_race` and `mixmat_race_reported` (#9).

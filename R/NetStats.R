@@ -402,6 +402,10 @@ build_netstats <- function(epistats, netparams,
                            duration.cap = NULL,
                            browser = FALSE) {
   method <- match.arg(method)
+  if (method == "existing" && !is.null(netparams$geog.pooling)) {
+    stop("netparams was built with geog.pooling = \"", netparams$geog.pooling$method,
+         "\", which pools only the joint models; use method = \"joint\".", call. = FALSE)
+  }
 
   if (!is.null(duration.cap)) {
     if (!is.numeric(duration.cap) || length(duration.cap) != 1 ||
